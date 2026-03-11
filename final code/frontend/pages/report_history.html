@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Report History</title>
+
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/chat.css">
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div id="navbar"></div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div id="sidebar"></div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+<h1 class="page-title">Report History</h1>
+<p class="page-subtitle">View previously generated safety reports.</p>
+
+<div class="container-rep-history">
+
+<table class="table">
+
+<thead>
+<tr>
+<th>Report ID</th>
+<th>Project</th>
+<th>Model</th>
+<th>Risk Level</th>
+<th>Date</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="reportTable">
+
+<tr>
+<td>RPT-101</td>
+<td>Construction AI</td>
+<td>Vision Model v2</td>
+<td><span class="badge high">High</span></td>
+<td>12 Mar 2026</td>
+<td><button class="primary-btn">View</button></td>
+</tr>
+
+<tr>
+<td>RPT-102</td>
+<td>Factory Monitor</td>
+<td>SafetyNet AI</td>
+<td><span class="badge medium">Medium</span></td>
+<td>11 Mar 2026</td>
+<td><button class="primary-btn">View</button></td>
+</tr>
+
+<tr>
+<td>RPT-103</td>
+<td>Warehouse Vision</td>
+<td>Hazard Detect</td>
+<td><span class="badge low">Low</span></td>
+<td>10 Mar 2026</td>
+<td><button class="primary-btn">View</button></td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<div id="footer"></div>
+
+
+<!-- LOAD COMPONENTS -->
+<script>
+
+/* NAVBAR */
+fetch("../components/navbar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("navbar").innerHTML = data
+})
+
+/* SIDEBAR */
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+
+document.getElementById("sidebar").innerHTML = data
+
+if(typeof initSidebar === "function"){
+initSidebar()
+}
+
+})
+
+/* FOOTER */
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

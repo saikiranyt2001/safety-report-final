@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlalchemy
+aiosqlite
+opencv-python
+pillow
+reportlab
+python-multipart
+openai
+PyJWT
+numpy
+pydantic-settings

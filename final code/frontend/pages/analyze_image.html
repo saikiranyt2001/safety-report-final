@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Analyze Image</title>
+
+<link rel="stylesheet" href="../css/style.css">
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+<h1 class="text-3xl font-bold mb-6">Analyze Safety Image</h1>
+
+<p class="text-gray-600 mb-6">
+Upload an image to detect workplace safety hazards.
+</p>
+
+<div class="container">
+
+<label class="block mb-2 font-semibold">Upload Image</label>
+
+<input type="file" id="imageInput" accept="image/*" onchange="previewImage()">
+
+<br><br>
+
+<img id="preview" style="max-width:300px;display:none;border-radius:8px;margin-bottom:15px">
+
+<br>
+
+<button onclick="analyzeImage()" class="analyze-btn">
+Analyze Image
+</button>
+
+</div>
+
+<div id="resultBox" class="result mt-6 p-4 bg-white rounded shadow">
+AI analysis results will appear here.
+</div>
+
+</div>
+
+<!-- AI CHAT -->
+<div class="ai-chat-sidebar" id="aiChat">
+
+<div class="chat-header">
+<span>AI Safety Assistant</span>
+<button class="chat-close" onclick="toggleChat()">✖</button>
+</div>
+
+<div class="chat-messages" id="chatMessages">
+<div class="ai-msg">Hello! Ask me about workplace safety.</div>
+</div>
+
+<div class="chat-input">
+<input id="chatInput" placeholder="Ask a question...">
+<button onclick="sendChat()">Send</button>
+</div>
+
+</div>
+
+<!-- CHAT BUTTON -->
+<button class="chat-toggle-btn" onclick="toggleChat()">
+💬 AI Assistant
+</button>
+
+<!-- FOOTER -->
+<div id="footer"></div>
+
+<script>
+
+/* LOAD SIDEBAR */
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+
+document.getElementById("sidebar-container").innerHTML = data
+
+if(typeof initSidebar === "function"){
+initSidebar()
+}
+
+})
+
+/* LOAD FOOTER */
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+</script>
+
+<!-- AUTH -->
+<script>
+
+if(!localStorage.getItem("token")){
+window.location.href="login.html";
+}
+
+function logout(){
+localStorage.removeItem("token");
+window.location.href="login.html";
+}
+
+</script>
+
+<!-- IMAGE PREVIEW -->
+<script>
+
+function previewImage(){
+
+let file = document.getElementById("imageInput").files[0]
+
+if(!file) return
+
+let reader = new FileReader()
+
+reader.onload = function(e){
+
+let img = document.getElementById("preview")
+img.src = e.target.result
+img.style.display = "block"
+
+}
+
+reader.readAsDataURL(file)
+
+}
+
+</script>
+
+<!-- ANALYZE IMAGE -->
+<script>
+
+function analyzeImage(){
+
+let file = document.getElementById("imageInput").files[0]
+
+if(!file){
+alert("Please upload an image")
+return
+}
+
+document.getElementById("resultBox").innerHTML = `
+<h3 style="font-weight:bold;margin-bottom:10px">AI Analysis Result</h3>
+
+<p><b>Detected hazards:</b></p>
+
+<ul style="margin-left:20px">
+<li>⚠ Worker without helmet</li>
+<li>⚠ Unsafe ladder position</li>
+</ul>
+
+<p style="margin-top:10px">
+<b>Risk Level:</b> <span style="color:red;font-weight:bold">HIGH</span>
+</p>
+`
+
+}
+
+</script>
+
+<!-- AI CHAT SCRIPT -->
+<script>
+
+function toggleChat(){
+let chat=document.getElementById("aiChat")
+chat.classList.toggle("open")
+}
+
+function sendChat(){
+
+let input=document.getElementById("chatInput")
+let text=input.value.trim()
+
+if(text==="") return
+
+addChat(text,"user-msg")
+
+let reply=generateReply(text)
+
+setTimeout(()=>{
+addChat(reply,"ai-msg")
+},500)
+
+input.value=""
+
+}
+
+function addChat(text,type){
+
+let box=document.getElementById("chatMessages")
+
+let div=document.createElement("div")
+
+div.className=type
+div.innerText=text
+
+box.appendChild(div)
+
+box.scrollTop=box.scrollHeight
+
+}
+
+function generateReply(q){
+
+q=q.toLowerCase()
+
+if(q.includes("hazard"))
+return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
+
+if(q.includes("helmet"))
+return "Workers should always wear PPE like helmets, gloves, and safety shoes."
+
+if(q.includes("accident"))
+return "Reduce accidents by conducting safety audits and enforcing PPE compliance."
+
+return "Safety tip: Always inspect equipment before starting work."
+
+}
+
+document.getElementById("chatInput").addEventListener("keypress",function(e){
+if(e.key==="Enter"){
+sendChat()
+}
+})
+
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

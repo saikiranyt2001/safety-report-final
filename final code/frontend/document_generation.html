@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AI Document Generation</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="js/auth.js"></script>
+
+</head>
+
+<body class="bg-gray-100">
+
+<script>
+checkAuth();
+</script>
+
+<!-- NAVBAR -->
+
+<nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
+
+<h1 class="font-bold text-xl">AI Safety Platform</h1>
+
+<div class="space-x-6 flex items-center">
+
+<a href="dashboard.html">Dashboard</a>
+<a href="pages/analyze_image.html">Analyze Image</a>
+<a href="pages/generate_report.html">Generate Report</a>
+<a href="pages/report_history.html">Report History</a>
+<a href="pages/analytics.html">Analytics</a>
+
+<button onclick="logoutUser()" class="bg-red-500 px-4 py-2 rounded">
+Logout
+</button>
+
+</div>
+
+</nav>
+
+
+<!-- MAIN -->
+
+<div class="p-10">
+
+<h1 class="text-3xl font-bold mb-6">Generate Safety Document</h1>
+
+<div class="bg-white p-8 rounded-xl shadow max-w-xl">
+
+<label class="block mb-2 font-semibold">Report Type</label>
+
+<select id="reportType" class="w-full border p-2 rounded mb-4">
+
+<option value="WHS">WHS Report</option>
+<option value="Incident">Incident Report</option>
+<option value="Risk">Risk Assessment</option>
+<option value="SWMS">SWMS</option>
+<option value="JSA">JSA</option>
+
+</select>
+
+<label class="block mb-2 font-semibold">Project ID</label>
+
+<input
+type="number"
+id="projectId"
+placeholder="Enter Project ID"
+class="w-full border p-2 rounded mb-4"
+>
+
+<button
+onclick="generateDocument()"
+class="bg-blue-600 text-white px-6 py-3 rounded w-full hover:bg-blue-700"
+>
+Generate Document
+</button>
+
+<div id="docResult" class="mt-6 bg-gray-100 p-4 rounded"></div>
+
+<a href="ai_tools/ai_report_chat.html" class="text-blue-600 mt-4 block">
+Go to AI Report Chat
+</a>
+
+</div>
+
+</div>
+
+
+<script>
+
+function logoutUser(){
+localStorage.removeItem("jwt_token");
+window.location.href="login.html";
+}
+
+function generateDocument(){
+
+const reportType = document.getElementById("reportType").value;
+const projectId = document.getElementById("projectId").value;
+
+fetch("/api/generate-report",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body: JSON.stringify({
+report_type: reportType,
+project_id: parseInt(projectId)
+})
+
+})
+
+.then(res => res.json())
+
+.then(data => {
+
+document.getElementById("docResult").innerText =
+data.document || "No document generated.";
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
