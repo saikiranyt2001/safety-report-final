@@ -1,14 +1,22 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
 import enum
 
+
+# -----------------------------
+# User Roles
+# -----------------------------
 class RoleEnum(enum.Enum):
     admin = "admin"
     manager = "manager"
     worker = "worker"
 
+
+# -----------------------------
+# Company
+# -----------------------------
 class Company(Base):
     __tablename__ = "companies"
 
@@ -17,7 +25,12 @@ class Company(Base):
 
     users = relationship("User", back_populates="company", cascade="all, delete")
     projects = relationship("Project", back_populates="company", cascade="all, delete")
+    usage_records = relationship("Usage", back_populates="company", cascade="all, delete")
 
+
+# -----------------------------
+# User
+# -----------------------------
 class User(Base):
     __tablename__ = "users"
 
@@ -30,6 +43,12 @@ class User(Base):
     company_id = Column(Integer, ForeignKey("companies.id"))
     company = relationship("Company", back_populates="users")
 
+    usage = relationship("Usage", back_populates="user")
+
+
+# -----------------------------
+# Project
+# -----------------------------
 class Project(Base):
     __tablename__ = "projects"
 
@@ -44,6 +63,10 @@ class Project(Base):
 
     reports = relationship("Report", back_populates="project", cascade="all, delete")
 
+
+# -----------------------------
+# Report
+# -----------------------------
 class Report(Base):
     __tablename__ = "reports"
 
@@ -62,6 +85,12 @@ class Report(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    usage_records = relationship("Usage", back_populates="report")
+
+
+# -----------------------------
+# Usage Tracking
+# -----------------------------
 class Usage(Base):
     __tablename__ = "usage"
 
@@ -69,16 +98,16 @@ class Usage(Base):
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     report_id = Column(Integer, ForeignKey("reports.id"))
-
     company_id = Column(Integer, ForeignKey("companies.id"))
 
     month = Column(String, nullable=False)
 
     tokens = Column(Integer, default=0)
     reports = Column(Integer, default=0)
-    cost = Column(Integer, default=0)
+    cost = Column(Float, default=0.0)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    user = relationship("User")
-    report = relationship("Report")
+    user = relationship("User", back_populates="usage")
+    report = relationship("Report", back_populates="usage_records")
+    company = relationship("Company", back_populates="usage_records")

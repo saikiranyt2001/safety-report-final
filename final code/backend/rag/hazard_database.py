@@ -29,5 +29,6 @@ HAZARDS = [
     }
 ]
 
-def get_hazards():
-    return HAZARDS
+def get_hazards(site_type=None):
+
+    return [h["name"] for h in HAZARDS]

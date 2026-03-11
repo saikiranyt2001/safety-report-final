@@ -3,20 +3,25 @@ function getAuthToken() {
 	return localStorage.getItem("auth_token");
 }
 
-// Example: fetch analytics with Authorization header
+// Fetch analytics
 async function fetchAnalytics() {
 	const token = getAuthToken();
-	const res = await fetch("/api/analytics", {
+
+	const res = await fetch("http://localhost:8000/api/analytics", {
 		method: "GET",
 		headers: {
 			"Authorization": `Bearer ${token}`
 		}
 	});
+
 	return await res.json();
 }
+
 const API_URL = "http://localhost:8000";
 
+// Generate AI report
 async function generateReport(data){
+
 	const response = await fetch(API_URL + "/generate-report",{
 		method:"POST",
 		headers:{
@@ -24,9 +29,14 @@ async function generateReport(data){
 		},
 		body:JSON.stringify(data)
 	});
-	return await response.json();
+
+	const result = await response.json();
+
+	const resultDiv = document.getElementById("result");
+
+	if(resultDiv){
+		resultDiv.innerText = JSON.stringify(result, null, 2);
+	}
+
+	return result;
 }
-
-document.getElementById("result").innerText = data.report
-
-

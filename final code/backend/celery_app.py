@@ -1,5 +1,3 @@
-
-
 from celery import Celery
 
 celery_app = Celery(
@@ -16,6 +14,8 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
-# register tasks
-import backend.tasks
-import backend.services.report_service
+# automatically discover tasks
+celery_app.autodiscover_tasks([
+    "backend.tasks",
+    "backend.services"
+])

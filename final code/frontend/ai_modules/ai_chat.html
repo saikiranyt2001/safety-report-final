@@ -1,26 +1,60 @@
-<!-- AI CHAT -->
-<div class="ai-chat-sidebar" id="aiChat">
+<script>
 
-<div class="chat-header">
+const API_URL = "http://localhost:8000";
 
-<span>AI Safety Assistant</span>
+// Open / close chat
+function toggleChat(){
+	const chat = document.getElementById("aiChat");
+	chat.classList.toggle("open");
+}
 
-<button class="chat-close" onclick="toggleChat()">✖</button>
+// Send message
+async function sendChat(){
 
-</div>
+	const input = document.getElementById("chatInput");
+	const message = input.value.trim();
 
-<div class="chat-messages" id="chatMessages">
-<div class="ai-msg">Hello! Ask me about workplace safety.</div>
-</div>
+	if(!message) return;
 
-<div class="chat-input">
-<input id="chatInput" placeholder="Ask a question...">
-<button onclick="sendChat()">Send</button>
-</div>
+	const messages = document.getElementById("chatMessages");
 
-</div>
+	// show user message
+	const userMsg = document.createElement("div");
+	userMsg.className = "user-msg";
+	userMsg.innerText = message;
+	messages.appendChild(userMsg);
 
-<!-- CHAT BUTTON -->
-<button class="chat-toggle-btn" onclick="toggleChat()">
-💬 AI Assistant
-</button>
+	input.value = "";
+
+	try{
+
+		const response = await fetch(API_URL + "/api/chat",{
+			method:"POST",
+			headers:{
+				"Content-Type":"application/json"
+			},
+			body:JSON.stringify({message:message})
+		});
+
+		const data = await response.json();
+
+		const aiMsg = document.createElement("div");
+		aiMsg.className = "ai-msg";
+		aiMsg.innerText = data.reply;
+
+		messages.appendChild(aiMsg);
+
+	}catch(error){
+
+		const errMsg = document.createElement("div");
+		errMsg.className = "ai-msg";
+		errMsg.innerText = "AI service unavailable";
+
+		messages.appendChild(errMsg);
+
+	}
+
+	messages.scrollTop = messages.scrollHeight;
+}
+
+</script>

@@ -32,18 +32,27 @@ def classify_risk(score):
     else:
         return "Extreme"
 
+
 def assess_risk(hazards):
+
     risks = {}
-    for h in hazards:
-        # Example: each hazard should have likelihood and severity
-        likelihood = h.get("likelihood", "Possible") if isinstance(h, dict) else "Possible"
-        severity = h.get("severity", "Moderate") if isinstance(h, dict) else "Moderate"
-        score = LIKELIHOOD_SCORES.get(likelihood,0) * SEVERITY_SCORES.get(severity,0)
-        level = RISK_MATRIX.get((likelihood,severity), classify_risk(score))
-        risks[h if not isinstance(h, dict) else h.get("name", str(h))] = {
+
+    hazard_list = hazards.get("hazards_detected", [])
+
+    for h in hazard_list:
+
+        likelihood = "Possible"
+        severity = "Moderate"
+
+        score = LIKELIHOOD_SCORES[likelihood] * SEVERITY_SCORES[severity]
+
+        level = classify_risk(score)
+
+        risks[h] = {
             "likelihood": likelihood,
             "severity": severity,
             "score": score,
             "level": level
         }
+
     return risks
