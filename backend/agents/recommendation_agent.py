@@ -30,17 +30,39 @@ DEFAULT_CONTROLS = {
     "PPE": "Use appropriate safety equipment"
 }
 
-def generate_recommendations(hazards):
-    recs = []
-    for hazard in hazards:
-        controls = RECOMMENDATIONS.get(hazard, {})
-        rec = {"hazard": hazard, "controls": {}}
-        for level in HIERARCHY_OF_CONTROLS:
-            if level in controls:
-                rec["controls"][level] = controls[level]
-            elif level in DEFAULT_CONTROLS:
-                rec["controls"][level] = DEFAULT_CONTROLS[level]
-        recs.append(rec)
-    return recs
 
-#done
+def recommend_controls(hazard, risk_data):
+
+    controls = []
+
+    if hazard.lower() == "fire":
+        controls = [
+            "Install fire extinguishers",
+            "Provide fire safety training",
+            "Maintain clear evacuation routes"
+        ]
+
+    elif hazard.lower() == "fall":
+        controls = [
+            "Use safety harnesses",
+            "Install guardrails",
+            "Provide fall protection training"
+        ]
+
+    elif hazard.lower() == "chemical":
+        controls = [
+            "Use proper PPE",
+            "Ensure chemical labeling",
+            "Provide ventilation systems"
+        ]
+
+    else:
+        controls = [
+            "Follow standard safety procedures",
+            "Conduct regular inspections"
+        ]
+
+    return {
+        "hazard": hazard,
+        "controls": controls
+    }
