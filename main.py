@@ -3,16 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 from prometheus_fastapi_instrumentator import Instrumentator
-from backend.api.routes_chat import router as chat_router
+from final_code.backend.api.routes_chat import router as chat_router
 print("🚀 Starting AI Safety Platform...")
 
 try:
-    from backend.api.routes_reports import router as report_router
-    from backend.api.routes_analytics import router as analytics_router
-    from backend.api.routes_admin import router as admin_router
-    from backend.api.routes_uploads import router as uploads_router
-    from backend.api.routes_validation import router as validation_router
-    from backend.api.routes_auth import router as auth_router
+    from final_code.backend.api.routes_reports import router as report_router
+    from final_code.backend.api.routes_analytics import router as analytics_router
+    from final_code.backend.api.routes_admin import router as admin_router
+    from final_code.backend.api.routes_uploads import router as uploads_router
+    from final_code.backend.api.routes_validation import router as validation_router
+    from final_code.backend.api.routes_auth import router as auth_router
     print("✅ Routers imported successfully")
 except Exception as e:
     print("❌ Router import error:", e)
