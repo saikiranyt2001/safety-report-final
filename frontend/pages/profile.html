@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>User Profile</title>
+
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/chat.css">
+
+</head>
+
+<body>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div id="sidebar"></div>
+
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+<h1 class="page-title">User Profile</h1>
+
+<div class="container profile-box">
+
+<div class="profile-row">
+<strong>Name:</strong>
+<span id="profileName"></span>
+</div>
+
+<div class="profile-row">
+<strong>Email:</strong>
+<span id="profileEmail"></span>
+</div>
+
+<div class="profile-row">
+<strong>Role:</strong>
+<span id="profileRole"></span>
+</div>
+
+<div class="profile-row">
+<strong>Last Login:</strong>
+<span id="profileLogin"></span>
+</div>
+
+<br>
+
+<button class="logout-btn" onclick="logoutUser()">Logout</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- FOOTER -->
+<div id="footer"></div>
+
+
+<script>
+
+/* LOAD SIDEBAR */
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+
+document.getElementById("sidebar").innerHTML = data
+
+if(typeof initSidebar === "function"){
+initSidebar()
+}
+
+})
+
+
+/* LOAD FOOTER */
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+
+/* LOAD USER DATA AFTER PAGE LOAD */
+window.onload = function(){
+
+document.getElementById("profileName").innerText =
+localStorage.getItem("user_name") || "Admin User"
+
+document.getElementById("profileEmail").innerText =
+localStorage.getItem("user_email") || "admin@safetyai.com"
+
+document.getElementById("profileRole").innerText =
+localStorage.getItem("user_role") || "Administrator"
+
+document.getElementById("profileLogin").innerText =
+new Date().toLocaleString()
+
+}
+
+
+/* LOGOUT FUNCTION */
+function logoutUser(){
+
+localStorage.removeItem("token")
+localStorage.removeItem("user_name")
+localStorage.removeItem("user_email")
+localStorage.removeItem("user_role")
+
+window.location.href = "../pages/login.html"
+
+}
+
+</script>
+
+</body>
+</html>

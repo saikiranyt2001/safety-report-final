@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login - AI Safety Platform</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+</head>
+
+<body>
+
+<div class="login-container">
+
+<h1>AI Safety Platform</h1>
+
+<div class="login-card">
+
+<h2>Login</h2>
+
+<input type="text" placeholder="Username">
+
+<input type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+</div>
+
+</div>
+
+<script>
+
+function login(){
+
+localStorage.setItem("token","loggedin")
+
+window.location.href="../pages/dashboard.html"
+
+}
+
+</script>
+
+</body>
+</html>
