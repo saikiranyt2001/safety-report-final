@@ -1,6 +1,6 @@
-from agents.hazard_agent import identify_hazards
-from agents.risk_agent import assess_risk
-from agents.recommendation_agent import recommend_controls
+from backend.agents.hazard_agent import identify_hazards
+from backend.agents.risk_agent import assess_risk
+from backend.agents.recommendation_agent import recommend_controls
 
 
 def run_safety_pipeline(site_type, site_data):
@@ -22,5 +22,6 @@ def run_safety_pipeline(site_type, site_data):
     return {
         "hazards": hazards,
         "risk": risk,
-        "recommendations": recommendations
-    }
+        "recommendations":    recommendations
+    } 
+#add 
