@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Project Management</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../js/auth.js"></script>
+
+</head>
+
+<body class="bg-gray-100">
+
+<script>
+checkAuth();
+</script>
+
+<div class="flex">
+
+<!-- SIDEBAR -->
+
+<div class="w-64 bg-blue-700 text-white min-h-screen p-6">
+
+<h2 class="text-2xl font-bold mb-8">AI Safety</h2>
+
+<a href="../dashboard.html" class="block mb-4">Dashboard</a>
+<a href="../pages/upload.html" class="block mb-4">Upload</a>
+<a href="../pages/analyze_image.html" class="block mb-4">Analyze Image</a>
+<a href="../pages/generate_report.html" class="block mb-4">Generate Report</a>
+<a href="../pages/report_history.html" class="block mb-4">Report History</a>
+<a href="../pages/analytics.html" class="block mb-4">Analytics</a>
+<a href="../pages/risk_assessment.html" class="block mb-4">Risk Assessment</a>
+<a href="../pages/recommendations.html" class="block mb-4">Recommendations</a>
+<a href="create_project.html" class="block mb-4">Create Project</a>
+<a href="project_management.html" class="block mb-4 font-bold">Projects</a>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="flex-1 p-10">
+
+<h1 class="text-3xl font-bold mb-6">Project Management</h1>
+
+<p class="text-gray-600 mb-8">
+Track projects, inspections, and safety reports.
+</p>
+
+<!-- PROJECT TABLE -->
+
+<div class="bg-white rounded-xl shadow overflow-hidden">
+
+<table class="min-w-full">
+
+<thead class="bg-gray-200">
+<tr>
+<th class="text-left p-3">Project</th>
+<th class="text-left p-3">Location</th>
+<th class="text-left p-3">Status</th>
+<th class="text-left p-3">Actions</th>
+</tr>
+</thead>
+
+<tbody id="projectTable">
+
+<tr class="border-b">
+<td class="p-3">Factory Safety AI</td>
+<td class="p-3">Hyderabad</td>
+<td class="p-3 text-green-600 font-bold">Active</td>
+<td class="p-3">
+<button class="bg-blue-600 text-white px-3 py-1 rounded mr-2">
+View
+</button>
+<button class="bg-red-500 text-white px-3 py-1 rounded">
+Delete
+</button>
+</td>
+</tr>
+
+<tr class="border-b">
+<td class="p-3">Autonomous Vehicle Safety</td>
+<td class="p-3">Bangalore</td>
+<td class="p-3 text-yellow-600 font-bold">Pending</td>
+<td class="p-3">
+<button class="bg-blue-600 text-white px-3 py-1 rounded mr-2">
+View
+</button>
+<button class="bg-red-500 text-white px-3 py-1 rounded">
+Delete
+</button>
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function logoutUser(){
+localStorage.removeItem("jwt_token");
+window.location.href="../login.html";
+}
+
+</script>
+
+</body>
+</html>
