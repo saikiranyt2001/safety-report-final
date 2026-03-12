@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Safety Alerts</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+
+<div class="logo">AI Safety Platform</div>
+
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+<h1>Safety Alerts</h1>
+
+
+<div class="overview">
+
+<div class="overview-box alert-high">
+
+<h3>⚠ High Risk Hazard Detected</h3>
+<p>Ladder safety violation near scaffolding area.</p>
+<small>2 minutes ago</small>
+
+</div>
+
+
+<div class="overview-box alert-warning">
+
+<h3>⚠ Missing PPE</h3>
+<p>Worker detected without helmet in zone B.</p>
+<small>10 minutes ago</small>
+
+</div>
+
+
+<div class="overview-box alert-medium">
+
+<h3>⚠ Compliance Warning</h3>
+<p>Electrical equipment inspection overdue.</p>
+<small>1 hour ago</small>
+
+</div>
+
+
+<div class="overview-box alert-info">
+
+<h3>ℹ Safety Score Update</h3>
+<p>Project safety score improved to 82%.</p>
+<small>Today</small>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- FOOTER -->
+<div id="footer"></div>
+
+
+<!-- LOAD SIDEBAR -->
+<script>
+
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+})
+
+</script>
+
+
+<!-- LOAD FOOTER -->
+<script>
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+</script>
+
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

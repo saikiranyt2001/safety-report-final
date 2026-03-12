@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Site Map</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.site-summary {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 14px;
+margin: 16px 0 20px;
+}
+
+.site-card {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+padding: 16px;
+box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.site-card h3 {
+margin: 0;
+font-size: 28px;
+}
+
+.site-toolbar {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 10px;
+margin-bottom: 16px;
+}
+
+.site-actions {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.site-actions button,
+.site-actions select {
+padding: 8px 12px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #fff;
+cursor: pointer;
+}
+
+.site-actions .primary {
+background: #0b63ce;
+border-color: #0b63ce;
+color: #fff;
+}
+
+.site-layout {
+display: grid;
+grid-template-columns: 2fr 1fr;
+gap: 16px;
+}
+
+.site-map-panel,
+.site-details-panel {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+padding: 16px;
+box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.site-map-panel h2,
+.site-details-panel h2 {
+margin: 0 0 14px;
+font-size: 18px;
+}
+
+.site-map-grid {
+display: grid;
+grid-template-columns: repeat(3, minmax(0, 1fr));
+gap: 12px;
+min-height: 360px;
+}
+
+.zone {
+border-radius: 12px;
+padding: 14px;
+border: 1px solid #dbe4ee;
+cursor: pointer;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+min-height: 110px;
+transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.zone:hover,
+.zone.active {
+transform: translateY(-2px);
+box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.zone.safe {
+background: #e9f7ef;
+}
+
+.zone.watch {
+background: #fff4e5;
+}
+
+.zone.alert {
+background: #fdecea;
+}
+
+.zone-name {
+font-weight: 700;
+font-size: 15px;
+}
+
+.zone-meta {
+font-size: 13px;
+color: #475569;
+}
+
+.zone-status {
+font-size: 12px;
+font-weight: 700;
+}
+
+.detail-list {
+display: grid;
+gap: 10px;
+}
+
+.detail-item {
+padding: 10px;
+border: 1px solid #eef3f8;
+border-radius: 8px;
+background: #f8fbff;
+}
+
+.status-note {
+margin-top: 12px;
+font-size: 14px;
+min-height: 20px;
+color: #1e6f43;
+}
+
+@media (max-width: 900px) {
+.site-layout {
+grid-template-columns: 1fr;
+}
+
+.site-map-grid {
+grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+}
+
+@media (max-width: 600px) {
+.site-map-grid {
+grid-template-columns: 1fr;
+}
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+<h1>Site Map</h1>
+<p>View monitored zones, active conditions, and location-specific safety details across the site.</p>
+
+<div class="site-summary">
+<div class="site-card">
+<h3>12</h3>
+<p>Mapped Zones</p>
+</div>
+<div class="site-card">
+<h3>3</h3>
+<p>Alert Zones</p>
+</div>
+<div class="site-card">
+<h3>5</h3>
+<p>Active Cameras</p>
+</div>
+<div class="site-card">
+<h3>2</h3>
+<p>Restricted Areas</p>
+</div>
+</div>
+
+<div class="site-toolbar">
+<div>
+<strong>Interactive Site View</strong>
+</div>
+<div class="site-actions">
+<select id="siteSelector">
+<option value="main">Main Facility</option>
+<option value="warehouse">Warehouse Complex</option>
+<option value="office">Office Block</option>
+</select>
+<button class="primary" onclick="refreshMap()">Refresh Map</button>
+</div>
+</div>
+
+<div class="site-layout">
+<div class="site-map-panel">
+<h2>Zone Overview</h2>
+<div class="site-map-grid">
+<div class="zone safe active" data-zone="Loading Bay" data-status="Safe" data-owner="N. Verma" data-issue="No active issues" data-updated="2 min ago" onclick="selectZone(this)">
+<div class="zone-name">Loading Bay</div>
+<div class="zone-meta">Forklift traffic and dispatch point</div>
+<div class="zone-status">Safe</div>
+</div>
+<div class="zone alert" data-zone="Fabrication Yard" data-status="Alert" data-owner="S. Thomas" data-issue="Missing PPE detected" data-updated="1 min ago" onclick="selectZone(this)">
+<div class="zone-name">Fabrication Yard</div>
+<div class="zone-meta">Welding and metalwork area</div>
+<div class="zone-status">Alert</div>
+</div>
+<div class="zone watch" data-zone="Warehouse Aisle 3" data-status="Watch" data-owner="R. Menon" data-issue="Congestion near pallet stack" data-updated="6 min ago" onclick="selectZone(this)">
+<div class="zone-name">Warehouse Aisle 3</div>
+<div class="zone-meta">Storage and forklift route</div>
+<div class="zone-status">Watch</div>
+</div>
+<div class="zone safe" data-zone="Control Room" data-status="Safe" data-owner="A. Singh" data-issue="Systems normal" data-updated="4 min ago" onclick="selectZone(this)">
+<div class="zone-name">Control Room</div>
+<div class="zone-meta">Operations monitoring center</div>
+<div class="zone-status">Safe</div>
+</div>
+<div class="zone alert" data-zone="Chemical Storage" data-status="Alert" data-owner="K. Mehta" data-issue="Ventilation warning" data-updated="3 min ago" onclick="selectZone(this)">
+<div class="zone-name">Chemical Storage</div>
+<div class="zone-meta">Restricted hazardous materials zone</div>
+<div class="zone-status">Alert</div>
+</div>
+<div class="zone watch" data-zone="Emergency Exit Corridor" data-status="Watch" data-owner="A. Singh" data-issue="Partial obstruction reported" data-updated="8 min ago" onclick="selectZone(this)">
+<div class="zone-name">Emergency Exit Corridor</div>
+<div class="zone-meta">Evacuation route inspection area</div>
+<div class="zone-status">Watch</div>
+</div>
+</div>
+</div>
+
+<div class="site-details-panel">
+<h2>Zone Details</h2>
+<div class="detail-list">
+<div class="detail-item"><strong>Zone:</strong> <span id="detailZone">Loading Bay</span></div>
+<div class="detail-item"><strong>Status:</strong> <span id="detailStatus">Safe</span></div>
+<div class="detail-item"><strong>Owner:</strong> <span id="detailOwner">N. Verma</span></div>
+<div class="detail-item"><strong>Issue:</strong> <span id="detailIssue">No active issues</span></div>
+<div class="detail-item"><strong>Last Updated:</strong> <span id="detailUpdated">2 min ago</span></div>
+<div class="detail-item"><strong>Suggested Action:</strong> <span id="detailAction">Continue routine monitoring.</span></div>
+<div class="detail-item"><strong>Coverage:</strong> Camera 01, Camera 02, patrol route A</div>
+ </div>
+</div>
+</div>
+
+<div class="status-note" id="siteMapStatus"></div>
+
+</div>
+
+<div id="footer"></div>
+
+<script>
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+toggleBtn.onclick = function(){
+sidebar.classList.toggle("collapsed")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+const footer = document.querySelector(".footer")
+if(footer){
+footer.classList.toggle("expanded")
+}
+}
+}
+})
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+if(!localStorage.getItem("token")){
+window.location.href = "login.html"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location.href = "login.html"
+}
+
+function selectZone(element){
+document.querySelectorAll(".zone").forEach(zone => zone.classList.remove("active"))
+element.classList.add("active")
+
+const zone = element.getAttribute("data-zone")
+const status = element.getAttribute("data-status")
+const owner = element.getAttribute("data-owner")
+const issue = element.getAttribute("data-issue")
+const updated = element.getAttribute("data-updated")
+
+document.getElementById("detailZone").textContent = zone
+document.getElementById("detailStatus").textContent = status
+document.getElementById("detailOwner").textContent = owner
+document.getElementById("detailIssue").textContent = issue
+document.getElementById("detailUpdated").textContent = updated
+document.getElementById("detailAction").textContent = getActionForStatus(status, issue)
+document.getElementById("siteMapStatus").textContent = zone + " selected."
+}
+
+function getActionForStatus(status, issue){
+if(status === "Alert") return "Dispatch supervisor and verify corrective action immediately."
+if(status === "Watch") return "Inspect the zone and monitor for escalation."
+return issue === "No active issues" ? "Continue routine monitoring." : "Review the reported condition."
+}
+
+function refreshMap(){
+const selector = document.getElementById("siteSelector")
+document.getElementById("siteMapStatus").textContent = selector.options[selector.selectedIndex].text + " map refreshed."
+}
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

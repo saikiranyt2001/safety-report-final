@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Inspection</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.inspection-summary {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 14px;
+margin: 16px 0 20px;
+}
+
+.inspection-card {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+padding: 16px;
+box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.inspection-card h3 {
+margin: 0;
+font-size: 28px;
+}
+
+.inspection-toolbar {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 10px;
+margin-bottom: 16px;
+}
+
+.inspection-filters {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.inspection-filters button,
+.inspection-actions button {
+padding: 8px 12px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #807272;
+cursor: pointer;
+}
+
+.inspection-filters button.active,
+.inspection-actions .primary {
+background: #0b63ce;
+border-color: #0b63ce;
+color: #fff;
+}
+
+.inspection-search {
+padding: 8px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+min-width: 220px;
+}
+
+.inspection-table-wrap {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+overflow: auto;
+}
+
+.inspection-table {
+width: 100%;
+border-collapse: collapse;
+min-width: 940px;
+}
+
+.inspection-table th,
+.inspection-table td {
+padding: 12px;
+text-align: left;
+border-bottom: 1px solid #eef3f8;
+font-size: 14px;
+}
+
+.inspection-table th {
+background: #f8fbff;
+font-weight: 700;
+}
+
+.status-pill,
+.result-pill {
+display: inline-block;
+padding: 4px 8px;
+border-radius: 999px;
+font-size: 12px;
+font-weight: 700;
+}
+
+.status-pill.scheduled {
+background: #e8f0fe;
+color: #174ea6;
+}
+
+.status-pill.in-progress {
+background: #fff4e5;
+color: #8c5d00;
+}
+
+.status-pill.completed {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.result-pill.pass {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.result-pill.warning {
+background: #fff4e5;
+color: #8c5d00;
+}
+
+.result-pill.fail {
+background: #fdecea;
+color: #b3261e;
+}
+
+.row-actions button {
+padding: 6px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #6da493;
+cursor: pointer;
+margin-right: 6px;
+}
+
+.status-note {
+margin-top: 12px;
+font-size: 14px;
+min-height: 20px;
+color: #1e6f43;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+<h1>Inspection</h1>
+<p>Monitor scheduled inspections, findings, and follow-up actions across sites.</p>
+
+<div class="inspection-summary">
+<div class="inspection-card">
+<h3>32</h3>
+<p>Total Inspections</p>
+</div>
+<div class="inspection-card">
+<h3>6</h3>
+<p>Scheduled Today</p>
+</div>
+<div class="inspection-card">
+<h3>4</h3>
+<p>Open Findings</p>
+</div>
+<div class="inspection-card">
+<h3>94%</h3>
+<p>Pass Rate</p>
+</div>
+</div>
+
+<div class="inspection-toolbar">
+<div class="inspection-filters">
+<button class="active" data-filter="all">All</button>
+<button data-filter="scheduled">Scheduled</button>
+<button data-filter="in-progress">In Progress</button>
+<button data-filter="completed">Completed</button>
+</div>
+<div class="inspection-actions">
+<input id="inspectionSearch" class="inspection-search" type="text" placeholder="Search site, inspector, or checklist...">
+<button class="primary" onclick="scheduleInspection()">Schedule Inspection</button>
+</div>
+</div>
+
+<div class="inspection-table-wrap">
+<table class="inspection-table" id="inspectionTable">
+<thead>
+<tr>
+<th>ID</th>
+<th>Checklist</th>
+<th>Status</th>
+<th>Result</th>
+<th>Site</th>
+<th>Inspector</th>
+<th>Date</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr data-status="scheduled">
+<td>INSP-312</td>
+<td>Warehouse PPE Audit</td>
+<td><span class="status-pill scheduled">Scheduled</span></td>
+<td><span class="result-pill warning">Pending</span></td>
+<td>Warehouse 2</td>
+<td>K. Mehta</td>
+<td>13 Mar 2026</td>
+<td class="row-actions">
+<button onclick="startInspection(this)">Start</button>
+<button onclick="viewInspection(this)">View</button>
+</td>
+</tr>
+<tr data-status="in-progress">
+<td>INSP-311</td>
+<td>Electrical Panel Checklist</td>
+<td><span class="status-pill in-progress">In Progress</span></td>
+<td><span class="result-pill warning">Warning</span></td>
+<td>Plant A</td>
+<td>S. Thomas</td>
+<td>13 Mar 2026</td>
+<td class="row-actions">
+<button onclick="completeInspection(this)">Complete</button>
+<button onclick="viewInspection(this)">View</button>
+</td>
+</tr>
+<tr data-status="completed">
+<td>INSP-310</td>
+<td>Emergency Exit Review</td>
+<td><span class="status-pill completed">Completed</span></td>
+<td><span class="result-pill pass">Pass</span></td>
+<td>Office Block</td>
+<td>A. Singh</td>
+<td>12 Mar 2026</td>
+<td class="row-actions">
+<button onclick="viewInspection(this)">View</button>
+</td>
+</tr>
+<tr data-status="completed">
+<td>INSP-309</td>
+<td>Scaffold Stability Check</td>
+<td><span class="status-pill completed">Completed</span></td>
+<td><span class="result-pill fail">Fail</span></td>
+<td>Construction Yard</td>
+<td>R. Menon</td>
+<td>11 Mar 2026</td>
+<td class="row-actions">
+<button onclick="viewInspection(this)">View</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="status-note" id="inspectionStatus"></div>
+
+</div>
+
+<div id="footer"></div>
+
+<script>
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+toggleBtn.onclick = function(){
+sidebar.classList.toggle("collapsed")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+const footer = document.querySelector(".footer")
+if(footer){
+footer.classList.toggle("expanded")
+}
+}
+}
+})
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+if(!localStorage.getItem("token")){
+window.location.href = "login.html"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location.href = "login.html"
+}
+
+const inspectionSearch = document.getElementById("inspectionSearch")
+const inspectionTableBody = document.querySelector("#inspectionTable tbody")
+let activeInspectionFilter = "all"
+
+function applyInspectionFilters(){
+const term = inspectionSearch.value.trim().toLowerCase()
+const rows = Array.from(inspectionTableBody.querySelectorAll("tr"))
+
+rows.forEach(row => {
+const rowStatus = row.getAttribute("data-status")
+const rowText = row.textContent.toLowerCase()
+const matchesStatus = activeInspectionFilter === "all" || rowStatus === activeInspectionFilter
+const matchesText = term === "" || rowText.includes(term)
+row.style.display = matchesStatus && matchesText ? "table-row" : "none"
+})
+}
+
+function scheduleInspection(){
+setInspectionStatus("Inspection scheduling flow requested.")
+}
+
+function viewInspection(button){
+const row = button.closest("tr")
+if(!row) return
+setInspectionStatus("Viewing inspection " + row.children[0].textContent.trim() + ".")
+}
+
+function startInspection(button){
+const row = button.closest("tr")
+if(!row) return
+row.setAttribute("data-status", "in-progress")
+const status = row.querySelector(".status-pill")
+status.className = "status-pill in-progress"
+status.textContent = "In Progress"
+const result = row.querySelector(".result-pill")
+result.className = "result-pill warning"
+result.textContent = "Warning"
+button.textContent = "Complete"
+button.setAttribute("onclick", "completeInspection(this)")
+setInspectionStatus("Inspection started.")
+applyInspectionFilters()
+}
+
+function completeInspection(button){
+const row = button.closest("tr")
+if(!row) return
+row.setAttribute("data-status", "completed")
+const status = row.querySelector(".status-pill")
+status.className = "status-pill completed"
+status.textContent = "Completed"
+const result = row.querySelector(".result-pill")
+if(result.textContent.trim() === "Pending"){
+result.className = "result-pill pass"
+result.textContent = "Pass"
+}
+button.textContent = "View"
+button.setAttribute("onclick", "viewInspection(this)")
+setInspectionStatus("Inspection completed.")
+applyInspectionFilters()
+}
+
+function setInspectionStatus(message){
+document.getElementById("inspectionStatus").textContent = message
+}
+
+document.querySelectorAll(".inspection-filters button").forEach(button => {
+button.addEventListener("click", function(){
+document.querySelectorAll(".inspection-filters button").forEach(btn => btn.classList.remove("active"))
+this.classList.add("active")
+activeInspectionFilter = this.getAttribute("data-filter")
+applyInspectionFilters()
+})
+})
+
+inspectionSearch.addEventListener("input", applyInspectionFilters)
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>KPI Dashboard</title>
+
+<link rel="stylesheet" href="../css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+.kpi-summary {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 14px;
+margin: 16px 0 20px;
+}
+
+.kpi-card {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+padding: 16px;
+box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.kpi-card h3 {
+margin: 0;
+font-size: 28px;
+}
+
+.kpi-toolbar {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 10px;
+margin-bottom: 16px;
+}
+
+.kpi-filters {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.kpi-filters button,
+.kpi-actions button,
+.kpi-actions select {
+padding: 8px 12px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #fff;
+cursor: pointer;
+}
+
+.kpi-filters button.active,
+.kpi-actions .primary {
+background: #0b63ce;
+border-color: #0b63ce;
+color: #fff;
+}
+
+.kpi-actions {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.kpi-grid {
+display: grid;
+grid-template-columns: repeat(2, minmax(0, 1fr));
+gap: 16px;
+}
+
+.kpi-panel {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+padding: 16px;
+box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.kpi-panel h2 {
+margin: 0 0 14px;
+font-size: 18px;
+}
+
+.kpi-table {
+width: 100%;
+border-collapse: collapse;
+}
+
+.kpi-table th,
+.kpi-table td {
+padding: 10px 8px;
+text-align: left;
+border-bottom: 1px solid #eef3f8;
+font-size: 14px;
+}
+
+.kpi-table th {
+font-weight: 700;
+background: #f8fbff;
+}
+
+.trend-up {
+color: #146c43;
+font-weight: 700;
+}
+
+.trend-down {
+color: #b3261e;
+font-weight: 700;
+}
+
+.status-note {
+margin-top: 12px;
+font-size: 14px;
+min-height: 20px;
+color: #1e6f43;
+}
+
+@media (max-width: 900px) {
+.kpi-grid {
+grid-template-columns: 1fr;
+}
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+<h1>KPI Dashboard</h1>
+<p>Track operational safety performance, compliance trends, and project delivery indicators.</p>
+
+<div class="kpi-summary">
+<div class="kpi-card">
+<h3>91%</h3>
+<p>Compliance Score</p>
+</div>
+<div class="kpi-card">
+<h3>14</h3>
+<p>Open Actions</p>
+</div>
+<div class="kpi-card">
+<h3>6</h3>
+<p>Critical Alerts</p>
+</div>
+<div class="kpi-card">
+<h3>97%</h3>
+<p>Inspection Completion</p>
+</div>
+</div>
+
+<div class="kpi-toolbar">
+<div class="kpi-filters">
+<button class="active" data-range="weekly">Weekly</button>
+<button data-range="monthly">Monthly</button>
+<button data-range="quarterly">Quarterly</button>
+</div>
+<div class="kpi-actions">
+<select id="kpiSiteFilter">
+<option value="all">All Sites</option>
+<option value="warehouse">Warehouse</option>
+<option value="plant">Plant A</option>
+<option value="office">Office Block</option>
+</select>
+<button class="primary" onclick="exportKpiReport()">Export KPI Report</button>
+</div>
+</div>
+
+<div class="kpi-grid">
+<div class="kpi-panel">
+<h2>Compliance Trend</h2>
+<canvas id="complianceChart" height="220"></canvas>
+</div>
+<div class="kpi-panel">
+<h2>Incident Volume</h2>
+<canvas id="incidentTrendChart" height="220"></canvas>
+</div>
+<div class="kpi-panel">
+<h2>Training Completion Mix</h2>
+<canvas id="trainingChart" height="220"></canvas>
+</div>
+<div class="kpi-panel">
+<h2>Top KPI Movements</h2>
+<table class="kpi-table">
+<thead>
+<tr>
+<th>Metric</th>
+<th>Current</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hazard Closure Rate</td>
+<td>88%</td>
+<td class="trend-up">+6%</td>
+</tr>
+<tr>
+<td>Near-Miss Reports</td>
+<td>19</td>
+<td class="trend-up">+3</td>
+</tr>
+<tr>
+<td>Overdue Actions</td>
+<td>5</td>
+<td class="trend-down">-2</td>
+</tr>
+<tr>
+<td>Audit Findings</td>
+<td>11</td>
+<td class="trend-down">-4</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="status-note" id="kpiStatus"></div>
+
+</div>
+
+<div id="footer"></div>
+
+<script>
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+toggleBtn.onclick = function(){
+sidebar.classList.toggle("collapsed")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+const footer = document.querySelector(".footer")
+if(footer){
+footer.classList.toggle("expanded")
+}
+}
+}
+})
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+if(!localStorage.getItem("token")){
+window.location.href = "login.html"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location.href = "login.html"
+}
+
+const kpiStatus = document.getElementById("kpiStatus")
+let complianceChart
+let incidentTrendChart
+let trainingChart
+
+const chartData = {
+weekly: {
+labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+compliance: [86, 88, 90, 89, 91, 92, 91],
+incidents: [4, 3, 5, 2, 4, 3, 2],
+training: [62, 23, 15]
+},
+monthly: {
+labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+compliance: [84, 87, 89, 91],
+incidents: [16, 13, 11, 9],
+training: [58, 27, 15]
+},
+quarterly: {
+labels: ["Jan", "Feb", "Mar"],
+compliance: [82, 87, 91],
+incidents: [21, 17, 12],
+training: [54, 31, 15]
+}
+}
+
+function buildCharts(range){
+const data = chartData[range]
+
+if(complianceChart) complianceChart.destroy()
+if(incidentTrendChart) incidentTrendChart.destroy()
+if(trainingChart) trainingChart.destroy()
+
+complianceChart = new Chart(document.getElementById("complianceChart"), {
+type: "line",
+data: {
+labels: data.labels,
+datasets: [{
+label: "Compliance %",
+data: data.compliance,
+borderColor: "#0b63ce",
+backgroundColor: "rgba(11, 99, 206, 0.15)",
+fill: true,
+tension: 0.3
+}]
+},
+options: { responsive: true, maintainAspectRatio: false }
+})
+
+incidentTrendChart = new Chart(document.getElementById("incidentTrendChart"), {
+type: "bar",
+data: {
+labels: data.labels,
+datasets: [{
+label: "Incidents",
+data: data.incidents,
+backgroundColor: "#f29900"
+}]
+},
+options: { responsive: true, maintainAspectRatio: false }
+})
+
+trainingChart = new Chart(document.getElementById("trainingChart"), {
+type: "doughnut",
+data: {
+labels: ["Completed", "In Progress", "Pending"],
+datasets: [{
+data: data.training,
+backgroundColor: ["#146c43", "#0b63ce", "#b3261e"]
+}]
+},
+options: { responsive: true, maintainAspectRatio: false }
+})
+}
+
+function exportKpiReport(){
+kpiStatus.textContent = "KPI report export requested."
+}
+
+document.querySelectorAll(".kpi-filters button").forEach(button => {
+button.addEventListener("click", function(){
+document.querySelectorAll(".kpi-filters button").forEach(btn => btn.classList.remove("active"))
+this.classList.add("active")
+const range = this.getAttribute("data-range")
+buildCharts(range)
+kpiStatus.textContent = "Dashboard updated for " + range + " view."
+})
+})
+
+document.getElementById("kpiSiteFilter").addEventListener("change", function(){
+kpiStatus.textContent = "Site filter set to " + this.options[this.selectedIndex].text + "."
+})
+
+buildCharts("weekly")
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

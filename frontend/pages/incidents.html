@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Incidents</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.incident-summary {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 14px;
+margin: 16px 0 20px;
+}
+
+.incident-card {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+padding: 16px;
+box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.incident-card h3 {
+margin: 0;
+font-size: 28px;
+}
+
+.incident-toolbar {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 10px;
+margin-bottom: 16px;
+}
+
+.incident-filters {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.incident-filters button,
+.incident-actions button {
+padding: 8px 12px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #5f4040;
+cursor: pointer;
+}
+
+.incident-filters button.active,
+.incident-actions .primary {
+background: #0b63ce;
+border-color: #0b63ce;
+color: #fff;
+}
+
+.incident-search {
+padding: 8px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+min-width: 220px;
+}
+
+.incident-table-wrap {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+overflow: auto;
+}
+
+.incident-table {
+width: 100%;
+border-collapse: collapse;
+min-width: 920px;
+}
+
+.incident-table th,
+.incident-table td {
+padding: 12px;
+text-align: left;
+border-bottom: 1px solid #eef3f8;
+font-size: 14px;
+}
+
+.incident-table th {
+background: #f8fbff;
+font-weight: 700;
+}
+
+.severity-pill,
+.status-pill {
+display: inline-block;
+padding: 4px 8px;
+border-radius: 999px;
+font-size: 12px;
+font-weight: 700;
+}
+
+.severity-pill.high {
+background: #fdecea;
+color: #b3261e;
+}
+
+.severity-pill.medium {
+background: #fff4e5;
+color: #8c5d00;
+}
+
+.severity-pill.low {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.status-pill.open {
+background: #e8f0fe;
+color: #174ea6;
+}
+
+.status-pill.investigating {
+background: #fff4e5;
+color: #8c5d00;
+}
+
+.status-pill.closed {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.row-actions button {
+padding: 6px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #6a7a2e;
+cursor: pointer;
+margin-right: 6px;
+}
+
+.status-note {
+margin-top: 12px;
+font-size: 14px;
+min-height: 20px;
+color: #1e6f43;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+<h1>Incidents</h1>
+<p>Review active incidents, investigation progress, and resolved safety events.</p>
+
+<div class="incident-summary">
+<div class="incident-card">
+<h3>27</h3>
+<p>Total Incidents</p>
+</div>
+<div class="incident-card">
+<h3>5</h3>
+<p>Open Cases</p>
+</div>
+<div class="incident-card">
+<h3>3</h3>
+<p>High Severity</p>
+</div>
+<div class="incident-card">
+<h3>81%</h3>
+<p>Closed Within SLA</p>
+</div>
+</div>
+
+<div class="incident-toolbar">
+<div class="incident-filters">
+<button class="active" data-filter="all">All</button>
+<button data-filter="open">Open</button>
+<button data-filter="investigating">Investigating</button>
+<button data-filter="closed">Closed</button>
+</div>
+<div class="incident-actions">
+<input id="incidentSearch" class="incident-search" type="text" placeholder="Search incident, site, or owner...">
+<button class="primary" onclick="reportIncident()">Report Incident</button>
+</div>
+</div>
+
+<div class="incident-table-wrap">
+<table class="incident-table" id="incidentTable">
+<thead>
+<tr>
+<th>ID</th>
+<th>Incident</th>
+<th>Severity</th>
+<th>Status</th>
+<th>Site</th>
+<th>Owner</th>
+<th>Date</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr data-status="open">
+<td>INC-204</td>
+<td>Forklift collision near loading bay</td>
+<td><span class="severity-pill high">High</span></td>
+<td><span class="status-pill open">Open</span></td>
+<td>Warehouse 2</td>
+<td>N. Verma</td>
+<td>13 Mar 2026</td>
+<td class="row-actions">
+<button onclick="advanceIncident(this)">Start Review</button>
+<button onclick="viewIncident(this)">View</button>
+</td>
+</tr>
+<tr data-status="investigating">
+<td>INC-203</td>
+<td>Electrical panel overheating alert</td>
+<td><span class="severity-pill medium">Medium</span></td>
+<td><span class="status-pill investigating">Investigating</span></td>
+<td>Plant A</td>
+<td>R. Menon</td>
+<td>12 Mar 2026</td>
+<td class="row-actions">
+<button onclick="closeIncident(this)">Close</button>
+<button onclick="viewIncident(this)">View</button>
+</td>
+</tr>
+<tr data-status="closed">
+<td>INC-202</td>
+<td>Slip event in wet corridor</td>
+<td><span class="severity-pill low">Low</span></td>
+<td><span class="status-pill closed">Closed</span></td>
+<td>Office Block</td>
+<td>A. Singh</td>
+<td>11 Mar 2026</td>
+<td class="row-actions">
+<button onclick="viewIncident(this)">View</button>
+</td>
+</tr>
+<tr data-status="open">
+<td>INC-201</td>
+<td>Missing PPE in fabrication zone</td>
+<td><span class="severity-pill high">High</span></td>
+<td><span class="status-pill open">Open</span></td>
+<td>Fabrication Yard</td>
+<td>S. Thomas</td>
+<td>10 Mar 2026</td>
+<td class="row-actions">
+<button onclick="advanceIncident(this)">Start Review</button>
+<button onclick="viewIncident(this)">View</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="status-note" id="incidentStatus"></div>
+
+</div>
+
+<div id="footer"></div>
+
+<script>
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+toggleBtn.onclick = function(){
+sidebar.classList.toggle("collapsed")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+const footer = document.querySelector(".footer")
+if(footer){
+footer.classList.toggle("expanded")
+}
+}
+}
+})
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+if(!localStorage.getItem("token")){
+window.location.href = "login.html"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location.href = "login.html"
+}
+
+const incidentSearch = document.getElementById("incidentSearch")
+const incidentTableBody = document.querySelector("#incidentTable tbody")
+let activeIncidentFilter = "all"
+
+function applyIncidentFilters(){
+const term = incidentSearch.value.trim().toLowerCase()
+const rows = Array.from(incidentTableBody.querySelectorAll("tr"))
+
+rows.forEach(row => {
+const rowStatus = row.getAttribute("data-status")
+const rowText = row.textContent.toLowerCase()
+const matchesStatus = activeIncidentFilter === "all" || rowStatus === activeIncidentFilter
+const matchesText = term === "" || rowText.includes(term)
+row.style.display = matchesStatus && matchesText ? "table-row" : "none"
+})
+}
+
+function reportIncident(){
+setIncidentStatus("Incident reporting flow requested.")
+}
+
+function viewIncident(button){
+const row = button.closest("tr")
+if(!row) return
+setIncidentStatus("Viewing incident " + row.children[0].textContent.trim() + ".")
+}
+
+function advanceIncident(button){
+const row = button.closest("tr")
+if(!row) return
+row.setAttribute("data-status", "investigating")
+const status = row.querySelector(".status-pill")
+status.className = "status-pill investigating"
+status.textContent = "Investigating"
+button.textContent = "Close"
+button.setAttribute("onclick", "closeIncident(this)")
+setIncidentStatus("Incident moved to investigating.")
+applyIncidentFilters()
+}
+
+function closeIncident(button){
+const row = button.closest("tr")
+if(!row) return
+row.setAttribute("data-status", "closed")
+const status = row.querySelector(".status-pill")
+status.className = "status-pill closed"
+status.textContent = "Closed"
+button.textContent = "View"
+button.setAttribute("onclick", "viewIncident(this)")
+setIncidentStatus("Incident closed.")
+applyIncidentFilters()
+}
+
+function setIncidentStatus(message){
+document.getElementById("incidentStatus").textContent = message
+}
+
+document.querySelectorAll(".incident-filters button").forEach(button => {
+button.addEventListener("click", function(){
+document.querySelectorAll(".incident-filters button").forEach(btn => btn.classList.remove("active"))
+this.classList.add("active")
+activeIncidentFilter = this.getAttribute("data-filter")
+applyIncidentFilters()
+})
+})
+
+incidentSearch.addEventListener("input", applyIncidentFilters)
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

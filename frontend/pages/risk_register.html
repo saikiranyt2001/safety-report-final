@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Risk Register</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.risk-summary {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 14px;
+margin: 16px 0 20px;
+}
+
+.risk-card {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+padding: 16px;
+box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.risk-card h3 {
+margin: 0;
+font-size: 28px;
+}
+
+.risk-toolbar {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 10px;
+margin-bottom: 16px;
+}
+
+.risk-filters {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.risk-filters button,
+.risk-actions button {
+padding: 8px 12px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #6b5f5f;
+cursor: pointer;
+}
+
+.risk-filters button.active,
+.risk-actions .primary {
+background: #0b63ce;
+border-color: #0b63ce;
+color: #fff;
+}
+
+.risk-search {
+padding: 8px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+min-width: 240px;
+}
+
+.risk-table-wrap {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+overflow: auto;
+}
+
+.risk-table {
+width: 100%;
+border-collapse: collapse;
+min-width: 980px;
+}
+
+.risk-table th,
+.risk-table td {
+padding: 12px;
+text-align: left;
+border-bottom: 1px solid #eef3f8;
+font-size: 14px;
+}
+
+.risk-table th {
+background: #f8fbff;
+font-weight: 700;
+}
+
+.level-pill,
+.owner-pill,
+.status-pill {
+display: inline-block;
+padding: 4px 8px;
+border-radius: 999px;
+font-size: 12px;
+font-weight: 700;
+}
+
+.level-pill.high {
+background: #fdecea;
+color: #b3261e;
+}
+
+.level-pill.medium {
+background: #fff4e5;
+color: #8c5d00;
+}
+
+.level-pill.low {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.status-pill.open {
+background: #e8f0fe;
+color: #174ea6;
+}
+
+.status-pill.mitigating {
+background: #fff4e5;
+color: #8c5d00;
+}
+
+.status-pill.closed {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.owner-pill {
+background: #eef3f8;
+color: #334155;
+}
+
+.row-actions button {
+padding: 6px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #418274;
+cursor: pointer;
+margin-right: 6px;
+}
+
+.status-note {
+margin-top: 12px;
+font-size: 14px;
+min-height: 20px;
+color: #1e6f43;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+<h1>Risk Register</h1>
+<p>Maintain a structured view of identified risks, owners, mitigations, and current status.</p>
+
+<div class="risk-summary">
+<div class="risk-card">
+<h3>21</h3>
+<p>Total Risks</p>
+</div>
+<div class="risk-card">
+<h3>4</h3>
+<p>High Risks</p>
+</div>
+<div class="risk-card">
+<h3>9</h3>
+<p>Under Mitigation</p>
+</div>
+<div class="risk-card">
+<h3>8</h3>
+<p>Closed Items</p>
+</div>
+</div>
+
+<div class="risk-toolbar">
+<div class="risk-filters">
+<button class="active" data-filter="all">All</button>
+<button data-filter="open">Open</button>
+<button data-filter="mitigating">Mitigating</button>
+<button data-filter="closed">Closed</button>
+</div>
+<div class="risk-actions">
+<input id="riskSearch" class="risk-search" type="text" placeholder="Search risk, owner, or category...">
+<button class="primary" onclick="addRisk()">Add Risk</button>
+</div>
+</div>
+
+<div class="risk-table-wrap">
+<table class="risk-table" id="riskTable">
+<thead>
+<tr>
+<th>ID</th>
+<th>Risk</th>
+<th>Category</th>
+<th>Level</th>
+<th>Status</th>
+<th>Owner</th>
+<th>Mitigation</th>
+<th>Review Date</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr data-status="open">
+<td>RISK-101</td>
+<td>Repeated PPE non-compliance in loading zone</td>
+<td>Operational Safety</td>
+<td><span class="level-pill high">High</span></td>
+<td><span class="status-pill open">Open</span></td>
+<td><span class="owner-pill">N. Verma</span></td>
+<td>Increase spot checks and supervisor audits</td>
+<td>15 Mar 2026</td>
+<td class="row-actions">
+<button onclick="advanceRisk(this)">Mitigate</button>
+<button onclick="viewRisk(this)">View</button>
+</td>
+</tr>
+<tr data-status="mitigating">
+<td>RISK-098</td>
+<td>Electrical overheating in control room</td>
+<td>Infrastructure</td>
+<td><span class="level-pill medium">Medium</span></td>
+<td><span class="status-pill mitigating">Mitigating</span></td>
+<td><span class="owner-pill">R. Menon</span></td>
+<td>Thermal scan and panel replacement plan</td>
+<td>14 Mar 2026</td>
+<td class="row-actions">
+<button onclick="closeRisk(this)">Close</button>
+<button onclick="viewRisk(this)">View</button>
+</td>
+</tr>
+<tr data-status="closed">
+<td>RISK-094</td>
+<td>Wet-floor slip exposure in corridor</td>
+<td>Facilities</td>
+<td><span class="level-pill low">Low</span></td>
+<td><span class="status-pill closed">Closed</span></td>
+<td><span class="owner-pill">A. Singh</span></td>
+<td>Drainage fix and anti-slip signage installed</td>
+<td>10 Mar 2026</td>
+<td class="row-actions">
+<button onclick="viewRisk(this)">View</button>
+</td>
+</tr>
+<tr data-status="open">
+<td>RISK-089</td>
+<td>Inconsistent incident escalation workflow</td>
+<td>Process Governance</td>
+<td><span class="level-pill medium">Medium</span></td>
+<td><span class="status-pill open">Open</span></td>
+<td><span class="owner-pill">S. Thomas</span></td>
+<td>Define escalation matrix and approval path</td>
+<td>18 Mar 2026</td>
+<td class="row-actions">
+<button onclick="advanceRisk(this)">Mitigate</button>
+<button onclick="viewRisk(this)">View</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="status-note" id="riskStatus"></div>
+
+</div>
+
+<div id="footer"></div>
+
+<script>
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+toggleBtn.onclick = function(){
+sidebar.classList.toggle("collapsed")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+const footer = document.querySelector(".footer")
+if(footer){
+footer.classList.toggle("expanded")
+}
+}
+}
+})
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+if(!localStorage.getItem("token")){
+window.location.href = "login.html"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location.href = "login.html"
+}
+
+const riskSearch = document.getElementById("riskSearch")
+const riskTableBody = document.querySelector("#riskTable tbody")
+let activeRiskFilter = "all"
+
+function applyRiskFilters(){
+const term = riskSearch.value.trim().toLowerCase()
+const rows = Array.from(riskTableBody.querySelectorAll("tr"))
+
+rows.forEach(row => {
+const rowStatus = row.getAttribute("data-status")
+const rowText = row.textContent.toLowerCase()
+const matchesStatus = activeRiskFilter === "all" || rowStatus === activeRiskFilter
+const matchesText = term === "" || rowText.includes(term)
+row.style.display = matchesStatus && matchesText ? "table-row" : "none"
+})
+}
+
+function addRisk(){
+setRiskStatus("Risk creation flow requested.")
+}
+
+function viewRisk(button){
+const row = button.closest("tr")
+if(!row) return
+setRiskStatus("Viewing risk " + row.children[0].textContent.trim() + ".")
+}
+
+function advanceRisk(button){
+const row = button.closest("tr")
+if(!row) return
+row.setAttribute("data-status", "mitigating")
+const status = row.querySelector(".status-pill")
+status.className = "status-pill mitigating"
+status.textContent = "Mitigating"
+button.textContent = "Close"
+button.setAttribute("onclick", "closeRisk(this)")
+setRiskStatus("Risk moved into mitigation.")
+applyRiskFilters()
+}
+
+function closeRisk(button){
+const row = button.closest("tr")
+if(!row) return
+row.setAttribute("data-status", "closed")
+const status = row.querySelector(".status-pill")
+status.className = "status-pill closed"
+status.textContent = "Closed"
+button.textContent = "View"
+button.setAttribute("onclick", "viewRisk(this)")
+setRiskStatus("Risk closed.")
+applyRiskFilters()
+}
+
+function setRiskStatus(message){
+document.getElementById("riskStatus").textContent = message
+}
+
+document.querySelectorAll(".risk-filters button").forEach(button => {
+button.addEventListener("click", function(){
+document.querySelectorAll(".risk-filters button").forEach(btn => btn.classList.remove("active"))
+this.classList.add("active")
+activeRiskFilter = this.getAttribute("data-filter")
+applyRiskFilters()
+})
+})
+
+riskSearch.addEventListener("input", applyRiskFilters)
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Settings</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.settings-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+gap: 16px;
+margin-top: 16px;
+}
+
+.settings-card {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+padding: 16px;
+box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.settings-card h2 {
+margin: 0 0 12px;
+font-size: 18px;
+}
+
+.field-row {
+display: flex;
+flex-direction: column;
+gap: 6px;
+margin-bottom: 12px;
+}
+
+.field-row label {
+font-size: 14px;
+font-weight: 600;
+}
+
+.field-row input,
+.field-row select {
+padding: 9px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+font-size: 14px;
+}
+
+.toggle-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 10px 0;
+border-bottom: 1px solid #eef3f8;
+gap: 10px;
+}
+
+.toggle-row:last-child {
+border-bottom: 0;
+}
+
+.save-actions {
+margin-top: 16px;
+display: flex;
+gap: 10px;
+flex-wrap: wrap;
+}
+
+.btn {
+padding: 9px 14px;
+border-radius: 8px;
+border: 1px solid #d0d7de;
+background: #6d0505;
+cursor: pointer;
+}
+
+.btn.primary {
+background: #0b63ce;
+border-color: #0b63ce;
+color: #fff;
+}
+
+.status-note {
+margin-top: 12px;
+font-size: 14px;
+color: #1e6f43;
+min-height: 20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+<h1>Settings</h1>
+<p>Manage account preferences, security options, and notification defaults.</p>
+
+<div class="settings-grid">
+
+<div class="settings-card">
+<h2>Profile Settings</h2>
+<div class="field-row">
+<label for="displayName">Display Name</label>
+<input id="displayName" type="text" placeholder="Admin User">
+</div>
+<div class="field-row">
+<label for="email">Email</label>
+<input id="email" type="email" placeholder="admin@safety.ai">
+</div>
+<div class="field-row">
+<label for="timezone">Timezone</label>
+<select id="timezone">
+<option value="UTC">UTC</option>
+<option value="Asia/Kolkata">Asia/Kolkata</option>
+<option value="Europe/London">Europe/London</option>
+<option value="America/New_York">America/New_York</option>
+</select>
+</div>
+</div>
+
+<div class="settings-card">
+<h2>Security</h2>
+<div class="field-row">
+<label for="currentPassword">Current Password</label>
+<input id="currentPassword" type="password" placeholder="Enter current password">
+</div>
+<div class="field-row">
+<label for="newPassword">New Password</label>
+<input id="newPassword" type="password" placeholder="Enter new password">
+</div>
+<div class="field-row">
+<label for="confirmPassword">Confirm Password</label>
+<input id="confirmPassword" type="password" placeholder="Confirm new password">
+</div>
+</div>
+
+<div class="settings-card">
+<h2>Notifications</h2>
+<div class="toggle-row">
+<span>Email alerts for high-risk hazards</span>
+<input id="notifyHighRisk" type="checkbox" checked>
+</div>
+<div class="toggle-row">
+<span>Weekly compliance summary</span>
+<input id="notifyWeekly" type="checkbox" checked>
+</div>
+<div class="toggle-row">
+<span>System maintenance updates</span>
+<input id="notifyMaintenance" type="checkbox">
+</div>
+<div class="toggle-row">
+<span>In-app recommendations</span>
+<input id="notifyRecommendations" type="checkbox" checked>
+</div>
+</div>
+
+</div>
+
+<div class="save-actions">
+<button class="btn primary" onclick="saveSettings()">Save Settings</button>
+<button class="btn" onclick="resetSettings()">Reset</button>
+</div>
+
+<div class="status-note" id="settingsStatus"></div>
+
+</div>
+
+<div id="footer"></div>
+
+<script>
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+toggleBtn.onclick = function(){
+sidebar.classList.toggle("collapsed")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+const footer = document.querySelector(".footer")
+if(footer){
+footer.classList.toggle("expanded")
+}
+}
+}
+})
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+if(!localStorage.getItem("token")){
+window.location.href = "login.html"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location.href = "login.html"
+}
+
+function loadSettings(){
+document.getElementById("displayName").value = localStorage.getItem("settings_display_name") || ""
+document.getElementById("email").value = localStorage.getItem("settings_email") || ""
+document.getElementById("timezone").value = localStorage.getItem("settings_timezone") || "UTC"
+document.getElementById("notifyHighRisk").checked = localStorage.getItem("settings_notify_high") !== "false"
+document.getElementById("notifyWeekly").checked = localStorage.getItem("settings_notify_weekly") !== "false"
+document.getElementById("notifyMaintenance").checked = localStorage.getItem("settings_notify_maintenance") === "true"
+document.getElementById("notifyRecommendations").checked = localStorage.getItem("settings_notify_recommendations") !== "false"
+}
+
+function saveSettings(){
+const newPassword = document.getElementById("newPassword").value
+const confirmPassword = document.getElementById("confirmPassword").value
+const status = document.getElementById("settingsStatus")
+
+if(newPassword !== "" && newPassword !== confirmPassword){
+status.style.color = "#b3261e"
+status.textContent = "Password confirmation does not match."
+return
+}
+
+localStorage.setItem("settings_display_name", document.getElementById("displayName").value)
+localStorage.setItem("settings_email", document.getElementById("email").value)
+localStorage.setItem("settings_timezone", document.getElementById("timezone").value)
+localStorage.setItem("settings_notify_high", document.getElementById("notifyHighRisk").checked)
+localStorage.setItem("settings_notify_weekly", document.getElementById("notifyWeekly").checked)
+localStorage.setItem("settings_notify_maintenance", document.getElementById("notifyMaintenance").checked)
+localStorage.setItem("settings_notify_recommendations", document.getElementById("notifyRecommendations").checked)
+
+status.style.color = "#1e6f43"
+status.textContent = "Settings saved successfully."
+
+// Password fields are cleared after save for safety.
+document.getElementById("currentPassword").value = ""
+document.getElementById("newPassword").value = ""
+document.getElementById("confirmPassword").value = ""
+}
+
+function resetSettings(){
+document.getElementById("displayName").value = ""
+document.getElementById("email").value = ""
+document.getElementById("timezone").value = "UTC"
+document.getElementById("notifyHighRisk").checked = true
+document.getElementById("notifyWeekly").checked = true
+document.getElementById("notifyMaintenance").checked = false
+document.getElementById("notifyRecommendations").checked = true
+document.getElementById("currentPassword").value = ""
+document.getElementById("newPassword").value = ""
+document.getElementById("confirmPassword").value = ""
+const status = document.getElementById("settingsStatus")
+status.style.color = "#5f6b7a"
+status.textContent = "Fields reset."
+}
+
+loadSettings()
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

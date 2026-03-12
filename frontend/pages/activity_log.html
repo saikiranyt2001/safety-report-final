@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Activity Log</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.activity-toolbar {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 10px;
+margin: 14px 0 18px;
+}
+
+
+.activity-filters {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.activity-filters button {
+padding: 8px 12px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #5b5656;
+cursor: pointer;
+}
+
+.activity-filters button.active {
+background: #0b63ce;
+color: #150a0a;
+border-color: #0b63ce;
+}
+
+.activity-search {
+padding: 8px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+min-width: 220px;
+}
+
+.activity-table-wrap {
+background: #fff;
+border: 1px solid #89a7c9;
+border-radius: 10px;
+overflow: auto;
+}
+
+.activity-table {
+width: 100%;
+border-collapse: collapse;
+min-width: 780px;
+}
+
+.activity-table th,
+.activity-table td {
+padding: 12px;
+text-align: left;
+border-bottom: 1px solid #eef3f8;
+font-size: 14px;
+}
+
+.activity-table th {
+background: #6d737a;
+font-weight: 700;
+}
+
+.event-pill {
+display: inline-block;
+padding: 4px 8px;
+border-radius: 999px;
+font-size: 12px;
+font-weight: 700;
+}
+
+.event-pill.system {
+background: #a7afba;
+color: #174ea6;
+}
+
+.event-pill.user {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.event-pill.alert {
+background: #fdecea;
+color: #b3261e;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+
+<h1>Activity Log</h1>
+<p>Track recent system, user, and alert events across your safety workspace.</p>
+
+<div class="activity-toolbar">
+<div class="activity-filters">
+<button class="active" data-type="all">All</button>
+<button data-type="system">System</button>
+<button data-type="user">User</button>
+<button data-type="alert">Alert</button>
+</div>
+<input id="activitySearch" class="activity-search" type="text" placeholder="Search activity...">
+</div>
+
+<div class="activity-table-wrap">
+<table class="activity-table" id="activityTable">
+<thead>
+<tr>
+<th>Timestamp</th>
+<th>Event</th>
+<th>Type</th>
+<th>User / Source</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr data-type="system">
+<td>13 Mar 2026, 10:14</td>
+<td>Pipeline Completed</td>
+<td><span class="event-pill system">System</span></td>
+<td>Orchestrator</td>
+<td>End-to-end report pipeline finished successfully.</td>
+</tr>
+<tr data-type="alert">
+<td>13 Mar 2026, 10:05</td>
+<td>High Risk Hazard</td>
+<td><span class="event-pill alert">Alert</span></td>
+<td>Vision Module</td>
+<td>Unsafe scaffold movement detected in Zone C.</td>
+</tr>
+<tr data-type="user">
+<td>13 Mar 2026, 09:52</td>
+<td>Report Downloaded</td>
+<td><span class="event-pill user">User</span></td>
+<td>admin@safety.ai</td>
+<td>Downloaded report RPT-203 in PDF format.</td>
+</tr>
+<tr data-type="system">
+<td>13 Mar 2026, 09:47</td>
+<td>Compliance Validation</td>
+<td><span class="event-pill system">System</span></td>
+<td>Validation Agent</td>
+<td>Regulation checks completed with 2 warnings.</td>
+</tr>
+<tr data-type="user">
+<td>13 Mar 2026, 09:33</td>
+<td>Project Updated</td>
+<td><span class="event-pill user">User</span></td>
+<td>supervisor@safety.ai</td>
+<td>Updated project timeline and site contact data.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+</div>
+
+<div id="footer"></div>
+
+<script>
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+toggleBtn.onclick = function(){
+sidebar.classList.toggle("collapsed")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+const footer = document.querySelector(".footer")
+if(footer){
+footer.classList.toggle("expanded")
+}
+}
+}
+})
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+if(!localStorage.getItem("token")){
+window.location.href = "login.html"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location.href = "login.html"
+}
+
+const searchInput = document.getElementById("activitySearch")
+const rows = Array.from(document.querySelectorAll("#activityTable tbody tr"))
+let activeType = "all"
+
+function applyActivityFilters(){
+const term = searchInput.value.trim().toLowerCase()
+
+rows.forEach(row => {
+const type = row.getAttribute("data-type")
+const text = row.textContent.toLowerCase()
+const matchType = activeType === "all" || type === activeType
+const matchText = term === "" || text.includes(term)
+row.style.display = matchType && matchText ? "table-row" : "none"
+})
+}
+
+document.querySelectorAll(".activity-filters button").forEach(button => {
+button.addEventListener("click", function(){
+document.querySelectorAll(".activity-filters button").forEach(btn => btn.classList.remove("active"))
+this.classList.add("active")
+activeType = this.getAttribute("data-type")
+applyActivityFilters()
+})
+})
+
+searchInput.addEventListener("input", applyActivityFilters)
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

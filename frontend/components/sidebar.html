@@ -9,7 +9,7 @@
 
 <div class="search-box">
 
-<input type="text" id="appSearch" placeholder="Search features...">
+<input type="text" id="appSearch" placeholder="Search pages, reports, hazards...">
 
 <button class="search-btn" onclick="searchFeature()">🔍</button>
 <div id="searchResults" class="search-results"></div>
@@ -24,9 +24,35 @@
 <a href="../ai_modules/incident_prediction.html">Incident Prediction</a>
 <a href="../ai_modules/risk_heatmap.html">Risk Heatmap</a>
 
+<!-- DARK MODE TOGGLE -->
+<button class="dark-toggle-btn" onclick="toggleDark()" title="Toggle Dark Mode">🌙</button>
+
+<!-- NOTIFICATION BELL -->
+<div class="notification" onclick="toggleNotifPanel()" title="Notifications">
+  🔔
+  <span class="notif-badge" id="notifCount">3</span>
+  <!-- Notification dropdown panel -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-header">
+      <strong>Notifications</strong>
+      <span class="notif-clear" onclick="clearNotifications(event)">Clear all</span>
+    </div>
+    <div id="notifList">
+      <div class="notif-item notif-hazard">⚠️ Hazard detected in Zone B</div>
+      <div class="notif-item notif-incident">🚨 Incident reported: Forklift near-miss</div>
+      <div class="notif-item notif-report">📄 Report generated: Monthly Safety</div>
+    </div>
+    <div class="notif-empty" id="notifEmpty" style="display:none">No new notifications</div>
+  </div>
 </div>
 
 </div>
+
+</div>
+
+<!-- PAGE LOADER -->
+<div id="loader"></div>
+
 
 
 <!-- SIDEBAR -->

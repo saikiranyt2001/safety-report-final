@@ -84,27 +84,38 @@ fetch("../components/sidebar.html")
 .then(data => {
 
 document.getElementById("sidebar-container").innerHTML = data
-initSearch() 
-/* Sidebar Toggle Logic */
+
+/* Initialize search */
+initSearch()
+
+/* Sidebar Toggle */
 
 const toggleBtn = document.getElementById("menuToggle")
 const sidebar = document.querySelector(".sidebar")
-const mainContent = document.querySelector(".main-content")
 const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
 
 toggleBtn.onclick = function(){
 
 sidebar.classList.toggle("collapsed")
 
-mainContent.classList.toggle("expanded")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
 
-navbar.classList.toggle("expanded")
+/* footer loads later */
+const footer = document.querySelector(".footer")
 
+if(footer){
+footer.classList.toggle("expanded")
 }
 
 }
 
-)
+}
+})
+
 
 /* LOAD FOOTER */
 fetch("../components/footer.html")
@@ -154,12 +165,7 @@ document.getElementById("resultBox").innerHTML=
 <!-- AI CHAT SCRIPT -->
 <script>
 
-function toggleChat(){
 
-let chat=document.getElementById("aiChat")
-chat.classList.toggle("open")
-
-}
 
 function sendChat(){
 

@@ -8,7 +8,7 @@
 <title>Report History</title>
 
 <link rel="stylesheet" href="../css/style.css">
-<link rel="stylesheet" href="../css/chat.css">
+
 
 </head>
 
@@ -122,35 +122,37 @@ fetch("../components/sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML = data
 
-/* Initialize Search AFTER sidebar/navbar loads */
+/* Initialize search */
 initSearch()
 
-/* Sidebar Toggle Logic */
+/* Sidebar Toggle */
 
 const toggleBtn = document.getElementById("menuToggle")
 const sidebar = document.querySelector(".sidebar")
-const mainContent = document.querySelector(".main-content")
 const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
 
-if(toggleBtn && sidebar){
+if(toggleBtn){
 
 toggleBtn.onclick = function(){
 
 sidebar.classList.toggle("collapsed")
 
-if(mainContent){
-mainContent.classList.toggle("expanded")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+
+/* footer loads later */
+const footer = document.querySelector(".footer")
+
+if(footer){
+footer.classList.toggle("expanded")
 }
 
-if(navbar){
-navbar.classList.toggle("expanded")
 }
 
 }
-
-}
-
 })
+
 
 /* LOAD FOOTER */
 fetch("../components/footer.html")

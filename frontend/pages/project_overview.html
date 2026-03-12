@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Project Overview</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+
+<div class="logo">AI Safety Platform</div>
+
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+<h1>Project Overview</h1>
+
+
+<div class="overview">
+
+<div class="overview-box">
+
+<h2>Project Information</h2>
+
+<p><strong>Project Name:</strong></p>
+<p><strong>Location:</strong></p>
+<p><strong>Manager:</strong></p>
+<p><strong>Start Date:</strong></p>
+
+</div>
+
+
+<div class="overview-box">
+
+<h2>Project Status</h2>
+
+<p>Safety Score:</p>
+<p>Active Hazards:</p>
+<p>Reports Generated:</p>
+<p>Risk Alerts:</p>
+
+</div>
+
+
+<div class="overview-box">
+
+<h2>Recent Activity</h2>
+
+<ul>
+
+<li></li>
+<li></li>
+<li></li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- FOOTER -->
+<div id="footer"></div>
+
+
+<!-- LOAD SIDEBAR -->
+<script>
+
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+
+document.getElementById("sidebar-container").innerHTML = data
+
+/* Initialize search */
+initSearch()
+
+/* Sidebar Toggle */
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+
+toggleBtn.onclick = function(){
+
+sidebar.classList.toggle("collapsed")
+
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+
+/* footer loads later */
+const footer = document.querySelector(".footer")
+
+if(footer){
+footer.classList.toggle("expanded")
+}
+
+}
+
+}
+})
+
+</script>
+
+
+<!-- LOAD FOOTER -->
+<script>
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+</script>
+
+
+<!-- AUTH -->
+<script>
+
+if(!localStorage.getItem("token")){
+window.location.href="login.html";
+}
+
+function logout(){
+localStorage.removeItem("token");
+window.location.href="login.html";
+}
+
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

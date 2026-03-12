@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Documents</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.documents-summary {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 14px;
+margin: 16px 0 20px;
+}
+
+.documents-card {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+padding: 16px;
+box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.documents-card h3 {
+margin: 0;
+font-size: 28px;
+}
+
+.documents-toolbar {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 10px;
+margin-bottom: 16px;
+}
+
+.documents-filters {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.documents-filters button,
+.documents-actions button {
+padding: 8px 12px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #8f7373;
+cursor: pointer;
+}
+
+.documents-filters button.active,
+.documents-actions .primary {
+background: #0b63ce;
+border-color: #0b63ce;
+color: #fff;
+}
+
+.documents-search {
+padding: 8px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+min-width: 240px;
+}
+
+.documents-table-wrap {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+overflow: auto;
+}
+
+.documents-table {
+width: 100%;
+border-collapse: collapse;
+min-width: 980px;
+}
+
+.documents-table th,
+.documents-table td {
+padding: 12px;
+text-align: left;
+border-bottom: 1px solid #eef3f8;
+font-size: 14px;
+}
+
+.documents-table th {
+background: #f8fbff;
+font-weight: 700;
+}
+
+.type-pill,
+.status-pill {
+display: inline-block;
+padding: 4px 8px;
+border-radius: 999px;
+font-size: 12px;
+font-weight: 700;
+}
+
+.type-pill.policy {
+background: #e8f0fe;
+color: #174ea6;
+}
+
+.type-pill.report {
+background: #fff4e5;
+color: #8c5d00;
+}
+
+.type-pill.checklist {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.status-pill.review {
+background: #fff4e5;
+color: #8c5d00;
+}
+
+.status-pill.approved {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.status-pill.draft {
+background: #fdecea;
+color: #b3261e;
+}
+
+.row-actions button {
+padding: 6px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #377c40;
+cursor: pointer;
+margin-right: 6px;
+}
+
+.status-note {
+margin-top: 12px;
+font-size: 14px;
+min-height: 20px;
+color: #1e6f43;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+<h1>Documents</h1>
+<p>Manage uploaded files, generated reports, policies, and safety documentation in one place.</p>
+
+<div class="documents-summary">
+<div class="documents-card">
+<h3>58</h3>
+<p>Total Documents</p>
+</div>
+<div class="documents-card">
+<h3>12</h3>
+<p>Pending Review</p>
+</div>
+<div class="documents-card">
+<h3>31</h3>
+<p>Approved Files</p>
+</div>
+<div class="documents-card">
+<h3>15</h3>
+<p>Draft Items</p>
+</div>
+</div>
+
+<div class="documents-toolbar">
+<div class="documents-filters">
+<button class="active" data-filter="all">All</button>
+<button data-filter="policy">Policies</button>
+<button data-filter="report">Reports</button>
+<button data-filter="checklist">Checklists</button>
+</div>
+<div class="documents-actions">
+<input id="documentsSearch" class="documents-search" type="text" placeholder="Search title, owner, or type...">
+<button class="primary" onclick="uploadDocument()">Upload Document</button>
+</div>
+</div>
+
+<div class="documents-table-wrap">
+<table class="documents-table" id="documentsTable">
+<thead>
+<tr>
+<th>ID</th>
+<th>Title</th>
+<th>Type</th>
+<th>Status</th>
+<th>Owner</th>
+<th>Updated</th>
+<th>Version</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr data-type="policy">
+<td>DOC-411</td>
+<td>Site Safety Policy 2026</td>
+<td><span class="type-pill policy">Policy</span></td>
+<td><span class="status-pill approved">Approved</span></td>
+<td>N. Verma</td>
+<td>13 Mar 2026</td>
+<td>v3.2</td>
+<td class="row-actions">
+<button onclick="reviewDocument(this)">View</button>
+<button onclick="downloadDocument(this)">Download</button>
+</td>
+</tr>
+<tr data-type="report">
+<td>DOC-405</td>
+<td>Quarterly Hazard Report</td>
+<td><span class="type-pill report">Report</span></td>
+<td><span class="status-pill review">Review</span></td>
+<td>R. Menon</td>
+<td>12 Mar 2026</td>
+<td>v1.4</td>
+<td class="row-actions">
+<button onclick="approveDocument(this)">Approve</button>
+<button onclick="reviewDocument(this)">View</button>
+</td>
+</tr>
+<tr data-type="checklist">
+<td>DOC-399</td>
+<td>Forklift Inspection Checklist</td>
+<td><span class="type-pill checklist">Checklist</span></td>
+<td><span class="status-pill draft">Draft</span></td>
+<td>S. Thomas</td>
+<td>11 Mar 2026</td>
+<td>v0.9</td>
+<td class="row-actions">
+<button onclick="submitDocument(this)">Submit</button>
+<button onclick="reviewDocument(this)">View</button>
+</td>
+</tr>
+<tr data-type="report">
+<td>DOC-392</td>
+<td>Incident Trend Summary</td>
+<td><span class="type-pill report">Report</span></td>
+<td><span class="status-pill approved">Approved</span></td>
+<td>A. Singh</td>
+<td>10 Mar 2026</td>
+<td>v2.0</td>
+<td class="row-actions">
+<button onclick="reviewDocument(this)">View</button>
+<button onclick="downloadDocument(this)">Download</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="status-note" id="documentsStatus"></div>
+
+</div>
+
+<div id="footer"></div>
+
+<script>
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+toggleBtn.onclick = function(){
+sidebar.classList.toggle("collapsed")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+const footer = document.querySelector(".footer")
+if(footer){
+footer.classList.toggle("expanded")
+}
+}
+}
+})
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+if(!localStorage.getItem("token")){
+window.location.href = "login.html"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location.href = "login.html"
+}
+
+const documentsSearch = document.getElementById("documentsSearch")
+const documentsTableBody = document.querySelector("#documentsTable tbody")
+let activeDocumentsFilter = "all"
+
+function applyDocumentsFilters(){
+const term = documentsSearch.value.trim().toLowerCase()
+const rows = Array.from(documentsTableBody.querySelectorAll("tr"))
+
+rows.forEach(row => {
+const rowType = row.getAttribute("data-type")
+const rowText = row.textContent.toLowerCase()
+const matchesType = activeDocumentsFilter === "all" || rowType === activeDocumentsFilter
+const matchesText = term === "" || rowText.includes(term)
+row.style.display = matchesType && matchesText ? "table-row" : "none"
+})
+}
+
+function uploadDocument(){
+setDocumentsStatus("Document upload flow requested.")
+}
+
+function reviewDocument(button){
+const row = button.closest("tr")
+if(!row) return
+setDocumentsStatus("Viewing document " + row.children[0].textContent.trim() + ".")
+}
+
+function downloadDocument(button){
+const row = button.closest("tr")
+if(!row) return
+setDocumentsStatus("Download requested for " + row.children[1].textContent.trim() + ".")
+}
+
+function approveDocument(button){
+const row = button.closest("tr")
+if(!row) return
+const status = row.querySelector(".status-pill")
+status.className = "status-pill approved"
+status.textContent = "Approved"
+button.textContent = "Download"
+button.setAttribute("onclick", "downloadDocument(this)")
+setDocumentsStatus("Document approved.")
+}
+
+function submitDocument(button){
+const row = button.closest("tr")
+if(!row) return
+const status = row.querySelector(".status-pill")
+status.className = "status-pill review"
+status.textContent = "Review"
+button.textContent = "Approve"
+button.setAttribute("onclick", "approveDocument(this)")
+setDocumentsStatus("Document submitted for review.")
+}
+
+function setDocumentsStatus(message){
+document.getElementById("documentsStatus").textContent = message
+}
+
+document.querySelectorAll(".documents-filters button").forEach(button => {
+button.addEventListener("click", function(){
+document.querySelectorAll(".documents-filters button").forEach(btn => btn.classList.remove("active"))
+this.classList.add("active")
+activeDocumentsFilter = this.getAttribute("data-filter")
+applyDocumentsFilters()
+})
+})
+
+documentsSearch.addEventListener("input", applyDocumentsFilters)
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

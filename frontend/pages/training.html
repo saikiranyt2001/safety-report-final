@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Training</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.training-summary {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 14px;
+margin: 16px 0 20px;
+}
+
+.training-card {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+padding: 16px;
+box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.training-card h3 {
+margin: 0;
+font-size: 28px;
+}
+
+.training-toolbar {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 10px;
+margin-bottom: 16px;
+}
+
+.training-filters {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.training-filters button,
+.training-actions button {
+padding: 8px 12px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #fff;
+cursor: pointer;
+}
+
+.training-filters button.active,
+.training-actions .primary {
+background: #0b63ce;
+border-color: #0b63ce;
+color: #fff;
+}
+
+.training-search {
+padding: 8px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+min-width: 220px;
+}
+
+.training-table-wrap {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+overflow: auto;
+}
+
+.training-table {
+width: 100%;
+border-collapse: collapse;
+min-width: 860px;
+}
+
+.training-table th,
+.training-table td {
+padding: 12px;
+text-align: left;
+border-bottom: 1px solid #eef3f8;
+font-size: 14px;
+}
+
+.training-table th {
+background: #f8fbff;
+font-weight: 700;
+}
+
+.status-pill {
+display: inline-block;
+padding: 4px 8px;
+border-radius: 999px;
+font-size: 12px;
+font-weight: 700;
+}
+
+.status-pill.completed {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.status-pill.in-progress {
+background: #fff4e5;
+color: #8c5d00;
+}
+
+.status-pill.pending {
+background: #fdecea;
+color: #b3261e;
+}
+
+.progress-bar {
+width: 100%;
+height: 8px;
+background: #eef3f8;
+border-radius: 999px;
+overflow: hidden;
+}
+
+.progress-fill {
+height: 100%;
+background: #0b63ce;
+}
+
+.row-actions button {
+padding: 6px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #2b9450;
+cursor: pointer;
+margin-right: 6px;
+}
+
+.status-note {
+margin-top: 12px;
+font-size: 14px;
+min-height: 20px;
+color: #1e6f43;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+<h1>Training</h1>
+<p>Track training completion, overdue courses, and workforce readiness.</p>
+
+<div class="training-summary">
+<div class="training-card">
+<h3>124</h3>
+<p>Assigned Courses</p>
+</div>
+<div class="training-card">
+<h3>86%</h3>
+<p>Completion Rate</p>
+</div>
+<div class="training-card">
+<h3>9</h3>
+<p>Overdue Trainings</p>
+</div>
+<div class="training-card">
+<h3>18 Mar</h3>
+<p>Next Audit Review</p>
+</div>
+</div>
+
+<div class="training-toolbar">
+<div class="training-filters">
+<button class="active" data-filter="all">All</button>
+<button data-filter="completed">Completed</button>
+<button data-filter="in-progress">In Progress</button>
+<button data-filter="pending">Pending</button>
+</div>
+<div class="training-actions">
+<input id="trainingSearch" class="training-search" type="text" placeholder="Search employee or course...">
+<button class="primary" onclick="assignTraining()">Assign Training</button>
+</div>
+</div>
+
+<div class="training-table-wrap">
+<table class="training-table" id="trainingTable">
+<thead>
+<tr>
+<th>Employee</th>
+<th>Course</th>
+<th>Status</th>
+<th>Progress</th>
+<th>Due Date</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr data-status="completed">
+<td>Anika Rao</td>
+<td>Hazard Identification Basics</td>
+<td><span class="status-pill completed">Completed</span></td>
+<td>
+<div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+</td>
+<td>10 Mar 2026</td>
+<td class="row-actions">
+<button onclick="viewTraining(this)">View</button>
+</td>
+</tr>
+<tr data-status="in-progress">
+<td>Karan Mehta</td>
+<td>PPE Compliance Essentials</td>
+<td><span class="status-pill in-progress">In Progress</span></td>
+<td>
+<div class="progress-bar"><div class="progress-fill" style="width: 65%"></div></div>
+</td>
+<td>15 Mar 2026</td>
+<td class="row-actions">
+<button onclick="markComplete(this)">Mark Complete</button>
+</td>
+</tr>
+<tr data-status="pending">
+<td>Sara Thomas</td>
+<td>Electrical Safety Refresher</td>
+<td><span class="status-pill pending">Pending</span></td>
+<td>
+<div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+</td>
+<td>14 Mar 2026</td>
+<td class="row-actions">
+<button onclick="startTraining(this)">Start</button>
+</td>
+</tr>
+<tr data-status="completed">
+<td>Rahul Iyer</td>
+<td>Incident Reporting Workflow</td>
+<td><span class="status-pill completed">Completed</span></td>
+<td>
+<div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+</td>
+<td>09 Mar 2026</td>
+<td class="row-actions">
+<button onclick="viewTraining(this)">View</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="status-note" id="trainingStatus"></div>
+
+</div>
+
+<div id="footer"></div>
+
+<script>
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+toggleBtn.onclick = function(){
+sidebar.classList.toggle("collapsed")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+const footer = document.querySelector(".footer")
+if(footer){
+footer.classList.toggle("expanded")
+}
+}
+}
+})
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+if(!localStorage.getItem("token")){
+window.location.href = "login.html"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location.href = "login.html"
+}
+
+const trainingSearch = document.getElementById("trainingSearch")
+const trainingTableBody = document.querySelector("#trainingTable tbody")
+let activeTrainingFilter = "all"
+
+function applyTrainingFilters(){
+const term = trainingSearch.value.trim().toLowerCase()
+const rows = Array.from(trainingTableBody.querySelectorAll("tr"))
+
+rows.forEach(row => {
+const rowStatus = row.getAttribute("data-status")
+const rowText = row.textContent.toLowerCase()
+const matchesStatus = activeTrainingFilter === "all" || rowStatus === activeTrainingFilter
+const matchesText = term === "" || rowText.includes(term)
+row.style.display = matchesStatus && matchesText ? "table-row" : "none"
+})
+}
+
+function assignTraining(){
+setTrainingStatus("Training assignment dialog requested.")
+}
+
+function viewTraining(button){
+const row = button.closest("tr")
+if(!row) return
+setTrainingStatus("Viewing training record for " + row.children[0].textContent.trim() + ".")
+}
+
+function startTraining(button){
+const row = button.closest("tr")
+if(!row) return
+row.setAttribute("data-status", "in-progress")
+row.querySelector(".status-pill").className = "status-pill in-progress"
+row.querySelector(".status-pill").textContent = "In Progress"
+row.querySelector(".progress-fill").style.width = "25%"
+button.textContent = "Mark Complete"
+button.setAttribute("onclick", "markComplete(this)")
+setTrainingStatus("Training started.")
+applyTrainingFilters()
+}
+
+function markComplete(button){
+const row = button.closest("tr")
+if(!row) return
+row.setAttribute("data-status", "completed")
+row.querySelector(".status-pill").className = "status-pill completed"
+row.querySelector(".status-pill").textContent = "Completed"
+row.querySelector(".progress-fill").style.width = "100%"
+button.textContent = "View"
+button.setAttribute("onclick", "viewTraining(this)")
+setTrainingStatus("Training marked as completed.")
+applyTrainingFilters()
+}
+
+function setTrainingStatus(message){
+document.getElementById("trainingStatus").textContent = message
+}
+
+document.querySelectorAll(".training-filters button").forEach(button => {
+button.addEventListener("click", function(){
+document.querySelectorAll(".training-filters button").forEach(btn => btn.classList.remove("active"))
+this.classList.add("active")
+activeTrainingFilter = this.getAttribute("data-filter")
+applyTrainingFilters()
+})
+})
+
+trainingSearch.addEventListener("input", applyTrainingFilters)
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Users</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.users-toolbar {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 10px;
+margin: 14px 0 18px;
+}
+
+.users-search {
+padding: 8px 10px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+min-width: 220px;
+}
+
+.users-actions {
+display: flex;
+gap: 8px;
+}
+
+.users-actions button {
+padding: 8px 12px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #aa0b0b;
+cursor: pointer;
+}
+
+.users-actions .primary {
+background: #0b63ce;
+border-color: #0b63ce;
+color: #fff;
+}
+
+.users-table-wrap {
+background: #fff;
+border: 1px solid #e6edf5;
+border-radius: 10px;
+overflow: auto;
+}
+
+.users-table {
+width: 100%;
+border-collapse: collapse;
+min-width: 820px;
+}
+
+.users-table th,
+.users-table td {
+padding: 12px;
+text-align: left;
+border-bottom: 1px solid #eef3f8;
+font-size: 14px;
+}
+
+.users-table th {
+background: #f8fbff;
+font-weight: 700;
+}
+
+.role-pill {
+display: inline-block;
+padding: 4px 8px;
+border-radius: 999px;
+font-size: 12px;
+font-weight: 700;
+}
+
+.role-pill.admin {
+background: #e8f0fe;
+color: #174ea6;
+}
+
+.role-pill.manager {
+background: #fff4e5;
+color: #8c5d00;
+}
+
+.role-pill.viewer {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.status-pill {
+display: inline-block;
+padding: 4px 8px;
+border-radius: 999px;
+font-size: 12px;
+font-weight: 700;
+}
+
+.status-pill.active {
+background: #e9f7ef;
+color: #146c43;
+}
+
+.status-pill.inactive {
+background: #fdecea;
+color: #b3261e;
+}
+
+.row-actions button {
+padding: 6px 10px;
+margin-right: 6px;
+border: 1px solid #d0d7de;
+border-radius: 8px;
+background: #690404;
+cursor: pointer;
+}
+
+.status-note {
+margin-top: 12px;
+font-size: 14px;
+min-height: 20px;
+color: #1e6f43;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">AI Safety Platform</div>
+<div class="nav-right">
+<span>Admin</span>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+<h1>Users</h1>
+<p>Manage team access, roles, and account status.</p>
+
+<div class="users-toolbar">
+<input id="userSearch" class="users-search" type="text" placeholder="Search users by name, email, or role...">
+<div class="users-actions">
+<button class="primary" onclick="addSampleUser()">Add User</button>
+<button onclick="exportUsers()">Export CSV</button>
+</div>
+</div>
+
+<div class="users-table-wrap">
+<table class="users-table" id="usersTable">
+<thead>
+<tr>
+<th>Name</th>
+<th>Email</th>
+<th>Role</th>
+<th>Status</th>
+<th>Last Login</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aryan Singh</td>
+<td>aryan@safety.ai</td>
+<td><span class="role-pill admin">Admin</span></td>
+<td><span class="status-pill active">Active</span></td>
+<td>13 Mar 2026, 10:42</td>
+<td class="row-actions">
+<button onclick="toggleUserStatus(this)">Deactivate</button>
+<button onclick="editUser(this)">Edit</button>
+</td>
+</tr>
+<tr>
+<td>Neha Verma</td>
+<td>neha@safety.ai</td>
+<td><span class="role-pill manager">Manager</span></td>
+<td><span class="status-pill active">Active</span></td>
+<td>13 Mar 2026, 09:58</td>
+<td class="row-actions">
+<button onclick="toggleUserStatus(this)">Deactivate</button>
+<button onclick="editUser(this)">Edit</button>
+</td>
+</tr>
+<tr>
+<td>Ravi Menon</td>
+<td>ravi@safety.ai</td>
+<td><span class="role-pill viewer">Viewer</span></td>
+<td><span class="status-pill inactive">Inactive</span></td>
+<td>11 Mar 2026, 17:10</td>
+<td class="row-actions">
+<button onclick="toggleUserStatus(this)">Activate</button>
+<button onclick="editUser(this)">Edit</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="status-note" id="usersStatus"></div>
+
+</div>
+
+<div id="footer"></div>
+
+<script>
+fetch("../components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+
+initSearch()
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const navbar = document.querySelector(".navbar")
+const mainContent = document.querySelector(".main-content")
+
+if(toggleBtn){
+toggleBtn.onclick = function(){
+sidebar.classList.toggle("collapsed")
+if(navbar) navbar.classList.toggle("expanded")
+if(mainContent) mainContent.classList.toggle("expanded")
+const footer = document.querySelector(".footer")
+if(footer){
+footer.classList.toggle("expanded")
+}
+}
+}
+})
+
+fetch("../components/footer.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("footer").innerHTML = data
+})
+
+if(!localStorage.getItem("token")){
+window.location.href = "login.html"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location.href = "login.html"
+}
+
+const userSearch = document.getElementById("userSearch")
+const usersTableBody = document.querySelector("#usersTable tbody")
+
+function filterUsers(){
+const term = userSearch.value.trim().toLowerCase()
+const rows = Array.from(usersTableBody.querySelectorAll("tr"))
+
+rows.forEach(row => {
+const text = row.textContent.toLowerCase()
+row.style.display = term === "" || text.includes(term) ? "table-row" : "none"
+})
+}
+
+function toggleUserStatus(button){
+const row = button.closest("tr")
+if(!row) return
+
+const statusPill = row.querySelector(".status-pill")
+if(!statusPill) return
+
+if(statusPill.classList.contains("active")){
+statusPill.classList.remove("active")
+statusPill.classList.add("inactive")
+statusPill.textContent = "Inactive"
+button.textContent = "Activate"
+setStatusMessage("User has been deactivated.")
+} else {
+statusPill.classList.remove("inactive")
+statusPill.classList.add("active")
+statusPill.textContent = "Active"
+button.textContent = "Deactivate"
+setStatusMessage("User has been activated.")
+}
+}
+
+function editUser(button){
+const row = button.closest("tr")
+if(!row) return
+const name = row.children[0].textContent.trim()
+setStatusMessage("Edit requested for " + name + ".")
+}
+
+function addSampleUser(){
+const row = document.createElement("tr")
+row.innerHTML = "<td>New User</td><td>new.user@safety.ai</td><td><span class=\"role-pill viewer\">Viewer</span></td><td><span class=\"status-pill active\">Active</span></td><td>Just now</td><td class=\"row-actions\"><button onclick=\"toggleUserStatus(this)\">Deactivate</button><button onclick=\"editUser(this)\">Edit</button></td>"
+usersTableBody.prepend(row)
+setStatusMessage("Sample user added.")
+filterUsers()
+}
+
+function exportUsers(){
+const rows = Array.from(usersTableBody.querySelectorAll("tr"))
+const header = ["Name", "Email", "Role", "Status", "Last Login"]
+const data = rows
+.filter(row => row.style.display !== "none")
+.map(row => {
+const cells = row.querySelectorAll("td")
+return [
+cleanCsvValue(cells[0].textContent),
+cleanCsvValue(cells[1].textContent),
+cleanCsvValue(cells[2].textContent),
+cleanCsvValue(cells[3].textContent),
+cleanCsvValue(cells[4].textContent)
+]
+})
+
+const csvRows = [header, ...data].map(cols => cols.join(",")).join("\n")
+const blob = new Blob([csvRows], { type: "text/csv;charset=utf-8;" })
+const url = URL.createObjectURL(blob)
+const link = document.createElement("a")
+link.href = url
+link.download = "users_export.csv"
+link.click()
+URL.revokeObjectURL(url)
+setStatusMessage("Users exported as CSV.")
+}
+
+function cleanCsvValue(value){
+const escaped = value.trim().replace(/"/g, "\"\"")
+return "\"" + escaped + "\""
+}
+
+function setStatusMessage(message){
+const status = document.getElementById("usersStatus")
+status.textContent = message
+}
+
+userSearch.addEventListener("input", filterUsers)
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>
