@@ -3,6 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 from prometheus_fastapi_instrumentator import Instrumentator
+from backend.middleware.auth_middleware import AuthMiddleware
+from backend.middleware.logging_middleware import LoggingMiddleware
+from backend.middleware.tenant_middleware import TenantMiddleware
+from backend.api.routes_pipeline import router as pipeline_router
+
+
+
 
 print("🚀 Starting AI Safety Platform...")
 
@@ -54,8 +61,11 @@ app.include_router(uploads_router, prefix="/api")
 app.include_router(validation_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
+app.include_router(pipeline_router)
 
-
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(AuthMiddleware)
+app.add_middleware(TenantMiddleware)
 # Serve frontend if folder exists
 if os.path.exists("frontend"):
     app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
@@ -68,7 +78,6 @@ def home():
 
 
 # Health check route
+@app.get("/health")
 def health():
     return {"status": "ok"}
-
-#done

@@ -1,10 +1,11 @@
+
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
 import enum
 
-
+from .tenant_mixin import TenantMixin
 # -----------------------------
 # User Roles
 # -----------------------------
@@ -23,9 +24,26 @@ class Company(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
 
-    users = relationship("User", back_populates="company", cascade="all, delete")
-    projects = relationship("Project", back_populates="company", cascade="all, delete")
-    usage_records = relationship("Usage", back_populates="company", cascade="all, delete")
+    users = relationship(
+        "User",
+        back_populates="company",
+        cascade="all, delete-orphan"
+    )
+
+    projects = relationship(
+        "Project",
+        back_populates="company",
+        cascade="all, delete-orphan"
+    )
+
+    usage_records = relationship(
+        "Usage",
+        back_populates="company",
+        cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<Company {self.name}>"
 
 
 # -----------------------------
@@ -35,47 +53,63 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+
     username = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
 
     role = Column(Enum(RoleEnum), default=RoleEnum.worker, nullable=False)
 
-    company_id = Column(Integer, ForeignKey("companies.id"))
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True)
     company = relationship("Company", back_populates="users")
 
-    usage = relationship("Usage", back_populates="user")
+    usage = relationship(
+        "Usage",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<User {self.username}>"
 
 
 # -----------------------------
 # Project
 # -----------------------------
-class Project(Base):
+class Project(Base,TenantMixin):
     __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True, index=True)
+
     name = Column(String, nullable=False)
     description = Column(String)
 
-    company_id = Column(Integer, ForeignKey("companies.id"))
+
     company = relationship("Company", back_populates="projects")
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    reports = relationship("Report", back_populates="project", cascade="all, delete")
+    reports = relationship(
+        "Report",
+        back_populates="project",
+        cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<Project {self.name}>"
 
 
 # -----------------------------
 # Report
 # -----------------------------
-class Report(Base):
+class Report(Base,TenantMixin):
     __tablename__ = "reports"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    project_id = Column(Integer, ForeignKey("projects.id"))
+    project_id = Column(Integer, ForeignKey("projects.id"), index=True)
     project = relationship("Project", back_populates="reports")
 
-    company_id = Column(Integer, ForeignKey("companies.id"))
+
     company = relationship("Company")
 
     content = Column(String)
@@ -85,7 +119,14 @@ class Report(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    usage_records = relationship("Usage", back_populates="report")
+    usage_records = relationship(
+        "Usage",
+        back_populates="report",
+        cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<Report {self.id}>"
 
 
 # -----------------------------
@@ -96,9 +137,9 @@ class Usage(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    report_id = Column(Integer, ForeignKey("reports.id"))
-    company_id = Column(Integer, ForeignKey("companies.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    report_id = Column(Integer, ForeignKey("reports.id"), index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True)
 
     month = Column(String, nullable=False)
 
@@ -111,3 +152,6 @@ class Usage(Base):
     user = relationship("User", back_populates="usage")
     report = relationship("Report", back_populates="usage_records")
     company = relationship("Company", back_populates="usage_records")
+
+    def __repr__(self):
+        return f"<Usage user={self.user_id} month={self.month}>"

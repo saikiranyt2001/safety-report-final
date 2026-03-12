@@ -1,3 +1,4 @@
+
 # Recommendation Agent
 
 HIERARCHY_OF_CONTROLS = [
@@ -8,23 +9,27 @@ HIERARCHY_OF_CONTROLS = [
     "PPE"
 ]
 
+
 RECOMMENDATIONS = {
     "working at height": {
         "Engineering Controls": "Install guardrails",
         "Administrative Controls": "Permit to work",
         "PPE": "Safety harness"
     },
+
     "electrical hazard": {
         "Engineering Controls": "De-energize circuits before work",
         "Administrative Controls": "Lockout/tagout procedures",
         "PPE": "Insulated gloves"
     },
+
     "machine entanglement": {
         "Engineering Controls": "Install machine guards",
         "Administrative Controls": "Operator training",
         "PPE": "Protective gloves"
     }
 }
+
 
 DEFAULT_CONTROLS = {
     "PPE": "Use appropriate safety equipment"
@@ -33,34 +38,27 @@ DEFAULT_CONTROLS = {
 
 def recommend_controls(hazard, risk_data):
 
+    hazard_key = hazard.lower()
+
     controls = []
 
-    if hazard.lower() == "fire":
-        controls = [
-            "Install fire extinguishers",
-            "Provide fire safety training",
-            "Maintain clear evacuation routes"
-        ]
+    if hazard_key in RECOMMENDATIONS:
 
-    elif hazard.lower() == "fall":
-        controls = [
-            "Use safety harnesses",
-            "Install guardrails",
-            "Provide fall protection training"
-        ]
+        hazard_controls = RECOMMENDATIONS[hazard_key]
 
-    elif hazard.lower() == "chemical":
-        controls = [
-            "Use proper PPE",
-            "Ensure chemical labeling",
-            "Provide ventilation systems"
-        ]
+        for level in HIERARCHY_OF_CONTROLS:
+            if level in hazard_controls:
+                controls.append({
+                    "level": level,
+                    "action": hazard_controls[level]
+                })
 
     else:
-        controls = [
-            "Follow standard safety procedures",
-            "Conduct regular inspections"
-        ]
+
+        controls.append({
+            "level": "PPE",
+            "action": DEFAULT_CONTROLS["PPE"]
+        })
 
     return {
         "hazard": hazard,

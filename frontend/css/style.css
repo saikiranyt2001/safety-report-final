@@ -398,10 +398,6 @@ padding:0;
 box-sizing:border-box;
 }
 
-body{
-font-family:Segoe UI, Arial, sans-serif;
-background:#f4f6f9;
-}
 
 /* ===================== */
 /* SIDEBAR */
@@ -1031,4 +1027,28 @@ padding:18px;
 
 border-radius:10px;
 
+}
+
+/* Risk Heatmap */
+
+.heatmap-card{
+padding:20px;
+}
+
+.heatmap-container{
+width:100%;
+max-width:650px;
+margin:auto;
+height:350px;
+}
+
+.heatmap-container canvas{
+width:100% !important;
+height:100% !important;
+}
+
+.heatmap-desc{
+font-size:13px;
+color:#6b7280;
+margin-bottom:10px;
 }

@@ -74,6 +74,12 @@
 <canvas id="hazardChart"></canvas>
 </div>
 
+<!-- NEW RISK HEATMAP -->
+<div class="card">
+<h2>Risk Heatmap</h2>
+<canvas id="riskHeatmap" height="250"></canvas>
+</div>
+
 </div>
 
 </div>
@@ -214,6 +220,62 @@ return "Safety tip: Always conduct risk assessments before starting work."
 
 <!-- CHARTS -->
 <script>
+
+const heatmap = document.getElementById("riskHeatmap");
+
+if (heatmap) {
+
+const ctx = heatmap.getContext("2d");
+
+new Chart(ctx,{
+type:"bubble",
+data:{
+datasets:[
+{
+label:"Low Risk",
+data:[
+{x:1,y:1,r:8},
+{x:1,y:2,r:8}
+],
+backgroundColor:"rgba(34,197,94,0.7)"
+},
+{
+label:"Medium Risk",
+data:[
+{x:2,y:3,r:12},
+{x:3,y:3,r:12}
+],
+backgroundColor:"rgba(250,204,21,0.7)"
+},
+{
+label:"High Risk",
+data:[
+{x:4,y:5,r:18},
+{x:5,y:5,r:20}
+],
+backgroundColor:"rgba(239,68,68,0.8)"
+}
+]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+scales:{
+x:{
+title:{display:true,text:"Likelihood"},
+min:0,
+max:5
+},
+y:{
+title:{display:true,text:"Severity"},
+min:0,
+max:5
+}
+}
+}
+});
+
+}
 
 const ctx=document.getElementById("reportChart").getContext("2d")
 

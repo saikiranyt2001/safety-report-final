@@ -1,16 +1,17 @@
-# pipeline_tasks.py
-
-"""
-Celery tasks for orchestrating the safety pipeline.
-"""
-
-from backend.workflow.safety_pipeline import run_safety_pipeline
 
 from backend.celery_app import celery_app
+from backend.agents.orchestrator import run_safety_pipeline
 
-@celery_app.task(name="pipeline.run_safety_pipeline")
-def run_pipeline_task(project_id):
+
+@celery_app.task
+def safety_pipeline_task(site_type, site_data):
     """
-    Run the safety pipeline for a given project.
+    Run the full safety analysis pipeline
     """
-    return run_safety_pipeline(project_id)
+
+    result = run_safety_pipeline(site_type, site_data)
+
+    return {
+        "status": "completed",
+        "report": result
+    }

@@ -1,9 +1,25 @@
-# Project Service Business Logic
+from backend.database.database import SessionLocal
+from backend.database.models import Project
 
-def create_project(data):
-    # Dummy implementation
-    return {"message": "Project created", "data": data}
 
-def get_project(project_id):
-    # Dummy implementation
-    return {"message": f"Project {project_id} details"}
+def create_project(name, description):
+
+    db = SessionLocal()
+
+    project = Project(
+        name=name,
+        description=description
+    )
+
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+
+    return project
+
+
+def get_projects():
+
+    db = SessionLocal()
+
+    return db.query(Project).all()

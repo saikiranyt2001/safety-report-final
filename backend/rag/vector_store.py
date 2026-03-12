@@ -1,17 +1,38 @@
 # Simple Vector Store for Regulation RAG
 
 class VectorStore:
+    """
+    Simple similarity search engine for regulations.
+    This simulates vector search using keyword matching.
+    """
 
     def __init__(self, documents):
         self.documents = documents
 
     def similarity_search(self, query, k=3):
-        query = query.lower()
-        scored = []
+        """
+        Return top-k most relevant regulations
+        """
+
+        if not query:
+            return []
+
+        query_words = query.lower().split()
+        scored_results = []
+
         for doc in self.documents:
-            text = doc["regulation"].lower()
-            score = sum(word in text for word in query.split())
-            scored.append((score, doc))
-        scored.sort(reverse=True, key=lambda x: x[0])
-        results = [doc for score, doc in scored if score > 0]
+
+            text = doc.get("regulation", "").lower()
+
+            # basic keyword match scoring
+            score = sum(1 for word in query_words if word in text)
+
+            scored_results.append((score, doc))
+
+        # sort by highest score
+        scored_results.sort(key=lambda x: x[0], reverse=True)
+
+        # filter only relevant docs
+        results = [doc for score, doc in scored_results if score > 0]
+
         return results[:k]

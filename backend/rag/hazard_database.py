@@ -29,6 +29,23 @@ HAZARDS = [
     }
 ]
 
-def get_hazards(site_type=None):
 
-    return [h["name"] for h in HAZARDS]
+def get_hazards(site_type=None):
+    """
+    Return hazard names for a given site type.
+    Currently returns all hazards.
+    """
+
+    return [hazard["name"] for hazard in HAZARDS]
+
+
+def get_hazard_details(hazard_name):
+    """
+    Return full hazard information
+    """
+
+    for hazard in HAZARDS:
+        if hazard["name"] == hazard_name:
+            return hazard
+
+    return None

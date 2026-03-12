@@ -2,14 +2,15 @@ from backend.agents.hazard_agent import identify_hazards
 from backend.agents.risk_agent import assess_risk
 from backend.agents.recommendation_agent import generate_recommendations
 from backend.agents.compliance_agent import get_compliance_reference
+from backend.services.notification_service import hazard_alert
 
-def run_safety_workflow(data: dict):
+def run_safety_workflow(data):
     """
     Execute the AI Safety Workflow pipeline.
     """
     site_type = data.get("site_type", "construction")
     # Step 1: Hazard detection
-    hazards = identify_hazards(site_type)
+    hazards = hazard_alert(site_type)
     # Step 2: Risk assessment
     risks = assess_risk(hazards)
     # Step 3: Control recommendations

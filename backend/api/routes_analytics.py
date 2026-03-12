@@ -5,7 +5,7 @@ from backend.database.models import Report
 from backend.database.database import SessionLocal
 from sqlalchemy import func
 from fastapi.security import HTTPBearer
-
+from backend.agents.risk_matrix_agent import generate_risk_matrix
 
 router = APIRouter(tags=["Dashboard"])
 
@@ -40,3 +40,15 @@ async def dashboard_metrics(
     metrics = {severity: count for severity, count in results}
 
     return {"metrics": metrics}
+router = APIRouter(tags=["Analytics"])
+
+@router.post("/risk-heatmap")
+def risk_heatmap(severity: int, likelihood: int):
+
+    matrix = generate_risk_matrix(severity, likelihood)
+
+    return {
+        "severity": severity,
+        "likelihood": likelihood,
+        "risk_level": matrix
+    }

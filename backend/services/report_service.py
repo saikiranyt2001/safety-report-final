@@ -1,42 +1,41 @@
-from backend.celery_app import celery_app
-from backend.database.database import SessionLocal
-from backend.database.models import Report, Project
+import uuid
 import os
 
+from backend.document_export.pdf_generator import generate_pdf_report
+
 STORAGE_DIR = "storage/reports"
+os.makedirs(STORAGE_DIR, exist_ok=True)
 
 
-@celery_app.task(name="backend.services.report_service.generate_report_task")
-def generate_report_task(payload):
+# USER FUNCTIONS
+def create_user(name, email, password):
+    pass
 
-    report_type = payload.get("report_type")
-    project_id = payload.get("project_id")
 
-    db = SessionLocal()
+def get_user(user_id):
+    pass
 
-    try:
 
-        project = db.query(Project).filter(Project.id == project_id).first()
+def get_all_users():
+    pass
 
-        if not project:
-            return {"status": "error", "message": "Project not found"}
 
-        # Example content
-        report_content = f"{report_type} report generated for project {project.name}"
+# REPORT GENERATION
+def generate_report(project_id, hazards, risk_score):
 
-        report = Report(
-            project_id=project_id,
-            content=report_content
-        )
+    report_id = str(uuid.uuid4())
 
-        db.add(report)
-        db.commit()
-        db.refresh(report)
+    report_data = {
+        "Project ID": project_id,
+        "Hazards": hazards,
+        "Risk Score": risk_score
+    }
 
-        return {
-            "status": "generated",
-            "report_id": report.id
-        }
+    output_path = f"{STORAGE_DIR}/{report_id}.pdf"
 
-    finally:
-        db.close()
+    generate_pdf_report(report_data, output_path)
+
+    return {
+        "report_id": report_id,
+        "file_path": output_path
+    }

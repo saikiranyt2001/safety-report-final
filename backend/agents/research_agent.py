@@ -1,3 +1,15 @@
 class ResearchAgent:
+
     def research(self, topic: str):
-        return {"status": "success", "result": f"Research for {topic}"}
+        """
+        Perform research on a given topic.
+        Returns a simple structured response.
+        """
+
+        result = f"Research for {topic}"
+
+        return {
+            "status": "success",
+            "topic": topic,
+            "result": result
+        }
