@@ -81,16 +81,42 @@ Download status will appear here.
 <script>
 
 /* LOAD SIDEBAR */
+
 fetch("../components/sidebar.html")
 .then(res => res.text())
 .then(data => {
 
 document.getElementById("sidebar-container").innerHTML = data
 
-initSidebar()
+/* Initialize Search AFTER sidebar/navbar loads */
+initSearch()
+
+/* Sidebar Toggle Logic */
+
+const toggleBtn = document.getElementById("menuToggle")
+const sidebar = document.querySelector(".sidebar")
+const mainContent = document.querySelector(".main-content")
+const navbar = document.querySelector(".navbar")
+
+if(toggleBtn && sidebar){
+
+toggleBtn.onclick = function(){
+
+sidebar.classList.toggle("collapsed")
+
+if(mainContent){
+mainContent.classList.toggle("expanded")
+}
+
+if(navbar){
+navbar.classList.toggle("expanded")
+}
+
+}
+
+}
 
 })
-
 /* LOAD FOOTER */
 fetch("../components/footer.html")
 .then(res => res.text())
@@ -135,12 +161,7 @@ document.getElementById("resultBox").innerHTML=
 <!-- AI CHAT SCRIPT -->
 <script>
 
-function toggleChat(){
 
-let chat=document.getElementById("aiChat")
-chat.classList.toggle("open")
-
-}
 
 function sendChat(){
 
