@@ -10,7 +10,9 @@ from backend.api.routes_pipeline import router as pipeline_router
 
 from backend.core.limiter import limiter
 
+app = FastAPI()
 
+app.include_router(pipeline_router)
 print("🚀 Starting AI Safety Platform...")
 
 # Import API routers
