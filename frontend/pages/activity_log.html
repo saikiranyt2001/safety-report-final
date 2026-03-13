@@ -54,6 +54,13 @@ border-radius: 10px;
 overflow: auto;
 }
 
+.activity-state {
+padding: 22px;
+text-align: center;
+color: #5f6b7a;
+font-size: 14px;
+}
+
 .activity-table {
 width: 100%;
 border-collapse: collapse;
@@ -131,47 +138,15 @@ color: #b3261e;
 <thead>
 <tr>
 <th>Timestamp</th>
-<th>Event</th>
+<th>User</th>
+<th>Action</th>
 <th>Type</th>
-<th>User / Source</th>
 <th>Details</th>
 </tr>
 </thead>
-<tbody>
-<tr data-type="system">
-<td>13 Mar 2026, 10:14</td>
-<td>Pipeline Completed</td>
-<td><span class="event-pill system">System</span></td>
-<td>Orchestrator</td>
-<td>End-to-end report pipeline finished successfully.</td>
-</tr>
-<tr data-type="alert">
-<td>13 Mar 2026, 10:05</td>
-<td>High Risk Hazard</td>
-<td><span class="event-pill alert">Alert</span></td>
-<td>Vision Module</td>
-<td>Unsafe scaffold movement detected in Zone C.</td>
-</tr>
-<tr data-type="user">
-<td>13 Mar 2026, 09:52</td>
-<td>Report Downloaded</td>
-<td><span class="event-pill user">User</span></td>
-<td>admin@safety.ai</td>
-<td>Downloaded report RPT-203 in PDF format.</td>
-</tr>
-<tr data-type="system">
-<td>13 Mar 2026, 09:47</td>
-<td>Compliance Validation</td>
-<td><span class="event-pill system">System</span></td>
-<td>Validation Agent</td>
-<td>Regulation checks completed with 2 warnings.</td>
-</tr>
-<tr data-type="user">
-<td>13 Mar 2026, 09:33</td>
-<td>Project Updated</td>
-<td><span class="event-pill user">User</span></td>
-<td>supervisor@safety.ai</td>
-<td>Updated project timeline and site contact data.</td>
+<tbody id="activityTableBody">
+<tr>
+<td colspan="5" class="activity-state">Loading audit log...</td>
 </tr>
 </tbody>
 </table>
@@ -223,11 +198,76 @@ window.location.href = "login.html"
 }
 
 const searchInput = document.getElementById("activitySearch")
-const rows = Array.from(document.querySelectorAll("#activityTable tbody tr"))
+const tableBody = document.getElementById("activityTableBody")
 let activeType = "all"
+
+function formatTimestamp(value){
+if(!value){
+return "-"
+}
+
+const date = new Date(value)
+if(Number.isNaN(date.getTime())){
+return value
+}
+
+return date.toLocaleString([], {
+year: "numeric",
+month: "short",
+day: "2-digit",
+hour: "2-digit",
+minute: "2-digit"
+})
+}
+
+function titleCase(value){
+return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function renderActivityRows(logs){
+if(!logs.length){
+tableBody.innerHTML = '<tr><td colspan="5" class="activity-state">No activity recorded yet.</td></tr>'
+return
+}
+
+tableBody.innerHTML = logs.map(log => `
+<tr data-type="${log.type}">
+<td>${formatTimestamp(log.timestamp)}</td>
+<td>${log.user || "system"}</td>
+<td>${log.action}</td>
+<td><span class="event-pill ${log.type}">${titleCase(log.type)}</span></td>
+<td>${log.details || "-"}</td>
+</tr>
+`).join("")
+
+applyActivityFilters()
+}
+
+async function loadActivityLogs(){
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
+const headers = {}
+
+if(token && token !== "loggedin"){
+headers["Authorization"] = "Bearer " + token
+}
+
+try {
+const response = await fetch("/api/activity-logs?limit=100", { headers })
+
+if(!response.ok){
+throw new Error("Failed to load activity logs")
+}
+
+const logs = await response.json()
+renderActivityRows(logs)
+} catch(_error){
+tableBody.innerHTML = '<tr><td colspan="5" class="activity-state">Unable to load activity logs right now.</td></tr>'
+}
+}
 
 function applyActivityFilters(){
 const term = searchInput.value.trim().toLowerCase()
+const rows = Array.from(document.querySelectorAll("#activityTable tbody tr[data-type]"))
 
 rows.forEach(row => {
 const type = row.getAttribute("data-type")
@@ -248,6 +288,8 @@ applyActivityFilters()
 })
 
 searchInput.addEventListener("input", applyActivityFilters)
+
+loadActivityLogs()
 </script>
 
 <script src="../js/main.js"></script>

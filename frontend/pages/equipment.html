@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equipment Inspections</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #0d6efd;
+  --border: #e2e8f0;
+  --panel: #f8fafc;
+  --muted: #64748b;
+  --warn: #d9480f;
+  --success: #2f9e44;
+}
+body { font-family: 'Space Grotesk', sans-serif; }
+
+.head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+.head h1 { margin:0; font-size:1.65rem; }
+.sub { margin:4px 0 0; color:var(--muted); font-size:.9rem; }
+
+.summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
+.summary-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 2px 8px rgba(15,23,42,.05); }
+.summary-card strong { display:block; font-size:1.65rem; color:var(--primary); }
+.summary-card span { color:var(--muted); font-size:.82rem; }
+
+.toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.filters { display:flex; gap:6px; flex-wrap:wrap; }
+.filter-btn { background:#fff; border:1px solid var(--border); border-radius:8px; padding:7px 11px; font-size:.83rem; font-weight:600; cursor:pointer; }
+.filter-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.search { border:1px solid var(--border); border-radius:9px; padding:8px 11px; min-width:240px; }
+
+.btn { display:inline-flex; align-items:center; gap:5px; padding:8px 13px; border-radius:9px; border:1px solid transparent; font-size:.84rem; font-weight:600; cursor:pointer; }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:#0b5ed7; }
+.btn-outline { background:#fff; color:#334155; border-color:var(--border); }
+.btn-outline:hover { background:var(--panel); }
+.btn-success { background:var(--success); color:#fff; }
+.btn-success:hover { background:#237a34; }
+.btn-sm { padding:5px 9px; border-radius:7px; font-size:.78rem; }
+
+.table-wrap { background:#fff; border:1px solid var(--border); border-radius:16px; overflow:auto; }
+.table { width:100%; border-collapse:collapse; min-width:980px; }
+.table th, .table td { padding:11px 12px; border-bottom:1px solid #eff3f7; text-align:left; font-size:.88rem; }
+.table th { background:var(--panel); color:var(--muted); font-size:.8rem; letter-spacing:.04em; }
+.table tr:last-child td { border-bottom:none; }
+
+.pill { display:inline-flex; padding:3px 10px; border-radius:999px; font-size:.76rem; font-weight:700; }
+.st-safe { background:#e9f7ef; color:#2f9e44; }
+.st-inspection_due { background:#fff4e5; color:#8c5d00; }
+.st-under_repair { background:#fdecea; color:#b3261e; }
+.ir-passed { background:#e9f7ef; color:#2f9e44; }
+.ir-needs_attention { background:#fff4e5; color:#8c5d00; }
+.ir-failed { background:#fdecea; color:#b3261e; }
+
+.empty { text-align:center; padding:44px; color:var(--muted); }
+
+.detail-grid { display:grid; grid-template-columns:1.3fr .9fr; gap:16px; margin-top:18px; }
+.panel { background:#fff; border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:0 2px 8px rgba(15,23,42,.05); }
+.panel h2 { margin:0 0 12px; font-size:1rem; }
+.history-item { padding:11px 0; border-bottom:1px solid #eff3f7; font-size:.88rem; }
+.history-item:last-child { border-bottom:none; }
+.meta { color:var(--muted); font-size:.8rem; }
+
+.modal-overlay { display:none; position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.45); align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { width:100%; max-width:540px; max-height:90vh; overflow-y:auto; background:#fff; border-radius:18px; padding:24px; box-shadow:0 20px 60px rgba(15,23,42,.2); }
+.modal h2 { margin:0 0 14px; font-size:1.2rem; }
+.row { margin-bottom:12px; }
+.row label { display:block; margin-bottom:5px; font-size:.82rem; font-weight:600; color:#334155; }
+.input, .select, .textarea { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:9px; padding:9px 11px; background:var(--panel); font-family:inherit; }
+.textarea { min-height:84px; resize:vertical; }
+.actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+
+#toast { position:fixed; right:24px; bottom:24px; z-index:9999; background:#1e293b; color:#fff; border-radius:10px; padding:10px 15px; opacity:0; pointer-events:none; transition:opacity .25s; }
+#toast.show { opacity:1; }
+
+@media(max-width:960px) { .detail-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="navbar">
+  <div class="logo">AI Safety Platform</div>
+  <div class="nav-right">
+    <span id="navUsername">User</span>
+    <button onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+  <div class="head">
+    <div>
+      <h1>Equipment List</h1>
+      <p class="sub">Track equipment condition, inspection schedules, and maintenance follow-up.</p>
+    </div>
+    <button id="addEquipmentBtn" class="btn btn-primary" onclick="openEquipmentModal()">+ Register Equipment</button>
+  </div>
+
+  <div class="summary">
+    <div class="summary-card"><strong id="sumTotal">0</strong><span>Total Equipment</span></div>
+    <div class="summary-card"><strong id="sumSafe" style="color:var(--success)">0</strong><span>Safe</span></div>
+    <div class="summary-card"><strong id="sumDue" style="color:#8c5d00">0</strong><span>Inspection Due</span></div>
+    <div class="summary-card"><strong id="sumRepair" style="color:#b3261e">0</strong><span>Under Repair</span></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('safe', this)">Safe</button>
+      <button class="filter-btn" onclick="setFilter('inspection_due', this)">Inspection Due</button>
+      <button class="filter-btn" onclick="setFilter('under_repair', this)">Under Repair</button>
+    </div>
+    <input class="search" id="search" placeholder="Search equipment, location, serial" oninput="renderEquipment()">
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Equipment</th>
+          <th>Location</th>
+          <th>Serial</th>
+          <th>Status</th>
+          <th>Last Inspection</th>
+          <th>Next Inspection</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="equipmentBody">
+        <tr><td colspan="7" class="empty">Loading equipment...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="detail-grid">
+    <div class="panel">
+      <h2 id="inspectionPanelTitle">Inspection History</h2>
+      <div id="inspectionHistory"><div class="empty" style="padding:24px">Select equipment to view history.</div></div>
+    </div>
+    <div class="panel">
+      <h2>Record Inspection</h2>
+      <div id="inspectionFormState" class="meta" style="margin-bottom:10px">Choose an equipment item first.</div>
+      <div class="row">
+        <label>Inspection Result</label>
+        <select class="select" id="inspectionStatus">
+          <option value="passed">Passed</option>
+          <option value="needs_attention">Needs Attention</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Checklist Summary</label>
+        <textarea class="textarea" id="checklistSummary" placeholder="Brakes checked, lights operational, tires inspected..."></textarea>
+      </div>
+      <div class="row">
+        <label>Issues Found</label>
+        <textarea class="textarea" id="issuesFound" placeholder="Describe any issue detected during the inspection."></textarea>
+      </div>
+      <div class="row" id="taskToggleRow">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="createTaskToggle"> Create maintenance task if issue found
+        </label>
+      </div>
+      <div class="row" id="taskPriorityRow" style="display:none">
+        <label>Task Priority</label>
+        <select class="select" id="taskPriority">
+          <option value="medium">Medium</option>
+          <option value="high" selected>High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="row" id="taskAssignRow" style="display:none">
+        <label>Assign Technician (User ID)</label>
+        <input class="input" id="assignToId" type="number" placeholder="Optional">
+      </div>
+      <button class="btn btn-success" id="submitInspectionBtn" onclick="submitInspection()">Save Inspection</button>
+    </div>
+  </div>
+</div>
+
+<div id="footer"></div>
+<div id="toast"></div>
+
+<div id="equipmentModal" class="modal-overlay">
+  <div class="modal">
+    <h2>Register Equipment</h2>
+    <div class="row">
+      <label>Name *</label>
+      <input class="input" id="equipmentName" placeholder="e.g. Forklift #23">
+    </div>
+    <div class="row">
+      <label>Location</label>
+      <input class="input" id="equipmentLocation" placeholder="e.g. Warehouse A">
+    </div>
+    <div class="row">
+      <label>Serial Number</label>
+      <input class="input" id="equipmentSerial" placeholder="e.g. FL-230019">
+    </div>
+    <div class="row">
+      <label>Inspection Interval (days)</label>
+      <input class="input" id="equipmentInterval" type="number" min="1" value="30">
+    </div>
+    <div class="actions">
+      <button class="btn btn-outline" onclick="closeEquipmentModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEquipment()">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
+if (!token) window.location.href = "login.html"
+
+const role = (localStorage.getItem("user_role") || "worker").toLowerCase()
+const canManage = role === "admin" || role === "manager"
+document.getElementById("navUsername").textContent = localStorage.getItem("username") || "User"
+
+function apiHeaders() {
+  const headers = { "Content-Type": "application/json" }
+  if (token && token !== "loggedin") headers.Authorization = `Bearer ${token}`
+  return headers
+}
+
+function logout() {
+  localStorage.removeItem("token")
+  localStorage.removeItem("auth_token")
+  window.location.href = "login.html"
+}
+
+function toast(message, isError) {
+  const el = document.getElementById("toast")
+  el.textContent = message
+  el.style.background = isError ? "#b3261e" : "#1e293b"
+  el.classList.add("show")
+  setTimeout(() => el.classList.remove("show"), 2800)
+}
+
+function escHtml(value) {
+  return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+}
+
+function fmtDate(iso) {
+  if (!iso) return "-"
+  return new Date(iso).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })
+}
+
+function equipmentStatusPill(status) {
+  const labels = { safe: "Safe", inspection_due: "Inspection Due", under_repair: "Under Repair" }
+  return `<span class="pill st-${status}">${labels[status] || status}</span>`
+}
+
+function inspectionStatusPill(status) {
+  const labels = { passed: "Passed", needs_attention: "Needs Attention", failed: "Failed" }
+  return `<span class="pill ir-${status}">${labels[status] || status}</span>`
+}
+
+let equipmentList = []
+let activeFilter = "all"
+let selectedEquipmentId = null
+
+function setFilter(filter, btn) {
+  activeFilter = filter
+  document.querySelectorAll(".filter-btn").forEach((button) => button.classList.remove("active"))
+  btn.classList.add("active")
+  renderEquipment()
+}
+
+async function loadSummary() {
+  try {
+    const res = await fetch("/api/equipment/summary", { headers: apiHeaders() })
+    if (!res.ok) return
+    const data = await res.json()
+    document.getElementById("sumTotal").textContent = data.total || 0
+    document.getElementById("sumSafe").textContent = data.safe || 0
+    document.getElementById("sumDue").textContent = data.inspection_due || 0
+    document.getElementById("sumRepair").textContent = data.under_repair || 0
+  } catch (_) {}
+}
+
+async function loadEquipment() {
+  try {
+    const res = await fetch("/api/equipment", { headers: apiHeaders() })
+    if (!res.ok) throw new Error("failed")
+    equipmentList = await res.json()
+  } catch (_) {
+    equipmentList = []
+  }
+  renderEquipment()
+  if (selectedEquipmentId) loadInspectionHistory(selectedEquipmentId)
+}
+
+function renderEquipment() {
+  const term = document.getElementById("search").value.trim().toLowerCase()
+  const body = document.getElementById("equipmentBody")
+  const filtered = equipmentList.filter((item) => {
+    const byFilter = activeFilter === "all" || item.status === activeFilter
+    const text = `${item.name} ${item.location} ${item.serial_number}`.toLowerCase()
+    const bySearch = !term || text.includes(term)
+    return byFilter && bySearch
+  })
+
+  if (!filtered.length) {
+    body.innerHTML = '<tr><td colspan="7" class="empty">No equipment found.</td></tr>'
+    return
+  }
+
+  body.innerHTML = filtered.map((item) => `
+    <tr>
+      <td><strong>${escHtml(item.name)}</strong></td>
+      <td>${escHtml(item.location || "-")}</td>
+      <td>${escHtml(item.serial_number || "-")}</td>
+      <td>${equipmentStatusPill(item.status)}</td>
+      <td>${fmtDate(item.last_inspection_date)}</td>
+      <td>${fmtDate(item.next_inspection_date)}</td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="selectEquipment(${item.id}, '${escHtml(item.name)}')">Inspect</button>
+      </td>
+    </tr>
+  `).join("")
+}
+
+function selectEquipment(id, name) {
+  selectedEquipmentId = id
+  document.getElementById("inspectionPanelTitle").textContent = `Inspection History: ${name}`
+  document.getElementById("inspectionFormState").textContent = `Recording inspection for ${name}`
+  loadInspectionHistory(id)
+}
+
+async function loadInspectionHistory(equipmentId) {
+  const container = document.getElementById("inspectionHistory")
+  container.innerHTML = '<div class="empty" style="padding:24px">Loading history...</div>'
+  try {
+    const res = await fetch(`/api/equipment/${equipmentId}/inspections`, { headers: apiHeaders() })
+    if (!res.ok) throw new Error("failed")
+    const history = await res.json()
+    if (!history.length) {
+      container.innerHTML = '<div class="empty" style="padding:24px">No inspections recorded yet.</div>'
+      return
+    }
+    container.innerHTML = history.map((item) => `
+      <div class="history-item">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+          <strong>${inspectionStatusPill(item.status)}</strong>
+          <span class="meta">${fmtDate(item.inspection_date)}${item.inspector_name ? ` by ${escHtml(item.inspector_name)}` : ""}</span>
+        </div>
+        <div style="margin-top:6px">${escHtml(item.checklist_summary || "No checklist summary provided.")}</div>
+        ${item.issues_found ? `<div style="margin-top:6px;color:var(--warn)">Issue: ${escHtml(item.issues_found)}</div>` : ""}
+        ${item.maintenance_task_id ? `<div style="margin-top:6px" class="meta">Maintenance task linked: #${item.maintenance_task_id}</div>` : ""}
+      </div>
+    `).join("")
+  } catch (_) {
+    container.innerHTML = '<div class="empty" style="padding:24px">Unable to load inspection history.</div>'
+  }
+}
+
+function openEquipmentModal() {
+  document.getElementById("equipmentModal").classList.add("open")
+}
+
+function closeEquipmentModal() {
+  document.getElementById("equipmentModal").classList.remove("open")
+}
+
+async function submitEquipment() {
+  const name = document.getElementById("equipmentName").value.trim()
+  if (!name) {
+    toast("Equipment name is required", true)
+    return
+  }
+
+  const payload = {
+    name,
+    location: document.getElementById("equipmentLocation").value.trim(),
+    serial_number: document.getElementById("equipmentSerial").value.trim(),
+    inspection_interval_days: parseInt(document.getElementById("equipmentInterval").value || "30", 10),
+  }
+
+  try {
+    const res = await fetch("/api/equipment", {
+      method: "POST",
+      headers: apiHeaders(),
+      body: JSON.stringify(payload),
+    })
+    if (!res.ok) throw new Error("failed")
+    closeEquipmentModal()
+    toast("Equipment registered")
+    loadSummary()
+    loadEquipment()
+  } catch (_) {
+    toast("Unable to register equipment", true)
+  }
+}
+
+async function submitInspection() {
+  if (!selectedEquipmentId) {
+    toast("Select equipment first", true)
+    return
+  }
+
+  const payload = {
+    status: document.getElementById("inspectionStatus").value,
+    checklist_summary: document.getElementById("checklistSummary").value.trim(),
+    issues_found: document.getElementById("issuesFound").value.trim(),
+    create_maintenance_task: document.getElementById("createTaskToggle").checked,
+    task_priority: document.getElementById("taskPriority").value,
+    assign_to_id: document.getElementById("assignToId").value ? parseInt(document.getElementById("assignToId").value, 10) : null,
+  }
+
+  try {
+    const res = await fetch(`/api/equipment/${selectedEquipmentId}/inspection`, {
+      method: "POST",
+      headers: apiHeaders(),
+      body: JSON.stringify(payload),
+    })
+    if (!res.ok) throw new Error("failed")
+    toast("Inspection saved")
+    document.getElementById("checklistSummary").value = ""
+    document.getElementById("issuesFound").value = ""
+    document.getElementById("createTaskToggle").checked = false
+    toggleTaskFields()
+    loadSummary()
+    loadEquipment()
+    loadInspectionHistory(selectedEquipmentId)
+  } catch (_) {
+    toast("Unable to save inspection", true)
+  }
+}
+
+function toggleTaskFields() {
+  const visible = document.getElementById("createTaskToggle").checked
+  document.getElementById("taskPriorityRow").style.display = visible ? "block" : "none"
+  document.getElementById("taskAssignRow").style.display = visible ? "block" : "none"
+}
+
+if (!canManage) {
+  document.getElementById("addEquipmentBtn").style.display = "none"
+}
+
+document.getElementById("createTaskToggle").addEventListener("change", toggleTaskFields)
+document.getElementById("equipmentModal").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) closeEquipmentModal()
+})
+
+fetch("../components/sidebar.html")
+  .then((res) => res.text())
+  .then((html) => {
+    document.getElementById("sidebar-container").innerHTML = html
+    initSearch()
+    const toggleBtn = document.getElementById("menuToggle")
+    const sidebar = document.querySelector(".sidebar")
+    const navbar = document.querySelector(".navbar")
+    const mainContent = document.querySelector(".main-content")
+    if (toggleBtn) {
+      toggleBtn.onclick = function () {
+        sidebar.classList.toggle("collapsed")
+        if (navbar) navbar.classList.toggle("expanded")
+        if (mainContent) mainContent.classList.toggle("expanded")
+        const footer = document.querySelector(".footer")
+        if (footer) footer.classList.toggle("expanded")
+      }
+    }
+  })
+
+fetch("../components/footer.html")
+  .then((res) => res.text())
+  .then((html) => { document.getElementById("footer").innerHTML = html })
+
+loadSummary()
+loadEquipment()
+</script>
+<script src="../js/main.js"></script>
+</body>
+</html>

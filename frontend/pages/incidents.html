@@ -1,392 +1,565 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Incidents</title>
-
+<title>Incident Reporting</title>
 <link rel="stylesheet" href="../css/style.css">
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-.incident-summary {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-gap: 14px;
-margin: 16px 0 20px;
+:root {
+	--primary: #0d6efd;
+	--border: #e2e8f0;
+	--panel: #f8fafc;
+	--muted: #64748b;
+	--warn: #d9480f;
+	--success: #2f9e44;
 }
+body { font-family: 'Space Grotesk', sans-serif; }
 
-.incident-card {
-background: #fff;
-border: 1px solid #e6edf5;
-border-radius: 10px;
-padding: 16px;
-box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
-}
+.head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+.head h1 { margin:0; font-size:1.6rem; }
+.sub { color:var(--muted); margin:4px 0 0; font-size:.9rem; }
 
-.incident-card h3 {
-margin: 0;
-font-size: 28px;
+.summary {
+	display:grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap:12px;
+	margin-bottom:18px;
 }
+.card {
+	background:#fff;
+	border:1px solid var(--border);
+	border-radius:14px;
+	padding:14px;
+	box-shadow:0 2px 8px rgba(15,23,42,.05);
+}
+.card strong { display:block; font-size:1.7rem; color:var(--primary); }
+.card span { color:var(--muted); font-size:.84rem; }
 
-.incident-toolbar {
-display: flex;
-justify-content: space-between;
-align-items: center;
-flex-wrap: wrap;
-gap: 10px;
-margin-bottom: 16px;
+.toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px; }
+.filters { display:flex; gap:6px; flex-wrap:wrap; }
+.filter-btn {
+	padding:7px 12px; border-radius:8px; border:1px solid var(--border);
+	background:#fff; font-size:.84rem; font-weight:600; cursor:pointer;
 }
+.filter-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
 
-.incident-filters {
-display: flex;
-gap: 8px;
-flex-wrap: wrap;
-}
+.search { padding:8px 11px; border:1px solid var(--border); border-radius:9px; min-width:230px; }
 
-.incident-filters button,
-.incident-actions button {
-padding: 8px 12px;
-border: 1px solid #d0d7de;
-border-radius: 8px;
-background: #5f4040;
-cursor: pointer;
+.btn {
+	display:inline-flex; align-items:center; gap:5px;
+	padding:8px 14px; border-radius:9px; border:1px solid transparent;
+	font-size:.84rem; font-weight:600; cursor:pointer;
 }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:#0b5ed7; }
+.btn-outline { background:#fff; color:#334155; border-color:var(--border); }
+.btn-outline:hover { background:var(--panel); }
+.btn-success { background:var(--success); color:#fff; }
+.btn-success:hover { background:#237a34; }
+.btn-sm { padding:5px 10px; border-radius:7px; font-size:.78rem; }
 
-.incident-filters button.active,
-.incident-actions .primary {
-background: #0b63ce;
-border-color: #0b63ce;
-color: #fff;
-}
+.table-wrap { background:#fff; border:1px solid var(--border); border-radius:16px; overflow:auto; }
+.table { width:100%; border-collapse:collapse; min-width:980px; }
+.table th, .table td { padding:11px 13px; border-bottom:1px solid #eff3f7; font-size:.88rem; text-align:left; }
+.table th { background:var(--panel); color:var(--muted); font-size:.8rem; letter-spacing:.04em; }
+.table tr:last-child td { border-bottom:none; }
 
-.incident-search {
-padding: 8px 10px;
-border: 1px solid #d0d7de;
-border-radius: 8px;
-min-width: 220px;
-}
+.pill { display:inline-flex; padding:3px 10px; border-radius:999px; font-size:.76rem; font-weight:700; }
+.sev-low { background:#e9f7ef; color:#2f9e44; }
+.sev-medium { background:#fff4e5; color:#8c5d00; }
+.sev-high { background:#fdecea; color:#b3261e; }
+.sev-critical { background:#b3261e; color:#fff; }
 
-.incident-table-wrap {
-background: #fff;
-border: 1px solid #e6edf5;
-border-radius: 10px;
-overflow: auto;
-}
+.st-open { background:#e8f0fe; color:#1a56db; }
+.st-investigating { background:#fff4e5; color:#8c5d00; }
+.st-closed { background:#e9f7ef; color:#2f9e44; }
 
-.incident-table {
-width: 100%;
-border-collapse: collapse;
-min-width: 920px;
-}
+.empty { text-align:center; color:var(--muted); padding:42px; }
 
-.incident-table th,
-.incident-table td {
-padding: 12px;
-text-align: left;
-border-bottom: 1px solid #eef3f8;
-font-size: 14px;
+.modal-overlay {
+	display:none; position:fixed; inset:0; z-index:1000;
+	background:rgba(15,23,42,.45);
+	align-items:center; justify-content:center;
 }
+.modal-overlay.open { display:flex; }
+.modal {
+	width:100%; max-width:540px; max-height:90vh; overflow-y:auto;
+	background:#fff; border-radius:18px; padding:24px;
+	box-shadow:0 20px 60px rgba(15,23,42,.2);
+}
+.modal h2 { margin:0 0 16px; font-size:1.2rem; }
+.row { margin-bottom:12px; }
+.row label { display:block; font-size:.82rem; margin-bottom:5px; font-weight:600; color:#334155; }
+.input, .select, .textarea {
+	width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:9px;
+	padding:9px 11px; background:var(--panel); font-family:inherit; font-size:.88rem;
+}
+.textarea { min-height:84px; resize:vertical; }
+.actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
 
-.incident-table th {
-background: #f8fbff;
-font-weight: 700;
+#toast {
+	position:fixed; bottom:24px; right:24px; z-index:9999;
+	background:#1e293b; color:#fff; border-radius:10px; padding:10px 16px;
+	opacity:0; pointer-events:none; transition:opacity .25s;
 }
+#toast.show { opacity:1; }
 
-.severity-pill,
-.status-pill {
-display: inline-block;
-padding: 4px 8px;
-border-radius: 999px;
-font-size: 12px;
-font-weight: 700;
-}
-
-.severity-pill.high {
-background: #fdecea;
-color: #b3261e;
-}
-
-.severity-pill.medium {
-background: #fff4e5;
-color: #8c5d00;
-}
-
-.severity-pill.low {
-background: #e9f7ef;
-color: #146c43;
-}
-
-.status-pill.open {
-background: #e8f0fe;
-color: #174ea6;
-}
-
-.status-pill.investigating {
-background: #fff4e5;
-color: #8c5d00;
-}
-
-.status-pill.closed {
-background: #e9f7ef;
-color: #146c43;
-}
-
-.row-actions button {
-padding: 6px 10px;
-border: 1px solid #d0d7de;
-border-radius: 8px;
-background: #6a7a2e;
-cursor: pointer;
-margin-right: 6px;
-}
-
-.status-note {
-margin-top: 12px;
-font-size: 14px;
-min-height: 20px;
-color: #1e6f43;
-}
+@media(max-width:680px){ .table { min-width:700px; } }
 </style>
-
 </head>
-
 <body>
-
 <div class="navbar">
-<div class="logo">AI Safety Platform</div>
-<div class="nav-right">
-<span>Admin</span>
-<button onclick="logout()">Logout</button>
-</div>
+	<div class="logo">AI Safety Platform</div>
+	<div class="nav-right">
+		<span id="navUsername">User</span>
+		<button onclick="logout()">Logout</button>
+	</div>
 </div>
 
 <div id="sidebar-container"></div>
 
 <div class="main-content">
-<h1>Incidents</h1>
-<p>Review active incidents, investigation progress, and resolved safety events.</p>
+	<div class="head">
+		<div>
+			<h1>Incident Reports</h1>
+			<p class="sub">Track workplace injuries, near-misses, accidents, and investigations for compliance.</p>
+		</div>
+		<button class="btn btn-primary" onclick="openReportModal()">+ Report Incident</button>
+	</div>
 
-<div class="incident-summary">
-<div class="incident-card">
-<h3>27</h3>
-<p>Total Incidents</p>
-</div>
-<div class="incident-card">
-<h3>5</h3>
-<p>Open Cases</p>
-</div>
-<div class="incident-card">
-<h3>3</h3>
-<p>High Severity</p>
-</div>
-<div class="incident-card">
-<h3>81%</h3>
-<p>Closed Within SLA</p>
-</div>
-</div>
+	<div class="summary">
+		<div class="card"><strong id="sumTotal">0</strong><span>Total</span></div>
+		<div class="card"><strong id="sumOpen" style="color:#1a56db">0</strong><span>Open</span></div>
+		<div class="card"><strong id="sumInvestigating" style="color:#8c5d00">0</strong><span>Investigating</span></div>
+		<div class="card"><strong id="sumClosed" style="color:var(--success)">0</strong><span>Closed</span></div>
+		<div class="card"><strong id="sumCritical" style="color:#b3261e">0</strong><span>Critical Severity</span></div>
+	</div>
 
-<div class="incident-toolbar">
-<div class="incident-filters">
-<button class="active" data-filter="all">All</button>
-<button data-filter="open">Open</button>
-<button data-filter="investigating">Investigating</button>
-<button data-filter="closed">Closed</button>
-</div>
-<div class="incident-actions">
-<input id="incidentSearch" class="incident-search" type="text" placeholder="Search incident, site, or owner...">
-<button class="primary" onclick="reportIncident()">Report Incident</button>
-</div>
-</div>
+	<div class="toolbar">
+		<div class="filters">
+			<button class="filter-btn active" data-filter="all" onclick="setStatusFilter('all', this)">All</button>
+			<button class="filter-btn" data-filter="open" onclick="setStatusFilter('open', this)">Open</button>
+			<button class="filter-btn" data-filter="investigating" onclick="setStatusFilter('investigating', this)">Investigating</button>
+			<button class="filter-btn" data-filter="closed" onclick="setStatusFilter('closed', this)">Closed</button>
+		</div>
+		<input class="search" id="search" type="text" placeholder="Search type, location, reporter..." oninput="renderIncidents()">
+	</div>
 
-<div class="incident-table-wrap">
-<table class="incident-table" id="incidentTable">
-<thead>
-<tr>
-<th>ID</th>
-<th>Incident</th>
-<th>Severity</th>
-<th>Status</th>
-<th>Site</th>
-<th>Owner</th>
-<th>Date</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody>
-<tr data-status="open">
-<td>INC-204</td>
-<td>Forklift collision near loading bay</td>
-<td><span class="severity-pill high">High</span></td>
-<td><span class="status-pill open">Open</span></td>
-<td>Warehouse 2</td>
-<td>N. Verma</td>
-<td>13 Mar 2026</td>
-<td class="row-actions">
-<button onclick="advanceIncident(this)">Start Review</button>
-<button onclick="viewIncident(this)">View</button>
-</td>
-</tr>
-<tr data-status="investigating">
-<td>INC-203</td>
-<td>Electrical panel overheating alert</td>
-<td><span class="severity-pill medium">Medium</span></td>
-<td><span class="status-pill investigating">Investigating</span></td>
-<td>Plant A</td>
-<td>R. Menon</td>
-<td>12 Mar 2026</td>
-<td class="row-actions">
-<button onclick="closeIncident(this)">Close</button>
-<button onclick="viewIncident(this)">View</button>
-</td>
-</tr>
-<tr data-status="closed">
-<td>INC-202</td>
-<td>Slip event in wet corridor</td>
-<td><span class="severity-pill low">Low</span></td>
-<td><span class="status-pill closed">Closed</span></td>
-<td>Office Block</td>
-<td>A. Singh</td>
-<td>11 Mar 2026</td>
-<td class="row-actions">
-<button onclick="viewIncident(this)">View</button>
-</td>
-</tr>
-<tr data-status="open">
-<td>INC-201</td>
-<td>Missing PPE in fabrication zone</td>
-<td><span class="severity-pill high">High</span></td>
-<td><span class="status-pill open">Open</span></td>
-<td>Fabrication Yard</td>
-<td>S. Thomas</td>
-<td>10 Mar 2026</td>
-<td class="row-actions">
-<button onclick="advanceIncident(this)">Start Review</button>
-<button onclick="viewIncident(this)">View</button>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-
-<div class="status-note" id="incidentStatus"></div>
-
+	<div class="table-wrap">
+		<table class="table">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Incident</th>
+					<th>Severity</th>
+					<th>Status</th>
+					<th>Location</th>
+					<th>Reported By</th>
+					<th>Date</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody id="tbody">
+				<tr><td colspan="8" class="empty">Loading incidents...</td></tr>
+			</tbody>
+		</table>
+	</div>
 </div>
 
 <div id="footer"></div>
+<div id="toast"></div>
+
+<div class="modal-overlay" id="reportModal">
+	<div class="modal">
+		<h2>Report Incident</h2>
+		<div class="row">
+			<label>Incident Type *</label>
+			<input class="input" id="repType" placeholder="e.g. Fall injury">
+		</div>
+		<div class="row">
+			<label>Location</label>
+			<input class="input" id="repLocation" placeholder="e.g. Warehouse A">
+		</div>
+		<div class="row">
+			<label>Severity</label>
+			<select class="select" id="repSeverity">
+				<option value="low">Low</option>
+				<option value="medium" selected>Medium</option>
+				<option value="high">High</option>
+				<option value="critical">Critical</option>
+			</select>
+		</div>
+		<div class="row">
+			<label>Description *</label>
+			<textarea class="textarea" id="repDescription" placeholder="What happened?"></textarea>
+		</div>
+		<div class="row">
+			<label>Immediate Action</label>
+			<textarea class="textarea" id="repImmediate" placeholder="What was done immediately after incident?"></textarea>
+		</div>
+		<div class="row">
+			<label>Project ID (optional)</label>
+			<input class="input" id="repProject" type="number" placeholder="1">
+		</div>
+		<div class="actions">
+			<button class="btn btn-outline" onclick="closeReportModal()">Cancel</button>
+			<button class="btn btn-primary" onclick="submitIncident()">Submit</button>
+		</div>
+	</div>
+</div>
+
+<div class="modal-overlay" id="investigateModal">
+	<div class="modal">
+		<h2 id="invTitle">Investigation</h2>
+		<div class="row">
+			<label>Root Cause *</label>
+			<textarea class="textarea" id="invRoot" placeholder="e.g. Ladder not secured"></textarea>
+		</div>
+		<div class="row">
+			<label>Contributing Factor</label>
+			<textarea class="textarea" id="invFactor" placeholder="e.g. Wet surface"></textarea>
+		</div>
+		<div class="row">
+			<label>Corrective Action *</label>
+			<textarea class="textarea" id="invAction" placeholder="What corrective action will be taken?"></textarea>
+		</div>
+		<div class="row" id="taskLinkRow">
+			<label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+				<input type="checkbox" id="invCreateTask"> Create follow-up hazard task
+			</label>
+		</div>
+		<div class="row" id="taskPriorityRow" style="display:none">
+			<label>Task Priority</label>
+			<select class="select" id="invTaskPriority">
+				<option value="low">Low</option>
+				<option value="medium">Medium</option>
+				<option value="high" selected>High</option>
+				<option value="critical">Critical</option>
+			</select>
+		</div>
+		<div class="row" id="taskAssignRow" style="display:none">
+			<label>Assign Task To (User ID)</label>
+			<input class="input" id="invAssignTo" type="number" placeholder="Optional">
+		</div>
+		<div class="actions">
+			<button class="btn btn-outline" onclick="closeInvestigateModal()">Cancel</button>
+			<button class="btn btn-primary" onclick="submitInvestigation()">Save Investigation</button>
+		</div>
+	</div>
+</div>
 
 <script>
-fetch("../components/sidebar.html")
-.then(res => res.text())
-.then(data => {
-document.getElementById("sidebar-container").innerHTML = data
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
+if (!token) window.location.href = "login.html"
 
-initSearch()
+const role = (localStorage.getItem("user_role") || "worker").toLowerCase()
+const canInvestigate = role === "admin" || role === "manager"
+document.getElementById("navUsername").textContent = localStorage.getItem("username") || "User"
 
-const toggleBtn = document.getElementById("menuToggle")
-const sidebar = document.querySelector(".sidebar")
-const navbar = document.querySelector(".navbar")
-const mainContent = document.querySelector(".main-content")
+if (!canInvestigate) {
+	const taskLinkRow = document.getElementById("taskLinkRow")
+	const taskPriorityRow = document.getElementById("taskPriorityRow")
+	const taskAssignRow = document.getElementById("taskAssignRow")
+	if (taskLinkRow) taskLinkRow.style.display = "none"
+	if (taskPriorityRow) taskPriorityRow.style.display = "none"
+	if (taskAssignRow) taskAssignRow.style.display = "none"
+}
 
-if(toggleBtn){
-toggleBtn.onclick = function(){
-sidebar.classList.toggle("collapsed")
-if(navbar) navbar.classList.toggle("expanded")
-if(mainContent) mainContent.classList.toggle("expanded")
-const footer = document.querySelector(".footer")
-if(footer){
-footer.classList.toggle("expanded")
+function apiHeaders() {
+	const headers = { "Content-Type": "application/json" }
+	if (token && token !== "loggedin") headers["Authorization"] = "Bearer " + token
+	return headers
 }
+
+function logout() {
+	localStorage.removeItem("token")
+	localStorage.removeItem("auth_token")
+	window.location.href = "login.html"
 }
+
+function toast(msg, err) {
+	const el = document.getElementById("toast")
+	el.textContent = msg
+	el.style.background = err ? "#b3261e" : "#1e293b"
+	el.classList.add("show")
+	setTimeout(() => el.classList.remove("show"), 2800)
 }
+
+function escHtml(s) {
+	return String(s || "")
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+}
+
+function formatDate(iso) {
+	if (!iso) return "-"
+	return new Date(iso).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })
+}
+
+function severityPill(severity) {
+	return `<span class="pill sev-${severity}">${String(severity || "low").toUpperCase()}</span>`
+}
+
+function statusPill(status) {
+	const labels = { open: "Open", investigating: "Investigating", closed: "Closed" }
+	return `<span class="pill st-${status}">${labels[status] || status}</span>`
+}
+
+let incidents = []
+let activeStatus = "all"
+let selectedIncidentId = null
+
+function setStatusFilter(status, btn) {
+	activeStatus = status
+	document.querySelectorAll(".filter-btn").forEach((el) => el.classList.remove("active"))
+	btn.classList.add("active")
+	renderIncidents()
+}
+
+async function loadSummary() {
+	try {
+		const res = await fetch("/api/incidents/summary", { headers: apiHeaders() })
+		if (!res.ok) return
+		const data = await res.json()
+		document.getElementById("sumTotal").textContent = data.total || 0
+		document.getElementById("sumOpen").textContent = data.open || 0
+		document.getElementById("sumInvestigating").textContent = data.investigating || 0
+		document.getElementById("sumClosed").textContent = data.closed || 0
+		document.getElementById("sumCritical").textContent = data.critical || 0
+	} catch (_) {}
+}
+
+async function loadIncidents() {
+	try {
+		const res = await fetch("/api/incidents", { headers: apiHeaders() })
+		if (!res.ok) throw new Error("Failed")
+		incidents = await res.json()
+	} catch (_) {
+		incidents = []
+	}
+	renderIncidents()
+}
+
+function renderIncidents() {
+	const term = document.getElementById("search").value.trim().toLowerCase()
+	const tbody = document.getElementById("tbody")
+
+	const filtered = incidents.filter((item) => {
+		const byStatus = activeStatus === "all" || item.status === activeStatus
+		const searchable = `${item.incident_type} ${item.location} ${item.reported_by_name || ""}`.toLowerCase()
+		const byText = !term || searchable.includes(term)
+		return byStatus && byText
+	})
+
+	if (!filtered.length) {
+		tbody.innerHTML = '<tr><td colspan="8" class="empty">No incidents found.</td></tr>'
+		return
+	}
+
+	tbody.innerHTML = filtered.map((item) => {
+		const canClose = canInvestigate && item.status !== "closed" && item.investigation
+		const canOpenInvestigation = canInvestigate && item.status !== "closed"
+
+		return `
+			<tr>
+				<td><strong>INC-${item.id}</strong></td>
+				<td>
+					<div style="font-weight:600">${escHtml(item.incident_type)}</div>
+					<div style="font-size:.78rem;color:var(--muted)">${escHtml(item.description || "")}</div>
+				</td>
+				<td>${severityPill(item.severity)}</td>
+				<td>${statusPill(item.status)}</td>
+				<td>${escHtml(item.location || "-")}</td>
+				<td>${escHtml(item.reported_by_name || "system")}</td>
+				<td>${formatDate(item.created_at)}</td>
+				<td>
+					<button class="btn btn-outline btn-sm" onclick="viewIncident(${item.id})">View</button>
+					${canOpenInvestigation ? `<button class="btn btn-outline btn-sm" onclick="openInvestigateModal(${item.id})">Investigate</button>` : ""}
+					${canClose ? `<button class="btn btn-success btn-sm" onclick="closeIncident(${item.id})">Close</button>` : ""}
+				</td>
+			</tr>
+		`
+	}).join("")
+}
+
+function viewIncident(id) {
+	const incident = incidents.find((x) => x.id === id)
+	if (!incident) return
+
+	let details = `Type: ${incident.incident_type}\nLocation: ${incident.location || "-"}\nSeverity: ${incident.severity}\nStatus: ${incident.status}\n\nDescription:\n${incident.description || "-"}`
+	if (incident.immediate_action) details += `\n\nImmediate Action:\n${incident.immediate_action}`
+	if (incident.investigation) {
+		details += `\n\nRoot Cause:\n${incident.investigation.root_cause}`
+		details += `\n\nCorrective Action:\n${incident.investigation.corrective_action}`
+		if (incident.investigation.contributing_factor) {
+			details += `\n\nContributing Factor:\n${incident.investigation.contributing_factor}`
+		}
+	}
+	alert(details)
+}
+
+function openReportModal() {
+	document.getElementById("reportModal").classList.add("open")
+}
+
+function closeReportModal() {
+	document.getElementById("reportModal").classList.remove("open")
+}
+
+async function submitIncident() {
+	const incident_type = document.getElementById("repType").value.trim()
+	const description = document.getElementById("repDescription").value.trim()
+
+	if (!incident_type || !description) {
+		toast("Incident type and description are required", true)
+		return
+	}
+
+	const projectRaw = document.getElementById("repProject").value.trim()
+	const payload = {
+		incident_type,
+		description,
+		location: document.getElementById("repLocation").value.trim(),
+		severity: document.getElementById("repSeverity").value,
+		immediate_action: document.getElementById("repImmediate").value.trim(),
+		project_id: projectRaw ? parseInt(projectRaw, 10) : null,
+	}
+
+	try {
+		const res = await fetch("/api/incidents", {
+			method: "POST",
+			headers: apiHeaders(),
+			body: JSON.stringify(payload),
+		})
+		if (!res.ok) throw new Error("failed")
+		closeReportModal()
+		toast("Incident reported")
+		loadSummary()
+		loadIncidents()
+	} catch (_) {
+		toast("Unable to report incident", true)
+	}
+}
+
+function openInvestigateModal(incidentId) {
+	selectedIncidentId = incidentId
+	const incident = incidents.find((x) => x.id === incidentId)
+	document.getElementById("invTitle").textContent = `Investigation for INC-${incidentId}`
+	document.getElementById("invRoot").value = incident?.investigation?.root_cause || ""
+	document.getElementById("invFactor").value = incident?.investigation?.contributing_factor || ""
+	document.getElementById("invAction").value = incident?.investigation?.corrective_action || ""
+	document.getElementById("invCreateTask").checked = false
+	document.getElementById("invTaskPriority").value = "high"
+	document.getElementById("invAssignTo").value = ""
+	toggleTaskCreateOptions()
+	document.getElementById("investigateModal").classList.add("open")
+}
+
+function closeInvestigateModal() {
+	document.getElementById("investigateModal").classList.remove("open")
+}
+
+async function submitInvestigation() {
+	if (!selectedIncidentId) return
+
+	const root_cause = document.getElementById("invRoot").value.trim()
+	const corrective_action = document.getElementById("invAction").value.trim()
+	const contributing_factor = document.getElementById("invFactor").value.trim()
+	const create_task = document.getElementById("invCreateTask").checked
+	const task_priority = document.getElementById("invTaskPriority").value
+	const assignRaw = document.getElementById("invAssignTo").value.trim()
+	const assign_to_id = assignRaw ? parseInt(assignRaw, 10) : null
+
+	if (!root_cause || !corrective_action) {
+		toast("Root cause and corrective action are required", true)
+		return
+	}
+
+	try {
+		const res = await fetch(`/api/incidents/${selectedIncidentId}/investigation`, {
+			method: "PUT",
+			headers: apiHeaders(),
+			body: JSON.stringify({ root_cause, corrective_action, contributing_factor, create_task, task_priority, assign_to_id }),
+		})
+		if (!res.ok) throw new Error("failed")
+		closeInvestigateModal()
+		toast("Investigation saved")
+		loadSummary()
+		loadIncidents()
+	} catch (_) {
+		toast("Unable to save investigation", true)
+	}
+}
+
+function toggleTaskCreateOptions() {
+	const enabled = document.getElementById("invCreateTask").checked
+	document.getElementById("taskPriorityRow").style.display = enabled ? "block" : "none"
+	document.getElementById("taskAssignRow").style.display = enabled ? "block" : "none"
+}
+
+async function closeIncident(incidentId) {
+	if (!confirm("Close this incident?")) return
+	try {
+		const res = await fetch(`/api/incidents/${incidentId}/close`, {
+			method: "PUT",
+			headers: apiHeaders(),
+		})
+		if (!res.ok) {
+			const err = await res.json().catch(() => ({}))
+			throw new Error(err.detail || "failed")
+		}
+		toast("Incident closed")
+		loadSummary()
+		loadIncidents()
+	} catch (e) {
+		toast(e.message || "Unable to close incident", true)
+	}
+}
+
+document.getElementById("reportModal").addEventListener("click", (e) => {
+	if (e.target === e.currentTarget) closeReportModal()
 })
+document.getElementById("investigateModal").addEventListener("click", (e) => {
+	if (e.target === e.currentTarget) closeInvestigateModal()
+})
+document.getElementById("invCreateTask").addEventListener("change", toggleTaskCreateOptions)
+
+fetch("../components/sidebar.html")
+	.then((res) => res.text())
+	.then((html) => {
+		document.getElementById("sidebar-container").innerHTML = html
+		initSearch()
+
+		const toggleBtn = document.getElementById("menuToggle")
+		const sidebar = document.querySelector(".sidebar")
+		const navbar = document.querySelector(".navbar")
+		const mainContent = document.querySelector(".main-content")
+
+		if (toggleBtn) {
+			toggleBtn.onclick = function () {
+				sidebar.classList.toggle("collapsed")
+				if (navbar) navbar.classList.toggle("expanded")
+				if (mainContent) mainContent.classList.toggle("expanded")
+				const footer = document.querySelector(".footer")
+				if (footer) footer.classList.toggle("expanded")
+			}
+		}
+	})
 
 fetch("../components/footer.html")
-.then(res => res.text())
-.then(data => {
-document.getElementById("footer").innerHTML = data
-})
+	.then((res) => res.text())
+	.then((html) => {
+		document.getElementById("footer").innerHTML = html
+	})
 
-if(!localStorage.getItem("token")){
-window.location.href = "login.html"
-}
-
-function logout(){
-localStorage.removeItem("token")
-window.location.href = "login.html"
-}
-
-const incidentSearch = document.getElementById("incidentSearch")
-const incidentTableBody = document.querySelector("#incidentTable tbody")
-let activeIncidentFilter = "all"
-
-function applyIncidentFilters(){
-const term = incidentSearch.value.trim().toLowerCase()
-const rows = Array.from(incidentTableBody.querySelectorAll("tr"))
-
-rows.forEach(row => {
-const rowStatus = row.getAttribute("data-status")
-const rowText = row.textContent.toLowerCase()
-const matchesStatus = activeIncidentFilter === "all" || rowStatus === activeIncidentFilter
-const matchesText = term === "" || rowText.includes(term)
-row.style.display = matchesStatus && matchesText ? "table-row" : "none"
-})
-}
-
-function reportIncident(){
-setIncidentStatus("Incident reporting flow requested.")
-}
-
-function viewIncident(button){
-const row = button.closest("tr")
-if(!row) return
-setIncidentStatus("Viewing incident " + row.children[0].textContent.trim() + ".")
-}
-
-function advanceIncident(button){
-const row = button.closest("tr")
-if(!row) return
-row.setAttribute("data-status", "investigating")
-const status = row.querySelector(".status-pill")
-status.className = "status-pill investigating"
-status.textContent = "Investigating"
-button.textContent = "Close"
-button.setAttribute("onclick", "closeIncident(this)")
-setIncidentStatus("Incident moved to investigating.")
-applyIncidentFilters()
-}
-
-function closeIncident(button){
-const row = button.closest("tr")
-if(!row) return
-row.setAttribute("data-status", "closed")
-const status = row.querySelector(".status-pill")
-status.className = "status-pill closed"
-status.textContent = "Closed"
-button.textContent = "View"
-button.setAttribute("onclick", "viewIncident(this)")
-setIncidentStatus("Incident closed.")
-applyIncidentFilters()
-}
-
-function setIncidentStatus(message){
-document.getElementById("incidentStatus").textContent = message
-}
-
-document.querySelectorAll(".incident-filters button").forEach(button => {
-button.addEventListener("click", function(){
-document.querySelectorAll(".incident-filters button").forEach(btn => btn.classList.remove("active"))
-this.classList.add("active")
-activeIncidentFilter = this.getAttribute("data-filter")
-applyIncidentFilters()
-})
-})
-
-incidentSearch.addEventListener("input", applyIncidentFilters)
+loadSummary()
+loadIncidents()
 </script>
-
 <script src="../js/main.js"></script>
-
 </body>
 </html>

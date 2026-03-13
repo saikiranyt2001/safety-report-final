@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inspection Checklist Builder - Safety SaaS</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary: #0d6efd;
+  --panel: #f8fafc;
+  --panel-strong: #fff;
+  --border: #e2e8f0;
+  --muted: #64748b;
+  --warn: #d9480f;
+  --success: #2f9e44;
+}
+
+body { font-family: 'Space Grotesk', sans-serif; }
+
+/* ---- view switching ---- */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ---- page header ---- */
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.page-head h1 { margin: 0; font-size: 1.6rem; }
+.page-subtitle { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+/* ---- stat strip ---- */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-chip {
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 8px rgba(15,23,42,.05);
+}
+
+.stat-chip strong { display: block; font-size: 1.7rem; color: var(--primary); }
+.stat-chip span { font-size: 0.82rem; color: var(--muted); }
+
+/* ---- template cards grid ---- */
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.template-card {
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 4px 12px rgba(15,23,42,.06);
+  transition: box-shadow .2s;
+}
+
+.template-card:hover { box-shadow: 0 8px 24px rgba(15,23,42,.1); }
+
+.tc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tc-name { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.tc-desc { font-size: 0.84rem; color: var(--muted); margin: 6px 0 12px; }
+
+.tc-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.badge-blue  { background: #e8f0fe; color: #1a56db; border-color: #c3d7f9; }
+.badge-green { background: #e9f7ef; color: #2f9e44; border-color: #b2e8bf; }
+.badge-red   { background: #fdecea; color: #b3261e; border-color: #f8c5c1; }
+.badge-grey  { background: #f1f5f9; color: var(--muted); }
+
+.tc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: #0b5ed7; }
+.btn-outline { background: #fff; color: #334155; border-color: var(--border); }
+.btn-outline:hover { background: #f1f5f9; }
+.btn-danger { background: #fff; color: var(--warn); border-color: #f8c5c1; }
+.btn-danger:hover { background: #fdecea; }
+.btn-success { background: var(--success); color: #fff; border-color: var(--success); }
+.btn-success:hover { background: #27863a; }
+.btn-sm { padding: 5px 11px; font-size: 0.82rem; border-radius: 8px; }
+
+/* ---- builder panel ---- */
+.builder-panel {
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 6px 20px rgba(15,23,42,.07);
+  max-width: 780px;
+}
+
+.form-row { margin-bottom: 16px; }
+
+.form-row label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  background: var(--panel);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(13,110,253,.12);
+}
+
+.questions-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.question-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.q-num {
+  min-width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e8f0fe;
+  color: var(--primary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.q-text { flex: 1; }
+
+.add-question-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.add-question-row .form-input { flex: 1; }
+
+/* ---- fill checklist ---- */
+.fill-header {
+  background: linear-gradient(140deg, #f2fbff, #ecfff1);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.fill-header h2 { margin: 0 0 4px; }
+.fill-header p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+.checklist-form {
+  display: grid;
+  gap: 12px;
+}
+
+.checklist-item {
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.ci-question {
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.ci-answers {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.answer-btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.answer-btn.pass  { color: var(--success); border-color: #b2e8bf; }
+.answer-btn.fail  { color: var(--warn);    border-color: #f8c5c1; }
+.answer-btn.na    { color: var(--muted);   border-color: #d1d5db; }
+
+.answer-btn.selected.pass { background: #e9f7ef; }
+.answer-btn.selected.fail { background: #fdecea; }
+.answer-btn.selected.na   { background: #f1f5f9; }
+
+.ci-notes {
+  margin-top: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  resize: none;
+  background: var(--panel);
+}
+
+/* ---- result card ---- */
+.result-card {
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px 24px;
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(15,23,42,.07);
+}
+
+.result-score {
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+  margin: 12px 0 4px;
+}
+
+.result-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.result-meta-item strong { display: block; font-size: 1.4rem; font-weight: 700; }
+.result-meta-item span { font-size: 0.82rem; color: var(--muted); }
+
+/* ---- empty state ---- */
+.empty-state {
+  text-align: center;
+  padding: 52px 20px;
+  color: var(--muted);
+}
+
+.empty-state svg { opacity: .4; margin-bottom: 12px; }
+.empty-state p { margin: 4px 0; }
+
+/* ---- toolbar ---- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.toolbar-left { display: flex; gap: 8px; align-items: center; }
+
+.search-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  min-width: 220px;
+}
+
+/* ---- toast ---- */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #1e293b;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s;
+  z-index: 9999;
+}
+
+#toast.show { opacity: 1; }
+
+@media (max-width: 640px) {
+  .templates-grid { grid-template-columns: 1fr; }
+  .stat-strip { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+  <div class="logo">AI Safety Platform</div>
+  <div class="nav-right">
+    <span id="navUsername">Manager</span>
+    <button onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div id="sidebar-container"></div>
+
+<div class="main-content">
+
+  <!-- ==============================
+       VIEW 1 — Template List
+       ============================== -->
+  <div class="view active" id="viewList">
+
+    <div class="page-head">
+      <div>
+        <h1>Inspection Checklist Builder</h1>
+        <p class="page-subtitle">Create and manage digital inspection templates for your sites.</p>
+      </div>
+      <button class="btn btn-primary" onclick="showBuilder(null)">+ New Template</button>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat-chip">
+        <strong id="statTotal">0</strong>
+        <span>Templates</span>
+      </div>
+      <div class="stat-chip">
+        <strong id="statQuestions">0</strong>
+        <span>Total Questions</span>
+      </div>
+      <div class="stat-chip">
+        <strong id="statInspections">—</strong>
+        <span>Inspections Run</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <input class="search-input" type="text" id="templateSearch" placeholder="Search templates…" oninput="filterTemplates()">
+      <span id="noTemplatesHint" style="font-size:.85rem;color:var(--muted);display:none">No templates yet — create your first one.</span>
+    </div>
+
+    <div class="templates-grid" id="templatesGrid">
+      <div class="empty-state" id="loadingPlaceholder">
+        <p>Loading templates…</p>
+      </div>
+    </div>
+
+  </div><!-- /viewList -->
+
+
+  <!-- ==============================
+       VIEW 2 — Template Builder
+       ============================== -->
+  <div class="view" id="viewBuilder">
+
+    <div class="page-head">
+      <div>
+        <h1 id="builderTitle">New Inspection Template</h1>
+        <p class="page-subtitle">Add checklist questions that inspectors will answer on site.</p>
+      </div>
+      <button class="btn btn-outline" onclick="showList()">← Back to Templates</button>
+    </div>
+
+    <div class="builder-panel">
+      <input type="hidden" id="editTemplateId">
+
+      <div class="form-row">
+        <label for="templateName">Template Name *</label>
+        <input class="form-input" type="text" id="templateName" placeholder="e.g. Construction Safety Inspection">
+      </div>
+
+      <div class="form-row">
+        <label for="templateDesc">Description</label>
+        <input class="form-input" type="text" id="templateDesc" placeholder="Brief description of when this checklist is used">
+      </div>
+
+      <div class="form-row">
+        <label>Checklist Questions</label>
+        <ul class="questions-list" id="questionsList"></ul>
+
+        <div class="add-question-row">
+          <input class="form-input" type="text" id="newQuestionText" placeholder="Type a question…" onkeydown="if(event.key==='Enter'){event.preventDefault();addQuestion()}">
+          <button class="btn btn-outline" onclick="addQuestion()">+ Add</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="saveTemplate()">Save Template</button>
+        <button class="btn btn-outline" onclick="showList()">Cancel</button>
+      </div>
+
+      <p id="builderStatus" style="margin:10px 0 0;font-size:.85rem;color:var(--success);min-height:20px"></p>
+    </div>
+
+  </div><!-- /viewBuilder -->
+
+
+  <!-- ==============================
+       VIEW 3 — Fill Inspection
+       ============================== -->
+  <div class="view" id="viewFill">
+
+    <div class="page-head">
+      <div>
+        <h1>Fill Inspection Checklist</h1>
+        <p class="page-subtitle">Answer each question on site. Submit to calculate your safety score.</p>
+      </div>
+      <button class="btn btn-outline" onclick="showList()">← Back to Templates</button>
+    </div>
+
+    <div class="fill-header">
+      <h2 id="fillTemplateName"></h2>
+      <p id="fillTemplateDesc"></p>
+    </div>
+
+    <div class="checklist-form" id="checklistForm"></div>
+
+    <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-success" onclick="submitInspection()">Submit Inspection</button>
+      <button class="btn btn-outline" onclick="showList()">Cancel</button>
+    </div>
+
+    <p id="fillStatus" style="margin:10px 0 0;font-size:.85rem;color:var(--warn);min-height:20px"></p>
+
+  </div><!-- /viewFill -->
+
+
+  <!-- ==============================
+       VIEW 4 — Result
+       ============================== -->
+  <div class="view" id="viewResult">
+
+    <div class="page-head">
+      <div>
+        <h1>Inspection Complete</h1>
+        <p class="page-subtitle">Your inspection has been submitted and the safety score calculated.</p>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <p style="color:var(--muted);font-size:.9rem;margin:0">Safety Score</p>
+      <div class="result-score" id="resultScore">—%</div>
+      <div class="badge badge-grey" id="resultRiskBadge" style="font-size:.9rem;padding:5px 14px">—</div>
+
+      <div class="result-meta">
+        <div class="result-meta-item">
+          <strong id="resultPass" style="color:var(--success)">—</strong>
+          <span>Passed</span>
+        </div>
+        <div class="result-meta-item">
+          <strong id="resultFail" style="color:var(--warn)">—</strong>
+          <span>Failed</span>
+        </div>
+        <div class="result-meta-item">
+          <strong id="resultTotal">—</strong>
+          <span>Total</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="showList()">Back to Templates</button>
+        <button class="btn btn-outline" onclick="window.location.href='generate_report.html'">Generate Report</button>
+      </div>
+    </div>
+
+  </div><!-- /viewResult -->
+
+</div><!-- /main-content -->
+
+<div id="footer"></div>
+<div id="toast"></div>
+
+<script>
+// =====================
+// Bootstrap
+// =====================
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
+if(!token) window.location.href = "login.html"
+
+const username = localStorage.getItem("username") || "Manager"
+document.getElementById("navUsername").textContent = username
+
+function apiHeaders(){
+  const h = {"Content-Type":"application/json"}
+  if(token && token !== "loggedin") h["Authorization"] = "Bearer " + token
+  return h
+}
+
+function toast(msg, err){
+  const el = document.getElementById("toast")
+  el.textContent = msg
+  el.style.background = err ? "#b3261e" : "#1e293b"
+  el.classList.add("show")
+  setTimeout(() => el.classList.remove("show"), 3000)
+}
+
+function logout(){
+  localStorage.removeItem("token")
+  localStorage.removeItem("auth_token")
+  window.location.href = "login.html"
+}
+
+// =====================
+// View switching
+// =====================
+function showView(id){
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"))
+  document.getElementById(id).classList.add("active")
+}
+
+function showList(){ loadTemplates(); showView("viewList") }
+function showBuilder(templateId){ activateBuilder(templateId); showView("viewBuilder") }
+function showFill(templateId){ activateFill(templateId); showView("viewFill") }
+function showResult(data){ activateResult(data); showView("viewResult") }
+
+// =====================
+// Template List
+// =====================
+let allTemplates = []
+
+async function loadTemplates(){
+  try {
+    const res = await fetch("/api/inspection-templates", { headers: apiHeaders() })
+    if(!res.ok) throw new Error()
+    allTemplates = await res.json()
+  } catch {
+    allTemplates = []
+  }
+  renderTemplates(allTemplates)
+  updateStats()
+}
+
+function updateStats(){
+  document.getElementById("statTotal").textContent = allTemplates.length
+  const totalQ = allTemplates.reduce((s, t) => s + (t.question_count || 0), 0)
+  document.getElementById("statQuestions").textContent = totalQ
+}
+
+function renderTemplates(templates){
+  const grid = document.getElementById("templatesGrid")
+  const hint = document.getElementById("noTemplatesHint")
+
+  if(!templates.length){
+    grid.innerHTML = `<div class="empty-state">
+      <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      <p style="font-weight:700;font-size:1.05rem;color:#334155">No inspection templates yet</p>
+      <p>Click <strong>+ New Template</strong> to create your first checklist.</p>
+    </div>`
+    hint.style.display = "none"
+    return
+  }
+
+  hint.style.display = "none"
+  grid.innerHTML = templates.map(t => `
+    <div class="template-card">
+      <div class="tc-header">
+        <h3 class="tc-name">${escHtml(t.name)}</h3>
+      </div>
+      <p class="tc-desc">${escHtml(t.description || "No description")}</p>
+      <div class="tc-meta">
+        <span class="badge badge-blue">${t.question_count} questions</span>
+        <span class="badge badge-grey">By ${escHtml(t.created_by || "system")}</span>
+      </div>
+      <div class="tc-actions">
+        <button class="btn btn-success btn-sm" onclick="showFill(${t.id})">▶ Fill Checklist</button>
+        <button class="btn btn-outline btn-sm" onclick="showBuilder(${t.id})">✏ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTemplate(${t.id})">🗑 Delete</button>
+      </div>
+    </div>
+  `).join("")
+}
+
+function filterTemplates(){
+  const term = document.getElementById("templateSearch").value.trim().toLowerCase()
+  if(!term){ renderTemplates(allTemplates); return }
+  renderTemplates(allTemplates.filter(t =>
+    t.name.toLowerCase().includes(term) ||
+    (t.description || "").toLowerCase().includes(term)
+  ))
+}
+
+async function deleteTemplate(id){
+  if(!confirm("Delete this template and all its questions?")) return
+  const res = await fetch(`/api/inspection-templates/${id}`, {
+    method: "DELETE",
+    headers: apiHeaders()
+  })
+  if(res.ok){
+    toast("Template deleted")
+    loadTemplates()
+  } else {
+    toast("Could not delete template", true)
+  }
+}
+
+// =====================
+// Builder — create / edit
+// =====================
+let builderQuestions = []   // { id, question, order } — only ID-ed ones are on server
+let builderNewQuestions = [] // pending text-only, saved after template itself
+
+async function activateBuilder(templateId){
+  builderQuestions = []
+  builderNewQuestions = []
+  document.getElementById("editTemplateId").value = templateId || ""
+  document.getElementById("builderStatus").textContent = ""
+  document.getElementById("newQuestionText").value = ""
+
+  if(templateId){
+    document.getElementById("builderTitle").textContent = "Edit Inspection Template"
+    try {
+      const res = await fetch(`/api/inspection-templates/${templateId}`, { headers: apiHeaders() })
+      if(res.ok){
+        const t = await res.json()
+        document.getElementById("templateName").value = t.name
+        document.getElementById("templateDesc").value = t.description || ""
+        builderQuestions = t.questions || []
+      }
+    } catch { /* ignore, will show empty */ }
+  } else {
+    document.getElementById("builderTitle").textContent = "New Inspection Template"
+    document.getElementById("templateName").value = ""
+    document.getElementById("templateDesc").value = ""
+  }
+
+  renderBuilderQuestions()
+}
+
+function renderBuilderQuestions(){
+  const list = document.getElementById("questionsList")
+  const all = [
+    ...builderQuestions.map(q => ({ ...q, saved: true })),
+    ...builderNewQuestions.map((text, i) => ({ id: null, question: text, order: builderQuestions.length + i, saved: false }))
+  ]
+
+  if(!all.length){
+    list.innerHTML = `<li style="color:var(--muted);font-size:.85rem;padding:6px 0">No questions yet — add some below.</li>`
+    return
+  }
+
+  list.innerHTML = all.map((q, i) => `
+    <li class="question-item">
+      <span class="q-num">${i + 1}</span>
+      <span class="q-text">${escHtml(q.question)}</span>
+      ${q.saved
+        ? `<button class="btn btn-danger btn-sm" onclick="removeServerQuestion(${q.id})">✕</button>`
+        : `<button class="btn btn-danger btn-sm" onclick="removeLocalQuestion(${i - builderQuestions.length})">✕</button>`}
+    </li>
+  `).join("")
+}
+
+function addQuestion(){
+  const input = document.getElementById("newQuestionText")
+  const text = input.value.trim()
+  if(!text){ toast("Please type a question first", true); return }
+  builderNewQuestions.push(text)
+  input.value = ""
+  renderBuilderQuestions()
+}
+
+async function removeServerQuestion(questionId){
+  const res = await fetch(`/api/inspection-questions/${questionId}`, {
+    method: "DELETE",
+    headers: apiHeaders()
+  })
+  if(res.ok){
+    builderQuestions = builderQuestions.filter(q => q.id !== questionId)
+    renderBuilderQuestions()
+  } else {
+    toast("Could not delete question", true)
+  }
+}
+
+function removeLocalQuestion(index){
+  builderNewQuestions.splice(index, 1)
+  renderBuilderQuestions()
+}
+
+async function saveTemplate(){
+  const name = document.getElementById("templateName").value.trim()
+  if(!name){ toast("Template name is required", true); return }
+
+  const description = document.getElementById("templateDesc").value.trim()
+  const existingId = document.getElementById("editTemplateId").value
+
+  let templateId = existingId || null
+  const statusEl = document.getElementById("builderStatus")
+
+  try {
+    // 1 — create or update the template shell
+    if(existingId){
+      const res = await fetch(`/api/inspection-templates/${existingId}`, {
+        method: "PUT",
+        headers: apiHeaders(),
+        body: JSON.stringify({ name, description })
+      })
+      if(!res.ok) throw new Error("Failed to update template")
+    } else {
+      const res = await fetch("/api/inspection-templates", {
+        method: "POST",
+        headers: apiHeaders(),
+        body: JSON.stringify({ name, description })
+      })
+      if(!res.ok) throw new Error("Failed to create template")
+      const created = await res.json()
+      templateId = created.id
+      document.getElementById("editTemplateId").value = templateId
+    }
+
+    // 2 — post any new questions
+    for(const text of builderNewQuestions){
+      await fetch(`/api/inspection-templates/${templateId}/questions`, {
+        method: "POST",
+        headers: apiHeaders(),
+        body: JSON.stringify({ question: text })
+      })
+    }
+    builderNewQuestions = []
+
+    // 3 — reload questions from server
+    const qs = await fetch(`/api/inspection-templates/${templateId}`, { headers: apiHeaders() })
+    if(qs.ok){
+      const t = await qs.json()
+      builderQuestions = t.questions || []
+    }
+
+    renderBuilderQuestions()
+    statusEl.style.color = "var(--success)"
+    statusEl.textContent = "✓ Template saved successfully."
+    toast("Template saved")
+  } catch(err){
+    statusEl.style.color = "var(--warn)"
+    statusEl.textContent = "Error saving template. Please try again."
+    toast("Error saving template", true)
+  }
+}
+
+// =====================
+// Fill — inspector view
+// =====================
+let fillTemplateData = null
+const answerState = {}  // questionId → "pass"|"fail"|"na"
+
+async function activateFill(templateId){
+  answerState._templateId = templateId
+  document.getElementById("fillStatus").textContent = ""
+
+  try {
+    const res = await fetch(`/api/inspection-templates/${templateId}`, { headers: apiHeaders() })
+    if(!res.ok) throw new Error()
+    fillTemplateData = await res.json()
+  } catch {
+    document.getElementById("checklistForm").innerHTML = `<p style="color:var(--warn)">Could not load template.</p>`
+    return
+  }
+
+  document.getElementById("fillTemplateName").textContent = fillTemplateData.name
+  document.getElementById("fillTemplateDesc").textContent = fillTemplateData.description || ""
+
+  const questions = fillTemplateData.questions || []
+
+  if(!questions.length){
+    document.getElementById("checklistForm").innerHTML = `<p style="color:var(--muted)">This template has no questions yet. Edit the template to add some.</p>`
+    return
+  }
+
+  // initialise answers as "na"
+  questions.forEach(q => { answerState[q.id] = "na" })
+
+  document.getElementById("checklistForm").innerHTML = questions.map((q, i) => `
+    <div class="checklist-item">
+      <div class="ci-question">${i + 1}. ${escHtml(q.question)}</div>
+      <div class="ci-answers">
+        <button class="answer-btn pass selected" id="ans-p-${q.id}" onclick="selectAnswer(${q.id},'pass')">✓ Pass</button>
+        <button class="answer-btn fail" id="ans-f-${q.id}" onclick="selectAnswer(${q.id},'fail')">✗ Fail</button>
+        <button class="answer-btn na" id="ans-n-${q.id}" onclick="selectAnswer(${q.id},'na')">— N/A</button>
+      </div>
+      <textarea class="ci-notes" id="notes-${q.id}" rows="2" placeholder="Optional notes…"></textarea>
+    </div>
+  `).join("")
+
+  // pre-select all as "na" visually (changed above to init as "na" - actually let's default to na)
+  questions.forEach(q => selectAnswer(q.id, "na"))
+}
+
+function selectAnswer(questionId, answer){
+  answerState[questionId] = answer
+  const types = ["pass","fail","na"]
+  types.forEach(t => {
+    const btn = document.getElementById(`ans-${t[0]}-${questionId}`)
+    if(btn) btn.classList.toggle("selected", t === answer)
+  })
+}
+
+async function submitInspection(){
+  if(!fillTemplateData) return
+  const questions = fillTemplateData.questions || []
+  if(!questions.length){ toast("No questions to submit", true); return }
+
+  const answers = questions.map(q => ({
+    question_id: q.id,
+    answer: answerState[q.id] || "na",
+    notes: (document.getElementById(`notes-${q.id}`) || {}).value || ""
+  }))
+
+  const templateId = fillTemplateData.id
+
+  try {
+    const res = await fetch(`/api/inspection-templates/${templateId}/respond`, {
+      method: "POST",
+      headers: apiHeaders(),
+      body: JSON.stringify({ answers })
+    })
+
+    if(!res.ok) throw new Error()
+
+    const result = await res.json()
+    showResult(result)
+  } catch {
+    document.getElementById("fillStatus").textContent = "Submission failed — please try again."
+    toast("Submission failed", true)
+  }
+}
+
+// =====================
+// Result view
+// =====================
+function activateResult(data){
+  document.getElementById("resultScore").textContent = data.score + "%"
+  document.getElementById("resultPass").textContent = data.pass
+  document.getElementById("resultFail").textContent = data.fail
+  document.getElementById("resultTotal").textContent = data.total
+
+  const badge = document.getElementById("resultRiskBadge")
+  const level = data.risk_level || "Medium"
+  badge.textContent = level + " Risk"
+  badge.className = "badge"
+  if(level === "Low") badge.classList.add("badge-green")
+  else if(level === "High") badge.classList.add("badge-red")
+  else badge.classList.add("badge-grey")
+}
+
+// =====================
+// Utilities
+// =====================
+function escHtml(text){
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+}
+
+// =====================
+// Sidebar + footer
+// =====================
+fetch("../components/sidebar.html")
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("sidebar-container").innerHTML = html
+
+    initSearch()
+
+    const toggleBtn = document.getElementById("menuToggle")
+    const sidebar   = document.querySelector(".sidebar")
+    const navbar    = document.querySelector(".navbar")
+    const main      = document.querySelector(".main-content")
+
+    if(toggleBtn){
+      toggleBtn.onclick = function(){
+        sidebar.classList.toggle("collapsed")
+        if(navbar)  navbar.classList.toggle("expanded")
+        if(main)    main.classList.toggle("expanded")
+        const footer = document.querySelector(".footer")
+        if(footer)  footer.classList.toggle("expanded")
+      }
+    }
+  })
+
+fetch("../components/footer.html")
+  .then(r => r.text())
+  .then(html => { document.getElementById("footer").innerHTML = html })
+
+// Boot — load templates
+loadTemplates()
+</script>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

@@ -9,6 +9,190 @@
 <title>Incident Prediction</title>
 
 <link rel="stylesheet" href="../css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+	--bg-1: #f1f7ff;
+	--bg-2: #e4f4ef;
+	--panel: rgba(255, 255, 255, 0.82);
+	--panel-strong: #ffffff;
+	--text: #102a43;
+	--muted: #52606d;
+	--primary: #0b7285;
+	--accent: #2f9e44;
+	--warn: #d9480f;
+	--border: rgba(16, 42, 67, 0.08);
+	--shadow: 0 18px 45px rgba(11, 114, 133, 0.12);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body.incident-page {
+	margin: 0;
+	font-family: "Space Grotesk", sans-serif;
+	color: var(--text);
+	background:
+		radial-gradient(circle at 10% 10%, rgba(47, 158, 68, 0.18), transparent 30%),
+		radial-gradient(circle at 90% 15%, rgba(11, 114, 133, 0.17), transparent 28%),
+		linear-gradient(135deg, var(--bg-1), var(--bg-2));
+	min-height: 100vh;
+}
+
+.main-content {
+	max-width: 1080px;
+	margin: 2rem auto;
+	padding: 2rem;
+	border: 1px solid var(--border);
+	border-radius: 24px;
+	background: var(--panel);
+	backdrop-filter: blur(4px);
+	box-shadow: var(--shadow);
+}
+
+.incident-header {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+}
+
+.page-title {
+	margin: 0;
+	font-size: clamp(1.8rem, 4vw, 2.6rem);
+	letter-spacing: -0.03em;
+}
+
+.incident-subtitle {
+	margin: 0.35rem 0 0;
+	color: var(--muted);
+	font-size: 0.98rem;
+}
+
+.header-badge {
+	background: linear-gradient(135deg, #d3f9d8, #99e9f2);
+	color: #0c3f53;
+	border: 1px solid rgba(12, 63, 83, 0.2);
+	border-radius: 999px;
+	padding: 0.45rem 0.9rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.incident-card {
+	border: 1px solid var(--border);
+	border-radius: 18px;
+	padding: 1.1rem;
+	background: var(--panel-strong);
+	box-shadow: 0 6px 20px rgba(16, 42, 67, 0.06);
+}
+
+.incident-card p {
+	margin: 0 0 0.9rem;
+	color: var(--muted);
+}
+
+.incident-card label {
+	display: block;
+	font-size: 0.92rem;
+	font-weight: 600;
+	margin-bottom: 0.4rem;
+	color: #234;
+}
+
+.incident-card select,
+.incident-card input {
+	width: 100%;
+	padding: 0.62rem 0.68rem;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: #f8fbfd;
+	font-family: "Space Grotesk", sans-serif;
+	font-size: 0.95rem;
+}
+
+.incident-card br {
+	display: none;
+}
+
+#workers,
+#violations,
+#environment {
+	margin-bottom: 0.85rem;
+}
+
+.detect-btn {
+	border: 0;
+	border-radius: 12px;
+	background: linear-gradient(120deg, #0b7285, #2f9e44);
+	color: #fff;
+	padding: 0.72rem 1rem;
+	margin-top: 0.2rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	cursor: pointer;
+	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.24);
+}
+
+.result {
+	margin-top: 1rem;
+	border: 1px solid rgba(16, 42, 67, 0.1);
+	background: linear-gradient(90deg, #f8fbfd, #edf8f2);
+	border-radius: 12px;
+	padding: 0.9rem;
+	font-size: 0.95rem;
+}
+
+.result ul {
+	margin: 0.5rem 0;
+	padding-left: 1rem;
+}
+
+.risk-high {
+	color: var(--warn);
+	font-weight: 700;
+}
+
+.chat-toggle-btn {
+	border: 0;
+	border-radius: 999px;
+	background: linear-gradient(120deg, #0b7285, #2f9e44);
+	color: #fff;
+	padding: 0.7rem 1rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.25);
+}
+
+.ai-chat-sidebar {
+	border-radius: 16px 16px 0 0;
+	overflow: hidden;
+}
+
+.chat-header,
+.chat-input button {
+	font-family: "Space Grotesk", sans-serif;
+}
+
+@media (max-width: 680px) {
+	.main-content {
+		margin: 1rem;
+		padding: 1.2rem;
+		border-radius: 18px;
+	}
+
+	.incident-header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+}
+</style>
 
 </head>
 
@@ -21,7 +205,13 @@
 <!-- MAIN CONTENT -->
 <main class="main-content">
 
+<div class="incident-header">
+<div>
 <h1 class="page-title">Incident Prediction</h1>
+<p class="incident-subtitle">Predict potential incidents from live workplace conditions.</p>
+</div>
+<span class="header-badge">AI Risk Engine Active</span>
+</div>
 
 <div class="incident-card">
 

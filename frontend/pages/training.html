@@ -1,384 +1,543 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Training</title>
-
+<title>Training & Certification</title>
 <link rel="stylesheet" href="../css/style.css">
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-.training-summary {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-gap: 14px;
-margin: 16px 0 20px;
+:root {
+	--primary: #0d6efd;
+	--border: #e2e8f0;
+	--panel: #f8fafc;
+	--muted: #64748b;
+	--warn: #d9480f;
+	--success: #2f9e44;
+}
+body { font-family: 'Space Grotesk', sans-serif; }
+
+.head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px; }
+.head h1 { margin:0; font-size:1.6rem; }
+.sub { margin:4px 0 0; color:var(--muted); font-size:.9rem; }
+
+.summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:18px; }
+.sum-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 2px 8px rgba(15,23,42,.05); }
+.sum-card strong { display:block; font-size:1.6rem; color:var(--primary); }
+.sum-card span { color:var(--muted); font-size:.82rem; }
+
+.alerts { margin-bottom:14px; }
+.alert-box {
+	border:1px solid #f9d6a8; background:#fff8e8; color:#8c5d00;
+	border-radius:12px; padding:12px 14px; font-size:.88rem; margin-bottom:8px;
 }
 
-.training-card {
-background: #fff;
-border: 1px solid #e6edf5;
-border-radius: 10px;
-padding: 16px;
-box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+.toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.filters { display:flex; gap:6px; flex-wrap:wrap; }
+.filter-btn {
+	border:1px solid var(--border); background:#fff; border-radius:8px;
+	padding:7px 11px; font-size:.83rem; font-weight:600; cursor:pointer;
 }
+.filter-btn.active { background:var(--primary); border-color:var(--primary); color:#fff; }
 
-.training-card h3 {
-margin: 0;
-font-size: 28px;
-}
+.search { border:1px solid var(--border); border-radius:9px; padding:8px 11px; min-width:220px; }
 
-.training-toolbar {
-display: flex;
-justify-content: space-between;
-align-items: center;
-flex-wrap: wrap;
-gap: 10px;
-margin-bottom: 16px;
+.btn {
+	display:inline-flex; align-items:center; gap:5px;
+	border-radius:9px; border:1px solid transparent; padding:8px 13px;
+	font-size:.84rem; font-weight:600; cursor:pointer;
 }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:#0b5ed7; }
+.btn-outline { background:#fff; color:#334155; border-color:var(--border); }
+.btn-outline:hover { background:var(--panel); }
+.btn-sm { padding:5px 9px; border-radius:7px; font-size:.78rem; }
 
-.training-filters {
-display: flex;
-gap: 8px;
-flex-wrap: wrap;
-}
+.table-wrap { background:#fff; border:1px solid var(--border); border-radius:16px; overflow:auto; }
+.table { width:100%; border-collapse:collapse; min-width:920px; }
+.table th, .table td { padding:11px 12px; border-bottom:1px solid #eff3f7; text-align:left; font-size:.88rem; }
+.table th { background:var(--panel); color:var(--muted); font-size:.8rem; letter-spacing:.04em; }
+.table tr:last-child td { border-bottom:none; }
 
-.training-filters button,
-.training-actions button {
-padding: 8px 12px;
-border: 1px solid #d0d7de;
-border-radius: 8px;
-background: #fff;
-cursor: pointer;
-}
+.pill { display:inline-flex; padding:3px 10px; border-radius:999px; font-size:.76rem; font-weight:700; }
+.st-valid { background:#e9f7ef; color:#2f9e44; }
+.st-expiring_soon { background:#fff4e5; color:#8c5d00; }
+.st-expired { background:#fdecea; color:#b3261e; }
+.st-pending { background:#e8f0fe; color:#1a56db; }
 
-.training-filters button.active,
-.training-actions .primary {
-background: #0b63ce;
-border-color: #0b63ce;
-color: #fff;
-}
+.empty { text-align:center; padding:44px; color:var(--muted); }
 
-.training-search {
-padding: 8px 10px;
-border: 1px solid #d0d7de;
-border-radius: 8px;
-min-width: 220px;
+.modal-overlay {
+	display:none; position:fixed; inset:0; z-index:1000;
+	background:rgba(15,23,42,.45); align-items:center; justify-content:center;
 }
+.modal-overlay.open { display:flex; }
+.modal {
+	background:#fff; border-radius:18px; padding:24px; width:100%; max-width:520px;
+	box-shadow:0 20px 60px rgba(15,23,42,.2); max-height:90vh; overflow-y:auto;
+}
+.modal h2 { margin:0 0 14px; font-size:1.2rem; }
+.row { margin-bottom:12px; }
+.row label { display:block; margin-bottom:5px; font-size:.82rem; color:#334155; font-weight:600; }
+.input, .select, .textarea {
+	width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:9px;
+	padding:9px 11px; background:var(--panel); font-family:inherit;
+}
+.textarea { min-height:80px; resize:vertical; }
+.actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
 
-.training-table-wrap {
-background: #fff;
-border: 1px solid #e6edf5;
-border-radius: 10px;
-overflow: auto;
+#toast {
+	position:fixed; right:24px; bottom:24px; z-index:9999;
+	background:#1e293b; color:#fff; border-radius:10px; padding:10px 15px;
+	opacity:0; pointer-events:none; transition:opacity .25s;
 }
-
-.training-table {
-width: 100%;
-border-collapse: collapse;
-min-width: 860px;
-}
-
-.training-table th,
-.training-table td {
-padding: 12px;
-text-align: left;
-border-bottom: 1px solid #eef3f8;
-font-size: 14px;
-}
-
-.training-table th {
-background: #f8fbff;
-font-weight: 700;
-}
-
-.status-pill {
-display: inline-block;
-padding: 4px 8px;
-border-radius: 999px;
-font-size: 12px;
-font-weight: 700;
-}
-
-.status-pill.completed {
-background: #e9f7ef;
-color: #146c43;
-}
-
-.status-pill.in-progress {
-background: #fff4e5;
-color: #8c5d00;
-}
-
-.status-pill.pending {
-background: #fdecea;
-color: #b3261e;
-}
-
-.progress-bar {
-width: 100%;
-height: 8px;
-background: #eef3f8;
-border-radius: 999px;
-overflow: hidden;
-}
-
-.progress-fill {
-height: 100%;
-background: #0b63ce;
-}
-
-.row-actions button {
-padding: 6px 10px;
-border: 1px solid #d0d7de;
-border-radius: 8px;
-background: #2b9450;
-cursor: pointer;
-margin-right: 6px;
-}
-
-.status-note {
-margin-top: 12px;
-font-size: 14px;
-min-height: 20px;
-color: #1e6f43;
-}
+#toast.show { opacity:1; }
 </style>
-
 </head>
-
 <body>
-
 <div class="navbar">
-<div class="logo">AI Safety Platform</div>
-<div class="nav-right">
-<span>Admin</span>
-<button onclick="logout()">Logout</button>
-</div>
+	<div class="logo">AI Safety Platform</div>
+	<div class="nav-right">
+		<span id="navUsername">User</span>
+		<button onclick="logout()">Logout</button>
+	</div>
 </div>
 
 <div id="sidebar-container"></div>
 
 <div class="main-content">
-<h1>Training</h1>
-<p>Track training completion, overdue courses, and workforce readiness.</p>
+	<div class="head">
+		<div>
+			<h1>Training Status</h1>
+			<p class="sub">Track mandatory safety certifications, completions, and expiry reminders.</p>
+		</div>
+		<div style="display:flex; gap:8px; flex-wrap:wrap">
+			<button id="createCourseBtn" class="btn btn-outline" onclick="openCourseModal()">+ Create Course</button>
+			<button id="assignBtn" class="btn btn-primary" onclick="openAssignModal()">Assign Training</button>
+		</div>
+	</div>
 
-<div class="training-summary">
-<div class="training-card">
-<h3>124</h3>
-<p>Assigned Courses</p>
-</div>
-<div class="training-card">
-<h3>86%</h3>
-<p>Completion Rate</p>
-</div>
-<div class="training-card">
-<h3>9</h3>
-<p>Overdue Trainings</p>
-</div>
-<div class="training-card">
-<h3>18 Mar</h3>
-<p>Next Audit Review</p>
-</div>
-</div>
+	<div class="summary">
+		<div class="sum-card"><strong id="sumTotal">0</strong><span>Total Records</span></div>
+		<div class="sum-card"><strong id="sumValid" style="color:var(--success)">0</strong><span>Valid</span></div>
+		<div class="sum-card"><strong id="sumSoon" style="color:#8c5d00">0</strong><span>Expiring Soon</span></div>
+		<div class="sum-card"><strong id="sumExpired" style="color:#b3261e">0</strong><span>Expired</span></div>
+		<div class="sum-card"><strong id="sumPending" style="color:#1a56db">0</strong><span>Pending</span></div>
+	</div>
 
-<div class="training-toolbar">
-<div class="training-filters">
-<button class="active" data-filter="all">All</button>
-<button data-filter="completed">Completed</button>
-<button data-filter="in-progress">In Progress</button>
-<button data-filter="pending">Pending</button>
-</div>
-<div class="training-actions">
-<input id="trainingSearch" class="training-search" type="text" placeholder="Search employee or course...">
-<button class="primary" onclick="assignTraining()">Assign Training</button>
-</div>
-</div>
+	<div class="alerts" id="alerts"></div>
 
-<div class="training-table-wrap">
-<table class="training-table" id="trainingTable">
-<thead>
-<tr>
-<th>Employee</th>
-<th>Course</th>
-<th>Status</th>
-<th>Progress</th>
-<th>Due Date</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody>
-<tr data-status="completed">
-<td>Anika Rao</td>
-<td>Hazard Identification Basics</td>
-<td><span class="status-pill completed">Completed</span></td>
-<td>
-<div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
-</td>
-<td>10 Mar 2026</td>
-<td class="row-actions">
-<button onclick="viewTraining(this)">View</button>
-</td>
-</tr>
-<tr data-status="in-progress">
-<td>Karan Mehta</td>
-<td>PPE Compliance Essentials</td>
-<td><span class="status-pill in-progress">In Progress</span></td>
-<td>
-<div class="progress-bar"><div class="progress-fill" style="width: 65%"></div></div>
-</td>
-<td>15 Mar 2026</td>
-<td class="row-actions">
-<button onclick="markComplete(this)">Mark Complete</button>
-</td>
-</tr>
-<tr data-status="pending">
-<td>Sara Thomas</td>
-<td>Electrical Safety Refresher</td>
-<td><span class="status-pill pending">Pending</span></td>
-<td>
-<div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
-</td>
-<td>14 Mar 2026</td>
-<td class="row-actions">
-<button onclick="startTraining(this)">Start</button>
-</td>
-</tr>
-<tr data-status="completed">
-<td>Rahul Iyer</td>
-<td>Incident Reporting Workflow</td>
-<td><span class="status-pill completed">Completed</span></td>
-<td>
-<div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
-</td>
-<td>09 Mar 2026</td>
-<td class="row-actions">
-<button onclick="viewTraining(this)">View</button>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
+	<div class="toolbar">
+		<div class="filters">
+			<button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+			<button class="filter-btn" onclick="setFilter('valid', this)">Valid</button>
+			<button class="filter-btn" onclick="setFilter('expiring_soon', this)">Expiring Soon</button>
+			<button class="filter-btn" onclick="setFilter('expired', this)">Expired</button>
+			<button class="filter-btn" onclick="setFilter('pending', this)">Pending</button>
+		</div>
+		<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+			<label style="display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600;cursor:pointer">
+				<input type="checkbox" id="myRecordsOnly" onchange="loadRecords()"> My records only
+			</label>
+			<input class="search" id="search" placeholder="Search worker or training" oninput="renderRecords()">
+		</div>
+	</div>
 
-<div class="status-note" id="trainingStatus"></div>
-
+	<div class="table-wrap">
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Worker</th>
+					<th>Training</th>
+					<th>Status</th>
+					<th>Completed</th>
+					<th>Expires</th>
+					<th>Certificate</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody id="tbody">
+				<tr><td colspan="7" class="empty">Loading training records...</td></tr>
+			</tbody>
+		</table>
+	</div>
 </div>
 
 <div id="footer"></div>
+<div id="toast"></div>
+
+<div id="courseModal" class="modal-overlay">
+	<div class="modal">
+		<h2>Create Training Course</h2>
+		<div class="row">
+			<label>Course Name *</label>
+			<input class="input" id="courseName" placeholder="e.g. Fire Safety Training">
+		</div>
+		<div class="row">
+			<label>Description</label>
+			<textarea class="textarea" id="courseDescription"></textarea>
+		</div>
+		<div class="row">
+			<label>Validity (months)</label>
+			<input class="input" id="courseValidity" type="number" value="24" min="1" max="120">
+		</div>
+		<div class="actions">
+			<button class="btn btn-outline" onclick="closeCourseModal()">Cancel</button>
+			<button class="btn btn-primary" onclick="submitCourse()">Create</button>
+		</div>
+	</div>
+</div>
+
+<div id="assignModal" class="modal-overlay">
+	<div class="modal">
+		<h2>Assign Training</h2>
+		<div class="row">
+			<label>Worker User ID *</label>
+			<input class="input" id="assignUserId" type="number" placeholder="e.g. 12">
+		</div>
+		<div class="row">
+			<label>Course *</label>
+			<select class="select" id="assignCourse"></select>
+		</div>
+		<div class="row">
+			<label>Certificate Reference</label>
+			<input class="input" id="assignCert" placeholder="URL or file key">
+		</div>
+		<div class="actions">
+			<button class="btn btn-outline" onclick="closeAssignModal()">Cancel</button>
+			<button class="btn btn-primary" onclick="submitAssign()">Assign</button>
+		</div>
+	</div>
+</div>
+
+<div id="completeModal" class="modal-overlay">
+	<div class="modal">
+		<h2 id="completeTitle">Mark Training Complete</h2>
+		<div class="row">
+			<label>Completion Date</label>
+			<input class="input" id="completeDate" type="date">
+		</div>
+		<div class="row">
+			<label>Certificate Reference</label>
+			<input class="input" id="completeCert" placeholder="Certificate link or number">
+		</div>
+		<div class="actions">
+			<button class="btn btn-outline" onclick="closeCompleteModal()">Cancel</button>
+			<button class="btn btn-primary" onclick="submitComplete()">Save</button>
+		</div>
+	</div>
+</div>
 
 <script>
-fetch("../components/sidebar.html")
-.then(res => res.text())
-.then(data => {
-document.getElementById("sidebar-container").innerHTML = data
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
+if (!token) window.location.href = "login.html"
 
-initSearch()
+const role = (localStorage.getItem("user_role") || "worker").toLowerCase()
+const canManage = role === "admin" || role === "manager"
+document.getElementById("navUsername").textContent = localStorage.getItem("username") || "User"
 
-const toggleBtn = document.getElementById("menuToggle")
-const sidebar = document.querySelector(".sidebar")
-const navbar = document.querySelector(".navbar")
-const mainContent = document.querySelector(".main-content")
+function apiHeaders() {
+	const headers = { "Content-Type": "application/json" }
+	if (token && token !== "loggedin") headers["Authorization"] = "Bearer " + token
+	return headers
+}
 
-if(toggleBtn){
-toggleBtn.onclick = function(){
-sidebar.classList.toggle("collapsed")
-if(navbar) navbar.classList.toggle("expanded")
-if(mainContent) mainContent.classList.toggle("expanded")
-const footer = document.querySelector(".footer")
-if(footer){
-footer.classList.toggle("expanded")
+function logout() {
+	localStorage.removeItem("token")
+	localStorage.removeItem("auth_token")
+	window.location.href = "login.html"
 }
+
+function toast(message, isError) {
+	const el = document.getElementById("toast")
+	el.textContent = message
+	el.style.background = isError ? "#b3261e" : "#1e293b"
+	el.classList.add("show")
+	setTimeout(() => el.classList.remove("show"), 2800)
 }
+
+function escHtml(value) {
+	return String(value || "")
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
 }
+
+function fmtDate(iso) {
+	if (!iso) return "-"
+	return new Date(iso).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })
+}
+
+function statusPill(status) {
+	const labels = {
+		valid: "Valid",
+		expiring_soon: "Expiring Soon",
+		expired: "Expired",
+		pending: "Pending",
+	}
+	return `<span class="pill st-${status}">${labels[status] || status}</span>`
+}
+
+let records = []
+let courses = []
+let activeFilter = "all"
+let selectedRecordId = null
+
+function setFilter(filter, button) {
+	activeFilter = filter
+	document.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"))
+	button.classList.add("active")
+	renderRecords()
+}
+
+async function loadSummary() {
+	try {
+		const res = await fetch("/api/training/summary", { headers: apiHeaders() })
+		if (!res.ok) return
+		const data = await res.json()
+		document.getElementById("sumTotal").textContent = data.total || 0
+		document.getElementById("sumValid").textContent = data.valid || 0
+		document.getElementById("sumSoon").textContent = data.expiring_soon || 0
+		document.getElementById("sumExpired").textContent = data.expired || 0
+		document.getElementById("sumPending").textContent = data.pending || 0
+	} catch (_) {}
+}
+
+async function loadAlerts() {
+	const container = document.getElementById("alerts")
+	container.innerHTML = ""
+	try {
+		const res = await fetch("/api/training/alerts?within_days=14", { headers: apiHeaders() })
+		if (!res.ok) return
+		const alerts = await res.json()
+		if (!alerts.length) return
+
+		container.innerHTML = alerts.map((a) => `
+			<div class="alert-box">
+				<strong>Warning: Training expiring soon</strong><br>
+				Worker: ${escHtml(a.worker)} | Training: ${escHtml(a.training)} | Expires in: ${a.days_to_expiry} day(s)
+			</div>
+		`).join("")
+	} catch (_) {}
+}
+
+async function loadCourses() {
+	try {
+		const res = await fetch("/api/training/courses", { headers: apiHeaders() })
+		if (!res.ok) throw new Error("failed")
+		courses = await res.json()
+	} catch (_) {
+		courses = []
+	}
+
+	const sel = document.getElementById("assignCourse")
+	if (!courses.length) {
+		sel.innerHTML = '<option value="">No courses available</option>'
+		return
+	}
+	sel.innerHTML = courses.map((c) => `<option value="${c.id}">${escHtml(c.name)} (${c.validity_months}m)</option>`).join("")
+}
+
+async function loadRecords() {
+	const myOnly = document.getElementById("myRecordsOnly").checked
+	const url = `/api/training/records?my_records=${myOnly}`
+	try {
+		const res = await fetch(url, { headers: apiHeaders() })
+		if (!res.ok) throw new Error("failed")
+		records = await res.json()
+	} catch (_) {
+		records = []
+	}
+	renderRecords()
+}
+
+function renderRecords() {
+	const term = document.getElementById("search").value.trim().toLowerCase()
+	const tbody = document.getElementById("tbody")
+
+	const filtered = records.filter((r) => {
+		const byFilter = activeFilter === "all" || r.status === activeFilter
+		const text = `${r.worker_name || ""} ${r.course_name || ""}`.toLowerCase()
+		const bySearch = !term || text.includes(term)
+		return byFilter && bySearch
+	})
+
+	if (!filtered.length) {
+		tbody.innerHTML = '<tr><td colspan="7" class="empty">No training records found.</td></tr>'
+		return
+	}
+
+	tbody.innerHTML = filtered.map((r) => {
+		const action = r.status === "pending"
+			? `<button class="btn btn-outline btn-sm" onclick="openCompleteModal(${r.id})">Mark Complete</button>`
+			: `<button class="btn btn-outline btn-sm" onclick="viewRecord(${r.id})">View</button>`
+
+		return `
+			<tr>
+				<td>${escHtml(r.worker_name || ("User " + r.user_id))}</td>
+				<td>${escHtml(r.course_name || ("Course " + r.course_id))}</td>
+				<td>${statusPill(r.status)}</td>
+				<td>${fmtDate(r.completed_date)}</td>
+				<td>${fmtDate(r.expiry_date)}</td>
+				<td>${r.certificate_ref ? `<a href="${escHtml(r.certificate_ref)}" target="_blank" rel="noopener">Open</a>` : "-"}</td>
+				<td>${action}</td>
+			</tr>
+		`
+	}).join("")
+}
+
+function openCourseModal() { document.getElementById("courseModal").classList.add("open") }
+function closeCourseModal() { document.getElementById("courseModal").classList.remove("open") }
+function openAssignModal() { document.getElementById("assignModal").classList.add("open") }
+function closeAssignModal() { document.getElementById("assignModal").classList.remove("open") }
+function openCompleteModal(recordId) {
+	selectedRecordId = recordId
+	document.getElementById("completeDate").value = new Date().toISOString().slice(0, 10)
+	document.getElementById("completeCert").value = ""
+	document.getElementById("completeModal").classList.add("open")
+}
+function closeCompleteModal() { document.getElementById("completeModal").classList.remove("open") }
+
+async function submitCourse() {
+	const name = document.getElementById("courseName").value.trim()
+	const description = document.getElementById("courseDescription").value.trim()
+	const validity_months = parseInt(document.getElementById("courseValidity").value || "12", 10)
+	if (!name) {
+		toast("Course name is required", true)
+		return
+	}
+
+	try {
+		const res = await fetch("/api/training/courses", {
+			method: "POST",
+			headers: apiHeaders(),
+			body: JSON.stringify({ name, description, validity_months }),
+		})
+		if (!res.ok) throw new Error("failed")
+		closeCourseModal()
+		toast("Course created")
+		loadCourses()
+	} catch (_) {
+		toast("Unable to create course", true)
+	}
+}
+
+async function submitAssign() {
+	const user_id = parseInt(document.getElementById("assignUserId").value || "0", 10)
+	const course_id = parseInt(document.getElementById("assignCourse").value || "0", 10)
+	const certificate_ref = document.getElementById("assignCert").value.trim()
+
+	if (!user_id || !course_id) {
+		toast("User ID and course are required", true)
+		return
+	}
+
+	try {
+		const res = await fetch("/api/training/assign", {
+			method: "POST",
+			headers: apiHeaders(),
+			body: JSON.stringify({ user_id, course_id, certificate_ref }),
+		})
+		if (!res.ok) throw new Error("failed")
+		closeAssignModal()
+		toast("Training assigned")
+		loadSummary()
+		loadRecords()
+	} catch (_) {
+		toast("Unable to assign training", true)
+	}
+}
+
+async function submitComplete() {
+	if (!selectedRecordId) return
+	const dateVal = document.getElementById("completeDate").value
+	const certificate_ref = document.getElementById("completeCert").value.trim()
+
+	try {
+		const payload = {
+			completed_date: dateVal ? new Date(dateVal + "T00:00:00").toISOString() : null,
+			certificate_ref,
+		}
+		const res = await fetch(`/api/training/records/${selectedRecordId}/complete`, {
+			method: "PUT",
+			headers: apiHeaders(),
+			body: JSON.stringify(payload),
+		})
+		if (!res.ok) throw new Error("failed")
+		closeCompleteModal()
+		toast("Training marked complete")
+		loadSummary()
+		loadAlerts()
+		loadRecords()
+	} catch (_) {
+		toast("Unable to complete training", true)
+	}
+}
+
+function viewRecord(recordId) {
+	const record = records.find((r) => r.id === recordId)
+	if (!record) return
+	const msg = [
+		`Worker: ${record.worker_name || record.user_id}`,
+		`Training: ${record.course_name || record.course_id}`,
+		`Status: ${record.status}`,
+		`Completed: ${fmtDate(record.completed_date)}`,
+		`Expires: ${fmtDate(record.expiry_date)}`,
+		`Certificate: ${record.certificate_ref || "-"}`,
+	].join("\n")
+	alert(msg)
+}
+
+document.getElementById("courseModal").addEventListener("click", (e) => {
+	if (e.target === e.currentTarget) closeCourseModal()
 })
+document.getElementById("assignModal").addEventListener("click", (e) => {
+	if (e.target === e.currentTarget) closeAssignModal()
+})
+document.getElementById("completeModal").addEventListener("click", (e) => {
+	if (e.target === e.currentTarget) closeCompleteModal()
+})
+
+if (!canManage) {
+	document.getElementById("createCourseBtn").style.display = "none"
+	document.getElementById("assignBtn").style.display = "none"
+}
+
+fetch("../components/sidebar.html")
+	.then((res) => res.text())
+	.then((html) => {
+		document.getElementById("sidebar-container").innerHTML = html
+		initSearch()
+
+		const toggleBtn = document.getElementById("menuToggle")
+		const sidebar = document.querySelector(".sidebar")
+		const navbar = document.querySelector(".navbar")
+		const mainContent = document.querySelector(".main-content")
+
+		if (toggleBtn) {
+			toggleBtn.onclick = function () {
+				sidebar.classList.toggle("collapsed")
+				if (navbar) navbar.classList.toggle("expanded")
+				if (mainContent) mainContent.classList.toggle("expanded")
+				const footer = document.querySelector(".footer")
+				if (footer) footer.classList.toggle("expanded")
+			}
+		}
+	})
 
 fetch("../components/footer.html")
-.then(res => res.text())
-.then(data => {
-document.getElementById("footer").innerHTML = data
-})
+	.then((res) => res.text())
+	.then((html) => {
+		document.getElementById("footer").innerHTML = html
+	})
 
-if(!localStorage.getItem("token")){
-window.location.href = "login.html"
-}
-
-function logout(){
-localStorage.removeItem("token")
-window.location.href = "login.html"
-}
-
-const trainingSearch = document.getElementById("trainingSearch")
-const trainingTableBody = document.querySelector("#trainingTable tbody")
-let activeTrainingFilter = "all"
-
-function applyTrainingFilters(){
-const term = trainingSearch.value.trim().toLowerCase()
-const rows = Array.from(trainingTableBody.querySelectorAll("tr"))
-
-rows.forEach(row => {
-const rowStatus = row.getAttribute("data-status")
-const rowText = row.textContent.toLowerCase()
-const matchesStatus = activeTrainingFilter === "all" || rowStatus === activeTrainingFilter
-const matchesText = term === "" || rowText.includes(term)
-row.style.display = matchesStatus && matchesText ? "table-row" : "none"
-})
-}
-
-function assignTraining(){
-setTrainingStatus("Training assignment dialog requested.")
-}
-
-function viewTraining(button){
-const row = button.closest("tr")
-if(!row) return
-setTrainingStatus("Viewing training record for " + row.children[0].textContent.trim() + ".")
-}
-
-function startTraining(button){
-const row = button.closest("tr")
-if(!row) return
-row.setAttribute("data-status", "in-progress")
-row.querySelector(".status-pill").className = "status-pill in-progress"
-row.querySelector(".status-pill").textContent = "In Progress"
-row.querySelector(".progress-fill").style.width = "25%"
-button.textContent = "Mark Complete"
-button.setAttribute("onclick", "markComplete(this)")
-setTrainingStatus("Training started.")
-applyTrainingFilters()
-}
-
-function markComplete(button){
-const row = button.closest("tr")
-if(!row) return
-row.setAttribute("data-status", "completed")
-row.querySelector(".status-pill").className = "status-pill completed"
-row.querySelector(".status-pill").textContent = "Completed"
-row.querySelector(".progress-fill").style.width = "100%"
-button.textContent = "View"
-button.setAttribute("onclick", "viewTraining(this)")
-setTrainingStatus("Training marked as completed.")
-applyTrainingFilters()
-}
-
-function setTrainingStatus(message){
-document.getElementById("trainingStatus").textContent = message
-}
-
-document.querySelectorAll(".training-filters button").forEach(button => {
-button.addEventListener("click", function(){
-document.querySelectorAll(".training-filters button").forEach(btn => btn.classList.remove("active"))
-this.classList.add("active")
-activeTrainingFilter = this.getAttribute("data-filter")
-applyTrainingFilters()
-})
-})
-
-trainingSearch.addEventListener("input", applyTrainingFilters)
+loadSummary()
+loadAlerts()
+loadCourses()
+loadRecords()
 </script>
-
 <script src="../js/main.js"></script>
-
 </body>
 </html>

@@ -25,6 +25,35 @@ Deployment:
 - Docker
 - GitHub Actions
 
+## System Architecture
+
+```mermaid
+flowchart TD
+	FE[Frontend<br/>HTML + JS UI]
+	API[FastAPI<br/>REST API]
+	PIPE[Safety AI<br/>Pipeline]
+	VISION[Image Vision<br/>Analyzer]
+	AGENTS[AI Agents<br/>Risk Agents]
+	HAZ[Hazard<br/>Detection]
+	CELERY[Celery Worker<br/>Async Tasks]
+	DB[Database + Storage<br/>SQLite / Reports]
+
+	FE --> API
+	API --> PIPE
+	API --> VISION
+	PIPE --> AGENTS
+	VISION --> HAZ
+	AGENTS --> CELERY
+	CELERY --> DB
+```
+
+Architecture flow summary:
+- Frontend pages call FastAPI endpoints for report generation, analytics, and validation.
+- FastAPI routes orchestrate the safety pipeline and vision analysis modules.
+- Pipeline logic delegates tasks to specialized AI agents.
+- Long-running and asynchronous jobs are executed by Celery workers.
+- Outputs, metadata, and generated reports are persisted in SQLite and storage folders.
+
 Hazards Identified
 • Working at height
 • Electrical exposure
@@ -78,6 +107,28 @@ WHS Regulation Part 4.4 – Falls
 - Export reports as PDF/DOCX
 
 ## API Documentation
+
+### API Documentation Page
+
+FastAPI automatically provides interactive API documentation.
+
+Available endpoints:
+- `/docs` (Swagger UI)
+- `/redoc` (ReDoc)
+
+Examples:
+- `http://localhost:8000/docs`
+- `http://localhost:8000/redoc`
+- `https://yourdomain.com/docs`
+- `https://yourdomain.com/redoc`
+
+These pages provide:
+- All available endpoints
+- Request schema and payload examples
+- Response schema and status codes
+- Authentication/authorization details for protected routes
+
+This makes the platform easier to review, test, and present professionally.
 
 - `/generate-report` — Generate a safety report
 - `/report-history/{project_id}` — Get report history

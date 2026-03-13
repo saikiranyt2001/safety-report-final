@@ -7,7 +7,7 @@ from jose import jwt, JWTError
 from backend.config import settings
 
 SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = "HS256"
+ALGORITHM = settings.JWT_ALGORITHM
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -18,11 +18,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
         public_paths = [
             "/login",
             "/signup",
+            "/api/login",
+            "/api/signup",
             "/docs",
+            "/redoc",
+            "/metrics",
+            "/health",
             "/openapi.json"
         ]
 
-        if request.url.path in public_paths:
+        if request.url.path in public_paths or request.url.path.startswith("/api/external/"):
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
@@ -32,7 +37,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         try:
             token = auth_header.split(" ")[1]
-            jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            request.state.user_id = payload.get("user_id")
+            request.state.company_id = payload.get("company_id")
+            request.state.username = payload.get("sub")
+            request.state.role = payload.get("role")
         except JWTError:
             raise HTTPException(status_code=401, detail="Invalid token")
 

@@ -1,17 +1,102 @@
-
 function highlightActivePage(){
 
 const links = document.querySelectorAll(".sidebar a")
 
 links.forEach(link => {
 
-if(window.location.href.includes(link.getAttribute("href"))){
+const href = link.getAttribute("href")
+
+if(!href) return
+
+if(window.location.pathname.includes(href.replace("../",""))){
 link.classList.add("active")
 }
 
 })
 
 }
+const ROLE_ACCESS_RULES = {
+"/frontend/pages/users.html": ["admin"],
+"/frontend/pages/settings.html": ["admin"],
+"/frontend/pages/activity_log.html": ["admin", "manager"],
+"/frontend/pages/analytics.html": ["admin", "manager"],
+"/frontend/pages/generate_report.html": ["admin", "manager"],
+"/frontend/pages/rag_report.html": ["admin", "manager"],
+"/frontend/pages/recommendations.html": ["admin", "manager"],
+"/frontend/pages/risk_assessment.html": ["admin", "manager"],
+"/frontend/pages/validator.html": ["admin", "manager"],
+"/frontend/pages/upload.html": ["admin", "manager", "worker"],
+"/frontend/pages/download_report.html": ["admin", "manager", "worker"],
+"/frontend/pages/report_history.html": ["admin", "manager", "worker"],
+"/frontend/pages/dashboard.html": ["admin", "manager", "worker"],
+"/frontend/ai_modules/hazard_detection.html": ["admin", "manager", "worker"],
+"/frontend/ai_modules/compliance_agent.html": ["admin", "manager", "worker"],
+"/frontend/ai_modules/incident_prediction.html": ["admin", "manager", "worker"],
+"/frontend/ai_modules/risk_heatmap.html": ["admin", "manager", "worker"]
+};
+
+function getCurrentRole(){
+return (localStorage.getItem("user_role") || "worker").toLowerCase();
+}
+
+function canAccessPath(path, role){
+const currentPath = path.toLowerCase();
+
+for(const rulePath in ROLE_ACCESS_RULES){
+if(currentPath.endsWith(rulePath.toLowerCase())){
+return ROLE_ACCESS_RULES[rulePath].includes(role);
+}
+}
+
+return true;
+}
+
+function enforcePageAccess(){
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+if(!token){
+return;
+}
+
+const role = getCurrentRole();
+const currentPath = window.location.pathname;
+
+if(!canAccessPath(currentPath, role)){
+alert("You do not have permission to access this page.");
+window.location.href = "/frontend/pages/dashboard.html";
+}
+}
+
+function applyRoleBasedNavigation(){
+const role = getCurrentRole();
+	const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+	const resolvedRole = (storedUser && storedUser.role ? storedUser.role : role).toLowerCase();
+const links = document.querySelectorAll(".sidebar a, .nav-links a");
+	const usersMenu = document.getElementById("users-menu");
+
+	if(usersMenu && resolvedRole !== "admin"){
+		usersMenu.style.display = "none";
+	}
+
+links.forEach(function(link){
+const href = link.getAttribute("href");
+if(!href){
+return;
+}
+
+let resolvedPath = href;
+if(href.startsWith("../")){
+resolvedPath = "/frontend/" + href.replace("../", "");
+} else if(!href.startsWith("/")){
+resolvedPath = "/frontend/pages/" + href;
+}
+
+		if(!canAccessPath(resolvedPath, resolvedRole)){
+link.style.display = "none";
+}
+});
+}
+
+
 
 function initSidebar(){
 
@@ -108,6 +193,8 @@ const input = document.getElementById("appSearch");
 const results = document.getElementById("searchResults");
 
 if(!input || !results) return;
+
+applyRoleBasedNavigation();
 
 input.addEventListener("input", function(){
 
@@ -284,8 +371,10 @@ button.style.display = "block"
 
 document.addEventListener("DOMContentLoaded", function(){
 
+enforcePageAccess()
 initSidebar()
 initSearch()
+applyRoleBasedNavigation()
 highlightActivePage()
 applyDarkMode()
 initNotifications()

@@ -1,403 +1,518 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Compliance Tracker</title>
-
 <link rel="stylesheet" href="../css/style.css">
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-.compliance-summary {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-gap: 14px;
-margin: 16px 0 20px;
+:root {
+	--primary: #0d6efd;
+	--border: #e2e8f0;
+	--panel: #f8fafc;
+	--muted: #64748b;
+	--warn: #d9480f;
+	--success: #2f9e44;
 }
+body { font-family: 'Space Grotesk', sans-serif; }
 
-.compliance-card {
-background: #fff;
-border: 1px solid #e6edf5;
-border-radius: 10px;
-padding: 16px;
-box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
-}
+.head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+.head h1 { margin:0; font-size:1.6rem; }
+.sub { margin:4px 0 0; color:var(--muted); font-size:.9rem; }
 
-.compliance-card h3 {
-margin: 0;
-font-size: 28px;
-}
+.summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
+.summary-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 2px 8px rgba(15,23,42,.05); }
+.summary-card strong { display:block; font-size:1.65rem; color:var(--primary); }
+.summary-card span { color:var(--muted); font-size:.82rem; }
 
-.compliance-toolbar {
-display: flex;
-justify-content: space-between;
-align-items: center;
-flex-wrap: wrap;
-gap: 10px;
-margin-bottom: 16px;
-}
+.ai-hint { background:linear-gradient(135deg, #eef6ff, #fffdf4); border:1px solid #d9e8ff; border-radius:14px; padding:14px; margin-bottom:16px; }
+.ai-hint strong { display:block; margin-bottom:6px; }
 
-.compliance-filters {
-display: flex;
-gap: 8px;
-flex-wrap: wrap;
-}
+.toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.filters { display:flex; gap:6px; flex-wrap:wrap; }
+.filter-btn { background:#fff; border:1px solid var(--border); border-radius:8px; padding:7px 11px; font-size:.83rem; font-weight:600; cursor:pointer; }
+.filter-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.search { border:1px solid var(--border); border-radius:9px; padding:8px 11px; min-width:240px; }
 
-.compliance-filters button,
-.compliance-actions button {
-padding: 8px 12px;
-border: 1px solid #d0d7de;
-border-radius: 8px;
-background: #8f5f5f;
-cursor: pointer;
-}
+.btn { display:inline-flex; align-items:center; gap:5px; padding:8px 13px; border-radius:9px; border:1px solid transparent; font-size:.84rem; font-weight:600; cursor:pointer; }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:#0b5ed7; }
+.btn-outline { background:#fff; color:#334155; border-color:var(--border); }
+.btn-outline:hover { background:var(--panel); }
+.btn-success { background:var(--success); color:#fff; }
+.btn-success:hover { background:#237a34; }
+.btn-sm { padding:5px 9px; border-radius:7px; font-size:.78rem; }
 
-.compliance-filters button.active,
-.compliance-actions .primary {
-background: #0b63ce;
-border-color: #0b63ce;
-color: #fff;
-}
+.table-wrap { background:#fff; border:1px solid var(--border); border-radius:16px; overflow:auto; }
+.table { width:100%; border-collapse:collapse; min-width:1040px; }
+.table th, .table td { padding:11px 12px; border-bottom:1px solid #eff3f7; text-align:left; font-size:.88rem; }
+.table th { background:var(--panel); color:var(--muted); font-size:.8rem; letter-spacing:.04em; }
+.table tr:last-child td { border-bottom:none; }
 
-.compliance-search {
-padding: 8px 10px;
-border: 1px solid #d0d7de;
-border-radius: 8px;
-min-width: 240px;
-}
+.pill { display:inline-flex; padding:3px 10px; border-radius:999px; font-size:.76rem; font-weight:700; }
+.st-compliant { background:#e9f7ef; color:#2f9e44; }
+.st-violated { background:#fdecea; color:#b3261e; }
+.st-not_checked { background:#fff4e5; color:#8c5d00; }
+.source-pill { background:#eef3f8; color:#334155; }
 
-.compliance-table-wrap {
-background: #fff;
-border: 1px solid #e6edf5;
-border-radius: 10px;
-overflow: auto;
-}
+.empty { text-align:center; padding:42px; color:var(--muted); }
 
-.compliance-table {
-width: 100%;
-border-collapse: collapse;
-min-width: 980px;
-}
+.modal-overlay { display:none; position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.45); align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { width:100%; max-width:560px; max-height:90vh; overflow-y:auto; background:#fff; border-radius:18px; padding:24px; box-shadow:0 20px 60px rgba(15,23,42,.2); }
+.modal h2 { margin:0 0 14px; font-size:1.2rem; }
+.row { margin-bottom:12px; }
+.row label { display:block; margin-bottom:5px; font-size:.82rem; font-weight:600; color:#334155; }
+.input, .select, .textarea { width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:9px; padding:9px 11px; background:var(--panel); font-family:inherit; }
+.textarea { min-height:84px; resize:vertical; }
+.actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
 
-.compliance-table th,
-.compliance-table td {
-padding: 12px;
-text-align: left;
-border-bottom: 1px solid #eef3f8;
-font-size: 14px;
-}
+.suggestion-list { margin-top:8px; display:grid; gap:8px; }
+.suggestion { border:1px solid var(--border); border-radius:10px; padding:10px; background:#fff; font-size:.84rem; }
 
-.compliance-table th {
-background: #f8fbff;
-font-weight: 700;
-}
-
-.status-pill,
-.priority-pill,
-.framework-pill {
-display: inline-block;
-padding: 4px 8px;
-border-radius: 999px;
-font-size: 12px;
-font-weight: 700;
-}
-
-.status-pill.compliant {
-background: #e9f7ef;
-color: #146c43;
-}
-
-.status-pill.review {
-background: #fff4e5;
-color: #8c5d00;
-}
-
-.status-pill.overdue {
-background: #fdecea;
-color: #b3261e;
-}
-
-.priority-pill.high {
-background: #fdecea;
-color: #b3261e;
-}
-
-.priority-pill.medium {
-background: #fff4e5;
-color: #8c5d00;
-}
-
-.priority-pill.low {
-background: #e9f7ef;
-color: #146c43;
-}
-
-.framework-pill {
-background: #eef3f8;
-color: #334155;
-}
-
-.row-actions button {
-padding: 6px 10px;
-border: 1px solid #d0d7de;
-border-radius: 8px;
-background: #4f7c55;
-cursor: pointer;
-margin-right: 6px;
-}
-
-.status-note {
-margin-top: 12px;
-font-size: 14px;
-min-height: 20px;
-color: #1e6f43;
-}
+#toast { position:fixed; right:24px; bottom:24px; z-index:9999; background:#1e293b; color:#fff; border-radius:10px; padding:10px 15px; opacity:0; pointer-events:none; transition:opacity .25s; }
+#toast.show { opacity:1; }
 </style>
-
 </head>
-
 <body>
-
 <div class="navbar">
-<div class="logo">AI Safety Platform</div>
-<div class="nav-right">
-<span>Admin</span>
-<button onclick="logout()">Logout</button>
-</div>
+	<div class="logo">AI Safety Platform</div>
+	<div class="nav-right">
+		<span id="navUsername">User</span>
+		<button onclick="logout()">Logout</button>
+	</div>
 </div>
 
 <div id="sidebar-container"></div>
 
 <div class="main-content">
-<h1>Compliance Tracker</h1>
-<p>Track regulatory obligations, evidence status, review cycles, and remediation progress.</p>
+	<div class="head">
+		<div>
+			<h1>Compliance Tracker</h1>
+			<p class="sub">Track regulations, evaluate compliance, and turn violations into corrective actions.</p>
+		</div>
+		<div style="display:flex; gap:8px; flex-wrap:wrap">
+			<button id="addRuleBtn" class="btn btn-outline" onclick="openRuleModal()">+ Add Rule</button>
+			<button class="btn btn-primary" onclick="openCheckModal()">Run Compliance Check</button>
+		</div>
+	</div>
 
-<div class="compliance-summary">
-<div class="compliance-card">
-<h3>42</h3>
-<p>Total Controls</p>
-</div>
-<div class="compliance-card">
-<h3>29</h3>
-<p>Compliant</p>
-</div>
-<div class="compliance-card">
-<h3>8</h3>
-<p>Needs Review</p>
-</div>
-<div class="compliance-card">
-<h3>5</h3>
-<p>Overdue</p>
-</div>
-</div>
+	<div class="summary">
+		<div class="summary-card"><strong id="sumTotal">0</strong><span>Total Rules</span></div>
+		<div class="summary-card"><strong id="sumCompliant" style="color:var(--success)">0</strong><span>Compliant</span></div>
+		<div class="summary-card"><strong id="sumViolated" style="color:#b3261e">0</strong><span>Violated</span></div>
+		<div class="summary-card"><strong id="sumUnchecked" style="color:#8c5d00">0</strong><span>Not Checked</span></div>
+	</div>
 
-<div class="compliance-toolbar">
-<div class="compliance-filters">
-<button class="active" data-filter="all">All</button>
-<button data-filter="compliant">Compliant</button>
-<button data-filter="review">Needs Review</button>
-<button data-filter="overdue">Overdue</button>
-</div>
-<div class="compliance-actions">
-<input id="complianceSearch" class="compliance-search" type="text" placeholder="Search control, framework, or owner...">
-<button class="primary" onclick="addComplianceItem()">Add Control</button>
-</div>
-</div>
+	<div class="ai-hint">
+		<strong>AI Regulation Assist</strong>
+		The rule checker uses your local regulation knowledge and compliance agent to suggest actions and detect likely violations.
+	</div>
 
-<div class="compliance-table-wrap">
-<table class="compliance-table" id="complianceTable">
-<thead>
-<tr>
-<th>ID</th>
-<th>Control</th>
-<th>Framework</th>
-<th>Status</th>
-<th>Priority</th>
-<th>Owner</th>
-<th>Next Review</th>
-<th>Evidence</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody>
-<tr data-status="compliant">
-<td>CTL-204</td>
-<td>PPE enforcement documentation</td>
-<td><span class="framework-pill">OSHA</span></td>
-<td><span class="status-pill compliant">Compliant</span></td>
-<td><span class="priority-pill medium">Medium</span></td>
-<td>N. Verma</td>
-<td>19 Mar 2026</td>
-<td>Inspection logs uploaded</td>
-<td class="row-actions">
-<button onclick="viewCompliance(this)">View</button>
-</td>
-</tr>
-<tr data-status="review">
-<td>CTL-198</td>
-<td>Electrical isolation procedure review</td>
-<td><span class="framework-pill">ISO 45001</span></td>
-<td><span class="status-pill review">Needs Review</span></td>
-<td><span class="priority-pill high">High</span></td>
-<td>R. Menon</td>
-<td>15 Mar 2026</td>
-<td>Procedure draft pending approval</td>
-<td class="row-actions">
-<button onclick="markCompliant(this)">Mark Compliant</button>
-<button onclick="viewCompliance(this)">View</button>
-</td>
-</tr>
-<tr data-status="overdue">
-<td>CTL-187</td>
-<td>Emergency exit inspection evidence</td>
-<td><span class="framework-pill">Internal Policy</span></td>
-<td><span class="status-pill overdue">Overdue</span></td>
-<td><span class="priority-pill high">High</span></td>
-<td>A. Singh</td>
-<td>11 Mar 2026</td>
-<td>Missing signed checklist</td>
-<td class="row-actions">
-<button onclick="moveToReview(this)">Move to Review</button>
-<button onclick="viewCompliance(this)">View</button>
-</td>
-</tr>
-<tr data-status="review">
-<td>CTL-176</td>
-<td>Training completion evidence retention</td>
-<td><span class="framework-pill">ISO 45001</span></td>
-<td><span class="status-pill review">Needs Review</span></td>
-<td><span class="priority-pill low">Low</span></td>
-<td>S. Thomas</td>
-<td>22 Mar 2026</td>
-<td>Awaiting LMS export attachment</td>
-<td class="row-actions">
-<button onclick="markCompliant(this)">Mark Compliant</button>
-<button onclick="viewCompliance(this)">View</button>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
+	<div class="toolbar">
+		<div class="filters">
+			<button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+			<button class="filter-btn" onclick="setFilter('compliant', this)">Compliant</button>
+			<button class="filter-btn" onclick="setFilter('violated', this)">Violated</button>
+			<button class="filter-btn" onclick="setFilter('not_checked', this)">Not Checked</button>
+		</div>
+		<input class="search" id="search" placeholder="Search rule, source, category" oninput="renderReport()">
+	</div>
 
-<div class="status-note" id="complianceStatus"></div>
-
+	<div class="table-wrap">
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Rule</th>
+					<th>Source</th>
+					<th>Category</th>
+					<th>Status</th>
+					<th>Location</th>
+					<th>Checked At</th>
+					<th>Recommended Action</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody id="reportBody">
+				<tr><td colspan="8" class="empty">Loading compliance report...</td></tr>
+			</tbody>
+		</table>
+	</div>
 </div>
 
 <div id="footer"></div>
+<div id="toast"></div>
+
+<div id="ruleModal" class="modal-overlay">
+	<div class="modal">
+		<h2>Add Compliance Rule</h2>
+		<div class="row">
+			<label>Rule Name *</label>
+			<input class="input" id="ruleName" placeholder="e.g. Helmet Protection Rule">
+		</div>
+		<div class="row">
+			<label>Description *</label>
+			<textarea class="textarea" id="ruleDescription" placeholder="Workers must wear helmets in construction zones."></textarea>
+		</div>
+		<div class="row">
+			<label>Regulation Source *</label>
+			<input class="input" id="ruleSource" placeholder="e.g. OSHA / ISO 45001 / WHS Regulation 101">
+		</div>
+		<div class="row">
+			<label>Category</label>
+			<input class="input" id="ruleCategory" placeholder="e.g. PPE">
+		</div>
+		<div class="actions">
+			<button class="btn btn-outline" onclick="closeRuleModal()">Cancel</button>
+			<button class="btn btn-primary" onclick="submitRule()">Create Rule</button>
+		</div>
+	</div>
+</div>
+
+<div id="checkModal" class="modal-overlay">
+	<div class="modal">
+		<h2>Compliance Check</h2>
+		<div class="row">
+			<label>Rule *</label>
+			<select class="select" id="checkRule"></select>
+		</div>
+		<div class="row">
+			<label>Project ID</label>
+			<input class="input" id="checkProjectId" type="number" placeholder="Optional">
+		</div>
+		<div class="row">
+			<label>Location</label>
+			<input class="input" id="checkLocation" placeholder="e.g. Construction Site A">
+		</div>
+		<div class="row">
+			<label>Observation / Evidence</label>
+			<textarea class="textarea" id="checkObservation" placeholder="Example: two workers without helmets near scaffold edge."></textarea>
+		</div>
+		<div class="row">
+			<label>AI Regulation Suggestions</label>
+			<input class="input" id="suggestQuery" placeholder="Type keywords like helmet, electrical, fire" oninput="loadSuggestions()">
+			<div class="suggestion-list" id="suggestions"></div>
+		</div>
+		<div class="row">
+			<label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+				<input type="checkbox" id="createTaskToggle"> Create corrective task if violated
+			</label>
+		</div>
+		<div class="row" id="taskPriorityRow" style="display:none">
+			<label>Task Priority</label>
+			<select class="select" id="taskPriority">
+				<option value="medium">Medium</option>
+				<option value="high" selected>High</option>
+				<option value="critical">Critical</option>
+			</select>
+		</div>
+		<div class="row" id="taskAssignRow" style="display:none">
+			<label>Assign To User ID</label>
+			<input class="input" id="assignToId" type="number" placeholder="Optional">
+		</div>
+		<div class="actions">
+			<button class="btn btn-outline" onclick="closeCheckModal()">Cancel</button>
+			<button class="btn btn-primary" onclick="submitCheck()">Run Check</button>
+		</div>
+	</div>
+</div>
 
 <script>
-fetch("../components/sidebar.html")
-.then(res => res.text())
-.then(data => {
-document.getElementById("sidebar-container").innerHTML = data
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
+if (!token) window.location.href = "login.html"
 
-initSearch()
+const role = (localStorage.getItem("user_role") || "worker").toLowerCase()
+const canManage = role === "admin" || role === "manager"
+document.getElementById("navUsername").textContent = localStorage.getItem("username") || "User"
 
-const toggleBtn = document.getElementById("menuToggle")
-const sidebar = document.querySelector(".sidebar")
-const navbar = document.querySelector(".navbar")
-const mainContent = document.querySelector(".main-content")
+function apiHeaders() {
+	const headers = { "Content-Type": "application/json" }
+	if (token && token !== "loggedin") headers.Authorization = `Bearer ${token}`
+	return headers
+}
 
-if(toggleBtn){
-toggleBtn.onclick = function(){
-sidebar.classList.toggle("collapsed")
-if(navbar) navbar.classList.toggle("expanded")
-if(mainContent) mainContent.classList.toggle("expanded")
-const footer = document.querySelector(".footer")
-if(footer){
-footer.classList.toggle("expanded")
+function logout() {
+	localStorage.removeItem("token")
+	localStorage.removeItem("auth_token")
+	window.location.href = "login.html"
 }
+
+function toast(message, isError) {
+	const el = document.getElementById("toast")
+	el.textContent = message
+	el.style.background = isError ? "#b3261e" : "#1e293b"
+	el.classList.add("show")
+	setTimeout(() => el.classList.remove("show"), 2800)
 }
+
+function escHtml(value) {
+	return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 }
+
+function fmtDate(iso) {
+	if (!iso) return "-"
+	return new Date(iso).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })
+}
+
+function statusPill(status) {
+	const labels = { compliant: "Compliant", violated: "Violated", not_checked: "Not Checked" }
+	return `<span class="pill st-${status}">${labels[status] || status}</span>`
+}
+
+let rules = []
+let report = []
+let activeFilter = "all"
+
+function setFilter(filter, btn) {
+	activeFilter = filter
+	document.querySelectorAll('.filter-btn').forEach((item) => item.classList.remove('active'))
+	btn.classList.add('active')
+	renderReport()
+}
+
+async function loadSummary() {
+	try {
+		const res = await fetch('/api/compliance/summary', { headers: apiHeaders() })
+		if (!res.ok) return
+		const data = await res.json()
+		document.getElementById('sumTotal').textContent = data.total || 0
+		document.getElementById('sumCompliant').textContent = data.compliant || 0
+		document.getElementById('sumViolated').textContent = data.violated || 0
+		document.getElementById('sumUnchecked').textContent = data.not_checked || 0
+	} catch (_) {}
+}
+
+async function loadRules() {
+	try {
+		const res = await fetch('/api/compliance/rules', { headers: apiHeaders() })
+		if (!res.ok) throw new Error('failed')
+		rules = await res.json()
+	} catch (_) {
+		rules = []
+	}
+
+	const select = document.getElementById('checkRule')
+	if (!rules.length) {
+		select.innerHTML = '<option value="">No rules available</option>'
+		return
+	}
+	select.innerHTML = rules.map((rule) => `<option value="${rule.id}">${escHtml(rule.rule_name)} (${escHtml(rule.regulation_source)})</option>`).join('')
+}
+
+async function loadReport() {
+	try {
+		const res = await fetch('/api/compliance/report', { headers: apiHeaders() })
+		if (!res.ok) throw new Error('failed')
+		report = await res.json()
+	} catch (_) {
+		report = []
+	}
+	renderReport()
+}
+
+function renderReport() {
+	const term = document.getElementById('search').value.trim().toLowerCase()
+	const body = document.getElementById('reportBody')
+	const filtered = report.filter((item) => {
+		const byFilter = activeFilter === 'all' || item.status === activeFilter
+		const text = `${item.rule_name} ${item.regulation_source} ${item.category}`.toLowerCase()
+		const bySearch = !term || text.includes(term)
+		return byFilter && bySearch
+	})
+
+	if (!filtered.length) {
+		body.innerHTML = '<tr><td colspan="8" class="empty">No compliance rules found.</td></tr>'
+		return
+	}
+
+	body.innerHTML = filtered.map((item) => `
+		<tr>
+			<td>
+				<div style="font-weight:600">${escHtml(item.rule_name)}</div>
+				<div style="font-size:.78rem;color:var(--muted)">${escHtml(item.description || '')}</div>
+			</td>
+			<td><span class="pill source-pill">${escHtml(item.regulation_source)}</span></td>
+			<td>${escHtml(item.category || '-')}</td>
+			<td>${statusPill(item.status)}</td>
+			<td>${escHtml(item.location || '-')}</td>
+			<td>${fmtDate(item.checked_at)}</td>
+			<td>${escHtml(item.recommended_action || '-')}</td>
+			<td>
+				<button class="btn btn-outline btn-sm" onclick="viewItem(${item.rule_id})">View</button>
+				${item.maintenance_task_id ? `<button class="btn btn-success btn-sm" onclick="openTask(${item.maintenance_task_id})">Task #${item.maintenance_task_id}</button>` : ''}
+			</td>
+		</tr>
+	`).join('')
+}
+
+function viewItem(ruleId) {
+	const item = report.find((entry) => entry.rule_id === ruleId)
+	if (!item) return
+	const message = [
+		`Rule: ${item.rule_name}`,
+		`Source: ${item.regulation_source}`,
+		`Status: ${item.status}`,
+		`Location: ${item.location || '-'}`,
+		`Checked: ${fmtDate(item.checked_at)}`,
+		`Evidence: ${item.evidence || '-'}`,
+		`Recommended Action: ${item.recommended_action || '-'}`,
+	].join('\n')
+	alert(message)
+}
+
+function openTask(taskId) {
+	window.location.href = `task_details.html?id=${taskId}`
+}
+
+function openRuleModal() { document.getElementById('ruleModal').classList.add('open') }
+function closeRuleModal() { document.getElementById('ruleModal').classList.remove('open') }
+function openCheckModal() { document.getElementById('checkModal').classList.add('open') }
+function closeCheckModal() { document.getElementById('checkModal').classList.remove('open') }
+
+async function submitRule() {
+	const rule_name = document.getElementById('ruleName').value.trim()
+	const description = document.getElementById('ruleDescription').value.trim()
+	const regulation_source = document.getElementById('ruleSource').value.trim()
+	const category = document.getElementById('ruleCategory').value.trim()
+
+	if (!rule_name || !description || !regulation_source) {
+		toast('Rule name, description, and source are required', true)
+		return
+	}
+
+	try {
+		const res = await fetch('/api/compliance/rules', {
+			method: 'POST',
+			headers: apiHeaders(),
+			body: JSON.stringify({ rule_name, description, regulation_source, category }),
+		})
+		if (!res.ok) throw new Error('failed')
+		closeRuleModal()
+		toast('Compliance rule added')
+		loadSummary()
+		loadRules()
+		loadReport()
+	} catch (_) {
+		toast('Unable to add compliance rule', true)
+	}
+}
+
+async function submitCheck() {
+	const rule_id = parseInt(document.getElementById('checkRule').value || '0', 10)
+	if (!rule_id) {
+		toast('Select a compliance rule', true)
+		return
+	}
+
+	const project_id_raw = document.getElementById('checkProjectId').value.trim()
+	const location = document.getElementById('checkLocation').value.trim()
+	const observation = document.getElementById('checkObservation').value.trim()
+	const create_task = document.getElementById('createTaskToggle').checked
+	const task_priority = document.getElementById('taskPriority').value
+	const assign_raw = document.getElementById('assignToId').value.trim()
+
+	try {
+		const res = await fetch('/api/compliance/check', {
+			method: 'POST',
+			headers: apiHeaders(),
+			body: JSON.stringify({
+				rule_id,
+				project_id: project_id_raw ? parseInt(project_id_raw, 10) : null,
+				location,
+				evidence: observation,
+				observation,
+				create_task,
+				task_priority,
+				assign_to_id: assign_raw ? parseInt(assign_raw, 10) : null,
+			}),
+		})
+		if (!res.ok) throw new Error('failed')
+		closeCheckModal()
+		toast('Compliance check completed')
+		loadSummary()
+		loadReport()
+	} catch (_) {
+		toast('Unable to complete compliance check', true)
+	}
+}
+
+async function loadSuggestions() {
+	const query = document.getElementById('suggestQuery').value.trim()
+	const container = document.getElementById('suggestions')
+	if (!query || query.length < 2) {
+		container.innerHTML = ''
+		return
+	}
+
+	try {
+		const res = await fetch(`/api/compliance/suggestions?query=${encodeURIComponent(query)}`, { headers: apiHeaders() })
+		if (!res.ok) throw new Error('failed')
+		const data = await res.json()
+		if (!data.length) {
+			container.innerHTML = '<div class="suggestion">No matching regulations found.</div>'
+			return
+		}
+		container.innerHTML = data.map((item) => `
+			<div class="suggestion">
+				<strong>${escHtml(item.category || 'General')}</strong><br>
+				${escHtml(item.regulation || '')}<br>
+				<span style="color:var(--muted)">${escHtml(item.reference || '')}</span>
+			</div>
+		`).join('')
+	} catch (_) {
+		container.innerHTML = '<div class="suggestion">Unable to load suggestions.</div>'
+	}
+}
+
+function toggleTaskFields() {
+	const visible = document.getElementById('createTaskToggle').checked
+	document.getElementById('taskPriorityRow').style.display = visible ? 'block' : 'none'
+	document.getElementById('taskAssignRow').style.display = visible ? 'block' : 'none'
+}
+
+if (!canManage) {
+	document.getElementById('addRuleBtn').style.display = 'none'
+}
+
+document.getElementById('createTaskToggle').addEventListener('change', toggleTaskFields)
+document.getElementById('ruleModal').addEventListener('click', (e) => {
+	if (e.target === e.currentTarget) closeRuleModal()
+})
+document.getElementById('checkModal').addEventListener('click', (e) => {
+	if (e.target === e.currentTarget) closeCheckModal()
 })
 
-fetch("../components/footer.html")
-.then(res => res.text())
-.then(data => {
-document.getElementById("footer").innerHTML = data
-})
+fetch('../components/sidebar.html')
+	.then((res) => res.text())
+	.then((html) => {
+		document.getElementById('sidebar-container').innerHTML = html
+		initSearch()
+		const toggleBtn = document.getElementById('menuToggle')
+		const sidebar = document.querySelector('.sidebar')
+		const navbar = document.querySelector('.navbar')
+		const mainContent = document.querySelector('.main-content')
+		if (toggleBtn) {
+			toggleBtn.onclick = function () {
+				sidebar.classList.toggle('collapsed')
+				if (navbar) navbar.classList.toggle('expanded')
+				if (mainContent) mainContent.classList.toggle('expanded')
+				const footer = document.querySelector('.footer')
+				if (footer) footer.classList.toggle('expanded')
+			}
+		}
+	})
 
-if(!localStorage.getItem("token")){
-window.location.href = "login.html"
-}
+fetch('../components/footer.html')
+	.then((res) => res.text())
+	.then((html) => { document.getElementById('footer').innerHTML = html })
 
-function logout(){
-localStorage.removeItem("token")
-window.location.href = "login.html"
-}
-
-const complianceSearch = document.getElementById("complianceSearch")
-const complianceTableBody = document.querySelector("#complianceTable tbody")
-let activeComplianceFilter = "all"
-
-function applyComplianceFilters(){
-const term = complianceSearch.value.trim().toLowerCase()
-const rows = Array.from(complianceTableBody.querySelectorAll("tr"))
-
-rows.forEach(row => {
-const rowStatus = row.getAttribute("data-status")
-const rowText = row.textContent.toLowerCase()
-const matchesStatus = activeComplianceFilter === "all" || rowStatus === activeComplianceFilter
-const matchesText = term === "" || rowText.includes(term)
-row.style.display = matchesStatus && matchesText ? "table-row" : "none"
-})
-}
-
-function addComplianceItem(){
-setComplianceStatus("Compliance control creation flow requested.")
-}
-
-function viewCompliance(button){
-const row = button.closest("tr")
-if(!row) return
-setComplianceStatus("Viewing control " + row.children[0].textContent.trim() + ".")
-}
-
-function markCompliant(button){
-const row = button.closest("tr")
-if(!row) return
-row.setAttribute("data-status", "compliant")
-const status = row.querySelector(".status-pill")
-status.className = "status-pill compliant"
-status.textContent = "Compliant"
-button.textContent = "View"
-button.setAttribute("onclick", "viewCompliance(this)")
-setComplianceStatus("Control marked compliant.")
-applyComplianceFilters()
-}
-
-function moveToReview(button){
-const row = button.closest("tr")
-if(!row) return
-row.setAttribute("data-status", "review")
-const status = row.querySelector(".status-pill")
-status.className = "status-pill review"
-status.textContent = "Needs Review"
-button.textContent = "Mark Compliant"
-button.setAttribute("onclick", "markCompliant(this)")
-setComplianceStatus("Control moved to review.")
-applyComplianceFilters()
-}
-
-function setComplianceStatus(message){
-document.getElementById("complianceStatus").textContent = message
-}
-
-document.querySelectorAll(".compliance-filters button").forEach(button => {
-button.addEventListener("click", function(){
-document.querySelectorAll(".compliance-filters button").forEach(btn => btn.classList.remove("active"))
-this.classList.add("active")
-activeComplianceFilter = this.getAttribute("data-filter")
-applyComplianceFilters()
-})
-})
-
-complianceSearch.addEventListener("input", applyComplianceFilters)
+loadSummary()
+loadRules()
+loadReport()
 </script>
-
 <script src="../js/main.js"></script>
-
 </body>
 </html>

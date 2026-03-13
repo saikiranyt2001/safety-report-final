@@ -23,6 +23,7 @@ class Company(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     users = relationship(
         "User",
@@ -64,6 +65,12 @@ class User(Base):
 
     usage = relationship(
         "Usage",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    activity_logs = relationship(
+        "ActivityLog",
         back_populates="user",
         cascade="all, delete-orphan"
     )
@@ -155,3 +162,398 @@ class Usage(Base):
 
     def __repr__(self):
         return f"<Usage user={self.user_id} month={self.month}>"
+
+
+# -----------------------------
+# Inspection Checklist
+# -----------------------------
+class InspectionTemplate(Base):
+    __tablename__ = "inspection_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(String)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    questions = relationship(
+        "InspectionQuestion",
+        back_populates="template",
+        cascade="all, delete-orphan",
+        order_by="InspectionQuestion.order",
+    )
+    company = relationship("Company")
+    created_by = relationship("User", foreign_keys=[created_by_id])
+
+    def __repr__(self):
+        return f"<InspectionTemplate {self.name}>"
+
+
+class InspectionQuestion(Base):
+    __tablename__ = "inspection_questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_id = Column(Integer, ForeignKey("inspection_templates.id"), index=True, nullable=False)
+    question = Column(String, nullable=False)
+    order = Column(Integer, default=0)
+
+    template = relationship("InspectionTemplate", back_populates="questions")
+    responses = relationship(
+        "InspectionResponse",
+        back_populates="question",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self):
+        return f"<InspectionQuestion {self.question[:40]}>"
+
+
+class InspectionResponse(Base):
+    __tablename__ = "inspection_responses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    question_id = Column(Integer, ForeignKey("inspection_questions.id"), index=True, nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    answered_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    answer = Column(String, nullable=False)      # "pass", "fail", "na"
+    notes = Column(String)
+    submitted_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    question = relationship("InspectionQuestion", back_populates="responses")
+    company = relationship("Company")
+    answered_by = relationship("User", foreign_keys=[answered_by_id])
+
+    def __repr__(self):
+        return f"<InspectionResponse q={self.question_id} answer={self.answer}>"
+
+
+# -----------------------------
+# Hazard Tasks
+# -----------------------------
+class TaskStatusEnum(enum.Enum):
+    open = "open"
+    in_progress = "in_progress"
+    resolved = "resolved"
+    closed = "closed"
+
+
+class TaskPriorityEnum(enum.Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+    critical = "critical"
+
+
+class HazardTask(Base):
+    __tablename__ = "hazard_tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+
+    title = Column(String, nullable=False)
+    description = Column(String)
+    hazard_type = Column(String)                                  # e.g. "No helmet", "Loose ladder"
+    priority = Column(Enum(TaskPriorityEnum), default=TaskPriorityEnum.medium, nullable=False)
+    status = Column(Enum(TaskStatusEnum), default=TaskStatusEnum.open, nullable=False)
+
+    assigned_to_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    created_by_id  = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True, index=True)
+
+    deadline     = Column(DateTime, nullable=True)
+    resolved_at  = Column(DateTime, nullable=True)
+    proof_notes  = Column(String, nullable=True)               # text proof when resolving
+
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    assigned_to = relationship("User", foreign_keys=[assigned_to_id])
+    created_by  = relationship("User", foreign_keys=[created_by_id])
+    company = relationship("Company")
+    project     = relationship("Project")
+
+    def __repr__(self):
+        return f"<HazardTask {self.id} {self.status}>"
+
+
+# -----------------------------
+# Incidents & Investigations
+# -----------------------------
+class IncidentSeverityEnum(enum.Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+    critical = "critical"
+
+
+class IncidentStatusEnum(enum.Enum):
+    open = "open"
+    investigating = "investigating"
+    closed = "closed"
+
+
+class Incident(Base):
+    __tablename__ = "incidents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True, index=True)
+    reported_by = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+
+    incident_type = Column(String, nullable=False)
+    location = Column(String, nullable=True)
+    description = Column(String, nullable=False)
+
+    severity = Column(Enum(IncidentSeverityEnum), default=IncidentSeverityEnum.low, nullable=False)
+    status = Column(Enum(IncidentStatusEnum), default=IncidentStatusEnum.open, nullable=False)
+
+    immediate_action = Column(String, nullable=True)
+    closed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    reporter = relationship("User", foreign_keys=[reported_by])
+    company = relationship("Company")
+    project = relationship("Project")
+    investigation = relationship(
+        "IncidentInvestigation",
+        back_populates="incident",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
+    def __repr__(self):
+        return f"<Incident {self.id} {self.status}>"
+
+
+class IncidentInvestigation(Base):
+    __tablename__ = "incident_investigations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    incident_id = Column(Integer, ForeignKey("incidents.id"), nullable=False, unique=True, index=True)
+
+    root_cause = Column(String, nullable=False)
+    corrective_action = Column(String, nullable=False)
+    contributing_factor = Column(String, nullable=True)
+    investigated_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    incident = relationship("Incident", back_populates="investigation")
+    investigated_by = relationship("User", foreign_keys=[investigated_by_id])
+
+    def __repr__(self):
+        return f"<IncidentInvestigation incident={self.incident_id}>"
+
+
+# -----------------------------
+# Training & Certification
+# -----------------------------
+class TrainingCourse(Base):
+    __tablename__ = "training_courses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    validity_months = Column(Integer, nullable=False, default=12)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    company = relationship("Company")
+    records = relationship("TrainingRecord", back_populates="course", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<TrainingCourse {self.name}>"
+
+
+class TrainingRecord(Base):
+    __tablename__ = "training_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("training_courses.id"), nullable=False, index=True)
+    assigned_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    completed_date = Column(DateTime, nullable=True)
+    expiry_date = Column(DateTime, nullable=True)
+    certificate_ref = Column(String, nullable=True)
+
+    assigned_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    company = relationship("Company")
+    user = relationship("User", foreign_keys=[user_id])
+    course = relationship("TrainingCourse", back_populates="records")
+    assigned_by = relationship("User", foreign_keys=[assigned_by_id])
+
+    def __repr__(self):
+        return f"<TrainingRecord user={self.user_id} course={self.course_id}>"
+
+
+# -----------------------------
+# Equipment & Asset Inspections
+# -----------------------------
+class Equipment(Base):
+    __tablename__ = "equipment"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    name = Column(String, nullable=False)
+    location = Column(String, nullable=True)
+    serial_number = Column(String, nullable=True)
+    status = Column(String, nullable=False, default="safe")
+    inspection_interval_days = Column(Integer, nullable=False, default=30)
+    last_inspection_date = Column(DateTime, nullable=True)
+    next_inspection_date = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    company = relationship("Company")
+    inspections = relationship(
+        "EquipmentInspection",
+        back_populates="equipment",
+        cascade="all, delete-orphan",
+        order_by="EquipmentInspection.inspection_date.desc()",
+    )
+
+    def __repr__(self):
+        return f"<Equipment {self.name}>"
+
+
+class EquipmentInspection(Base):
+    __tablename__ = "equipment_inspections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    equipment_id = Column(Integer, ForeignKey("equipment.id"), nullable=False, index=True)
+    inspector_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    status = Column(String, nullable=False)
+    inspection_date = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    checklist_summary = Column(String, nullable=True)
+    issues_found = Column(String, nullable=True)
+    maintenance_task_id = Column(Integer, ForeignKey("hazard_tasks.id"), nullable=True)
+
+    company = relationship("Company")
+    equipment = relationship("Equipment", back_populates="inspections")
+    inspector = relationship("User", foreign_keys=[inspector_id])
+    maintenance_task = relationship("HazardTask", foreign_keys=[maintenance_task_id])
+
+    def __repr__(self):
+        return f"<EquipmentInspection equipment={self.equipment_id} status={self.status}>"
+
+
+# -----------------------------
+# Compliance & Regulation Tracking
+# -----------------------------
+class ComplianceRule(Base):
+    __tablename__ = "compliance_rules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    rule_name = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    regulation_source = Column(String, nullable=False)
+    category = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    company = relationship("Company")
+    checks = relationship(
+        "ComplianceCheck",
+        back_populates="rule",
+        cascade="all, delete-orphan",
+        order_by="ComplianceCheck.checked_at.desc()",
+    )
+
+    def __repr__(self):
+        return f"<ComplianceRule {self.rule_name}>"
+
+
+class ComplianceCheck(Base):
+    __tablename__ = "compliance_checks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    rule_id = Column(Integer, ForeignKey("compliance_rules.id"), nullable=False, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True, index=True)
+    checked_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    status = Column(String, nullable=False)
+    location = Column(String, nullable=True)
+    evidence = Column(String, nullable=True)
+    recommended_action = Column(String, nullable=True)
+    maintenance_task_id = Column(Integer, ForeignKey("hazard_tasks.id"), nullable=True)
+    checked_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    company = relationship("Company")
+    rule = relationship("ComplianceRule", back_populates="checks")
+    project = relationship("Project")
+    checked_by = relationship("User", foreign_keys=[checked_by_id])
+    maintenance_task = relationship("HazardTask", foreign_keys=[maintenance_task_id])
+
+    def __repr__(self):
+        return f"<ComplianceCheck rule={self.rule_id} status={self.status}>"
+
+
+class ActivityLog(Base):
+    __tablename__ = "activity_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
+    action = Column(String, nullable=False)
+    event_type = Column(String, nullable=False, default="user")
+    details = Column(String, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    company = relationship("Company")
+    user = relationship("User", back_populates="activity_logs")
+
+    def __repr__(self):
+        return f"<ActivityLog {self.event_type} {self.action}>"
+
+
+class IntegrationTypeEnum(enum.Enum):
+    email = "email"
+    slack = "slack"
+    teams = "teams"
+    webhook = "webhook"
+
+
+class IntegrationEndpoint(Base):
+    __tablename__ = "integration_endpoints"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=False)
+    integration_type = Column(Enum(IntegrationTypeEnum), nullable=False)
+    name = Column(String, nullable=True)
+    target = Column(String, nullable=False)
+    secret = Column(String, nullable=True)
+    is_active = Column(Integer, default=1, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    company = relationship("Company")
+
+    def __repr__(self):
+        return f"<IntegrationEndpoint {self.integration_type} {self.target}>"
+
+
+class ApiKey(Base):
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=False)
+    name = Column(String, nullable=False)
+    key_prefix = Column(String, index=True, nullable=False)
+    key_hash = Column(String, nullable=False)
+    is_active = Column(Integer, default=1, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_used_at = Column(DateTime, nullable=True)
+
+    company = relationship("Company")
+
+    def __repr__(self):
+        return f"<ApiKey {self.name} company={self.company_id}>"

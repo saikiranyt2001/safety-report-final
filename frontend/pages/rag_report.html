@@ -1,44 +1,221 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RAG Safety Report</title>
 
 <link rel="stylesheet" href="../css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+:root {
+	--bg-1: #f1f7ff;
+	--bg-2: #e4f4ef;
+	--panel: rgba(255, 255, 255, 0.82);
+	--panel-strong: #ffffff;
+	--text: #102a43;
+	--muted: #52606d;
+	--primary: #0b7285;
+	--accent: #2f9e44;
+	--warn: #d9480f;
+	--border: rgba(16, 42, 67, 0.08);
+	--shadow: 0 18px 45px rgba(11, 114, 133, 0.12);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family: "Space Grotesk", sans-serif;
+	color: var(--text);
+	background:
+		radial-gradient(circle at 10% 10%, rgba(47, 158, 68, 0.18), transparent 30%),
+		radial-gradient(circle at 90% 15%, rgba(11, 114, 133, 0.17), transparent 28%),
+		linear-gradient(135deg, var(--bg-1), var(--bg-2));
+	min-height: 100vh;
+}
+
+.main-content {
+	max-width: 1080px;
+	margin: 2rem auto;
+	padding: 2rem;
+	border: 1px solid var(--border);
+	border-radius: 24px;
+	background: var(--panel);
+	backdrop-filter: blur(4px);
+	box-shadow: var(--shadow);
+}
+
+.rag-header {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+}
+
+.rag-title {
+	margin: 0;
+	font-size: clamp(1.8rem, 4vw, 2.6rem);
+	letter-spacing: -0.03em;
+}
+
+.rag-subtitle {
+	margin: 0.35rem 0 0;
+	color: var(--muted);
+	font-size: 0.98rem;
+}
+
+.header-badge {
+	background: linear-gradient(135deg, #d3f9d8, #99e9f2);
+	color: #0c3f53;
+	border: 1px solid rgba(12, 63, 83, 0.2);
+	border-radius: 999px;
+	padding: 0.45rem 0.9rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.rag-form {
+	border: 1px solid var(--border);
+	border-radius: 18px;
+	padding: 1.1rem;
+	background: var(--panel-strong);
+	box-shadow: 0 6px 20px rgba(16, 42, 67, 0.06);
+	max-width: 720px;
+}
+
+.rag-label {
+	display: block;
+	margin-bottom: 0.45rem;
+	font-size: 0.92rem;
+	font-weight: 600;
+	color: #234;
+}
+
+.rag-textarea {
+	width: 100%;
+	padding: 0.72rem 0.78rem;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: #f8fbfd;
+	font-family: "Space Grotesk", sans-serif;
+	font-size: 0.95rem;
+	resize: vertical;
+	margin-bottom: 0.9rem;
+}
+
+.rag-btn {
+	border: 0;
+	border-radius: 12px;
+	background: linear-gradient(120deg, #0b7285, #2f9e44);
+	color: #fff;
+	padding: 0.72rem 1rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	cursor: pointer;
+	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.24);
+}
+
+.rag-result {
+	margin-top: 1rem;
+}
+
+.result-title {
+	margin: 0 0 0.7rem;
+	font-size: 1.15rem;
+	font-weight: 700;
+}
+
+.result-card {
+	border: 1px solid rgba(16, 42, 67, 0.1);
+	background: linear-gradient(90deg, #f8fbfd, #edf8f2);
+	border-radius: 12px;
+	padding: 0.9rem;
+	max-width: 720px;
+}
+
+.result-text {
+	color: var(--muted);
+}
+
+.chat-toggle-btn {
+	border: 0;
+	border-radius: 999px;
+	background: linear-gradient(120deg, #0b7285, #2f9e44);
+	color: #fff;
+	padding: 0.7rem 1rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.25);
+}
+
+.ai-chat-sidebar {
+	border-radius: 16px 16px 0 0;
+	overflow: hidden;
+}
+
+.chat-header,
+.chat-input button {
+	font-family: "Space Grotesk", sans-serif;
+}
+
+@media (max-width: 680px) {
+	.main-content {
+		margin: 1rem;
+		padding: 1.2rem;
+		border-radius: 18px;
+	}
+
+	.rag-header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+}
+</style>
 
 </head>
 
-<body class="bg-gray-100">
+<body>
 
 <!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
 
 <!-- MAIN CONTENT -->
-<div class="main-content p-10">
+<div class="main-content">
 
-<h1 class="text-3xl font-bold mb-6">RAG Safety Report</h1>
+<div class="rag-header">
+<div>
+<h1 class="rag-title">RAG Safety Report</h1>
+<p class="rag-subtitle">Generate an AI safety report using contextual documents.</p>
+</div>
+<span class="header-badge">Retrieval Engine Online</span>
+</div>
 
-<p class="text-gray-600 mb-8">
-Generate an AI safety report using contextual documents.
-</p>
+<div class="rag-form">
 
-<div class="bg-white p-8 rounded-xl shadow max-w-xl">
-
-<label class="block mb-2 font-semibold">
+<label class="rag-label">
 Paste document or context
 </label>
 
 <textarea
 id="context"
 rows="6"
-class="w-full border p-3 rounded mb-4"
+class="rag-textarea"
 placeholder="Paste safety guidelines, model documentation, or logs..."
 ></textarea>
 
 <button
 onclick="generateRAGReport()"
-class="bg-purple-600 text-white px-6 py-3 rounded hover:bg-purple-700"
+class="rag-btn"
 >
 Generate AI Report
 </button>
@@ -46,15 +223,15 @@ Generate AI Report
 </div>
 
 
-<div id="result" class="mt-10 hidden">
+<div id="result" class="rag-result hidden">
 
-<h2 class="text-xl font-bold mb-4">
+<h2 class="result-title">
 AI Generated Report
 </h2>
 
-<div class="bg-white p-6 rounded shadow max-w-xl">
+<div class="result-card">
 
-<p id="ragOutput" class="text-gray-700"></p>
+<p id="ragOutput" class="result-text"></p>
 
 </div>
 

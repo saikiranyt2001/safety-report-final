@@ -1,348 +1,197 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
-<title>Analytics</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Safety Analytics</title>
 <link rel="stylesheet" href="../css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<style>
+:root {
+  --bg-1: #f1f7ff;
+  --bg-2: #e4f4ef;
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel-strong: #ffffff;
+  --text: #102a43;
+  --muted: #52606d;
+  --primary: #0b7285;
+  --success: #2f9e44;
+  --warn: #d9480f;
+  --border: rgba(16, 42, 67, 0.08);
+  --shadow: 0 18px 45px rgba(11, 114, 133, 0.12);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 10% 10%, rgba(47, 158, 68, 0.18), transparent 30%),
+    radial-gradient(circle at 90% 15%, rgba(11, 114, 133, 0.17), transparent 28%),
+    linear-gradient(135deg, var(--bg-1), var(--bg-2));
+  min-height: 100vh;
+}
+.navbar { backdrop-filter: blur(4px); background: rgba(255, 255, 255, 0.65); border-bottom: 1px solid var(--border); }
+.nav-right button {
+  border: 0; border-radius: 10px; padding: 0.45rem 0.8rem; color: #fff;
+  font-family: "Space Grotesk", sans-serif; font-weight: 600;
+  background: linear-gradient(120deg, #0b7285, #2f9e44);
+}
+.main-content {
+  max-width: 1180px; margin: 2rem auto; padding: 2rem; border: 1px solid var(--border);
+  border-radius: 24px; background: var(--panel); backdrop-filter: blur(4px); box-shadow: var(--shadow);
+}
+.analytics-header { display:flex; align-items:end; justify-content:space-between; gap:1rem; margin-bottom:1.3rem; }
+.analytics-title { margin:0; font-size:clamp(1.8rem, 4vw, 2.6rem); letter-spacing:-0.03em; }
+.analytics-subtitle { margin:0.35rem 0 0; color:var(--muted); font-size:0.98rem; }
+.header-badge {
+  background:linear-gradient(135deg, #d3f9d8, #99e9f2); color:#0c3f53; border:1px solid rgba(12,63,83,.2);
+  border-radius:999px; padding:.45rem .9rem; font-size:.82rem; font-weight:600; white-space:nowrap;
+}
+.stats { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:1rem; margin-bottom:1.3rem; }
+.stat-card {
+  padding:1rem; border-radius:18px; border:1px solid var(--border); background:var(--panel-strong);
+  box-shadow:0 6px 20px rgba(16,42,67,.06);
+}
+.stat-card h3 { margin:0; font-size:1.65rem; font-weight:700; color:#0b7285; letter-spacing:-0.02em; }
+.stat-card p { margin:.3rem 0 0; color:var(--muted); font-size:.88rem; }
+.charts-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; }
+.card {
+  border:1px solid var(--border); border-radius:18px; padding:1rem; background:var(--panel-strong);
+  box-shadow:0 6px 20px rgba(16,42,67,.06); min-height:320px;
+}
+.card h2 { margin:0 0 .75rem; font-size:1.05rem; }
+.card canvas { width:100% !important; height:250px !important; }
+.wide { grid-column: span 2; }
+.heatmap-grid { display:grid; grid-template-columns:90px repeat(3, 1fr); gap:8px; align-items:stretch; }
+.heatmap-header-cell, .heatmap-axis, .heatmap-cell {
+  border-radius:12px; border:1px solid var(--border); padding:12px; background:#fff; text-align:center;
+}
+.heatmap-axis { background:#f8fbff; font-weight:700; }
+.heatmap-header-cell { background:#f8fbff; font-weight:700; color:var(--muted); }
+.heatmap-cell.low { background:linear-gradient(120deg, #d3f9d8, #b2f2bb); color:#14532d; }
+.heatmap-cell.medium { background:linear-gradient(120deg, #fff3bf, #ffe066); color:#7c4d00; }
+.heatmap-cell.high { background:linear-gradient(120deg, #ffc9c9, #ffa8a8); color:#7f1d1d; }
+.sites-list { display:grid; gap:10px; }
+.site-item { display:flex; justify-content:space-between; gap:12px; padding:12px; border:1px solid var(--border); border-radius:14px; background:#fff; }
+.site-item small { color:var(--muted); display:block; margin-top:4px; }
+.empty { color:var(--muted); padding:1rem 0; }
+@media (max-width: 1080px) {
+  .stats { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .charts-grid { grid-template-columns:1fr; }
+  .wide { grid-column:auto; }
+}
+@media (max-width: 680px) {
+  .main-content { margin:1rem; padding:1.2rem; border-radius:18px; }
+  .analytics-header { align-items:flex-start; flex-direction:column; }
+  .stats { grid-template-columns:1fr 1fr; }
+  .heatmap-grid { grid-template-columns:70px repeat(3, 1fr); }
+}
+</style>
 </head>
-
 <body>
-
-<!-- NAVBAR -->
 <div class="navbar">
-
-<div class="logo">AI Safety Platform</div>
-
-<div class="nav-right">
-<span>Admin</span>
-<button onclick="logout()">Logout</button>
+  <div class="logo">AI Safety Platform</div>
+  <div class="nav-right">
+    <span id="navUsername">Admin</span>
+    <button onclick="logout()">Logout</button>
+  </div>
 </div>
 
-</div>
-
-
-<!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
-
-<!-- MAIN CONTENT -->
 <div class="main-content">
+  <div class="analytics-header">
+    <div>
+      <h1 class="analytics-title">Advanced Safety Analytics</h1>
+      <p class="analytics-subtitle">Track safety performance, trend signals, and emerging risks across the platform.</p>
+    </div>
+    <span class="header-badge">Last 30 Days Summary</span>
+  </div>
 
-<h1>Analytics</h1>
+  <div class="stats">
+    <div class="stat-card"><h3 id="hazardsStat">0</h3><p>Hazards Detected</p></div>
+    <div class="stat-card"><h3 id="highRiskStat">0</h3><p>High-Risk Hazards</p></div>
+    <div class="stat-card"><h3 id="incidentsStat">0</h3><p>Incidents Reported</p></div>
+    <div class="stat-card"><h3 id="scoreStat">0</h3><p>Average Safety Score</p></div>
+    <div class="stat-card"><h3 id="tasksStat">0</h3><p>Open Tasks</p></div>
+    <div class="stat-card"><h3 id="inspectionRateStat">0%</h3><p>Inspection Completion</p></div>
+  </div>
 
-
-<!-- STATS -->
-<div class="stats">
-
-<div class="stat-card">
-<h3>78</h3>
-<p>Reports Generated</p>
+  <div class="charts-grid">
+    <div class="card">
+      <h2>Hazard Trend</h2>
+      <canvas id="hazardTrendChart"></canvas>
+    </div>
+    <div class="card">
+      <h2>Incident Trend</h2>
+      <canvas id="incidentTrendChart"></canvas>
+    </div>
+    <div class="card">
+      <h2>Safety Score Trend</h2>
+      <canvas id="scoreTrendChart"></canvas>
+    </div>
+    <div class="card">
+      <h2>Top Hazard Types</h2>
+      <canvas id="hazardTypesChart"></canvas>
+    </div>
+    <div class="card">
+      <h2>Risk Distribution</h2>
+      <canvas id="riskDistributionChart"></canvas>
+    </div>
+    <div class="card">
+      <h2>Most Exposed Sites</h2>
+      <div id="topSites" class="sites-list"><div class="empty">Loading site risk profile...</div></div>
+    </div>
+    <div class="card wide">
+      <h2>Risk Matrix</h2>
+      <div id="riskMatrix" class="heatmap-grid"></div>
+    </div>
+  </div>
 </div>
 
-<div class="stat-card">
-<h3>12</h3>
-<p>Risk Alerts</p>
-</div>
-
-<div class="stat-card">
-<h3>86%</h3>
-<p>Compliance Rate</p>
-</div>
-
-<div class="stat-card">
-<h3>5</h3>
-<p>Active Sites</p>
-</div>
-
-</div>
-
-
-<!-- CHARTS -->
-<div class="charts-grid">
-
-<div class="card">
-<h2>Reports Generated Over Time</h2>
-<canvas id="reportChart"></canvas>
-</div>
-
-<div class="card">
-<h2>Hazard Distribution</h2>
-<canvas id="hazardChart"></canvas>
-</div>
-
-<!-- NEW RISK HEATMAP -->
-<div class="card">
-<h2>Risk Heatmap</h2>
-<canvas id="riskHeatmap" height="250"></canvas>
-</div>
-
-</div>
-
-</div>
-
-
-<!-- AI CHAT -->
-<div id="aiChat" class="ai-chat-sidebar">
-
-<div class="chat-header">
-AI Safety Assistant
-<button class="close-chat" onclick="toggleChat()">✖</button>
-</div>
-
-<div class="chat-messages" id="chatMessages">
-<div class="ai-msg">Hello! Ask me about workplace safety.</div>
-</div>
-
-<div class="chat-input">
-<input id="chatInput" placeholder="Ask a question...">
-<button onclick="sendChat()">Send</button>
-</div>
-
-</div>
-
-
-<!-- CHAT BUTTON -->
-<button class="chat-toggle-btn" onclick="toggleChat()">
-💬 AI Assistant
-</button>
-
-
-<!-- FOOTER -->
 <div id="footer"></div>
 
-
-<!-- LOAD SIDEBAR -->
 <script>
-
-<!-- LOAD SIDEBAR -->
-
-
 fetch("../components/sidebar.html")
-.then(res => res.text())
-.then(data => {
-
-document.getElementById("sidebar-container").innerHTML = data
-
-/* Initialize search */
-initSearch()
-
-/* Sidebar Toggle */
-
-const toggleBtn = document.getElementById("menuToggle")
-const sidebar = document.querySelector(".sidebar")
-const navbar = document.querySelector(".navbar")
-const mainContent = document.querySelector(".main-content")
-
-if(toggleBtn){
-
-toggleBtn.onclick = function(){
-
-sidebar.classList.toggle("collapsed")
-
-if(navbar) navbar.classList.toggle("expanded")
-if(mainContent) mainContent.classList.toggle("expanded")
-
-/* footer loads later */
-const footer = document.querySelector(".footer")
-
-if(footer){
-footer.classList.toggle("expanded")
-}
-
-}
-
-}
-})
-
-</script>
-
-
-<!-- LOAD FOOTER -->
-<script>
+  .then(res => res.text())
+  .then(data => {
+    document.getElementById("sidebar-container").innerHTML = data
+    initSearch()
+    const toggleBtn = document.getElementById("menuToggle")
+    const sidebar = document.querySelector(".sidebar")
+    const navbar = document.querySelector(".navbar")
+    const mainContent = document.querySelector(".main-content")
+    if (toggleBtn) {
+      toggleBtn.onclick = function(){
+        sidebar.classList.toggle("collapsed")
+        if (navbar) navbar.classList.toggle("expanded")
+        if (mainContent) mainContent.classList.toggle("expanded")
+        const footer = document.querySelector(".footer")
+        if (footer) footer.classList.toggle("expanded")
+      }
+    }
+  })
 
 fetch("../components/footer.html")
-.then(res => res.text())
-.then(data => {
-document.getElementById("footer").innerHTML = data
-})
+  .then(res => res.text())
+  .then(data => { document.getElementById("footer").innerHTML = data })
 
-</script>
-
-
-<!-- AUTH -->
-<script>
-
-if(!localStorage.getItem("token")){
-window.location.href="login.html";
-}
+const username = localStorage.getItem("username") || "Admin"
+document.getElementById("navUsername").textContent = username
 
 function logout(){
-localStorage.removeItem("token");
-window.location.href="login.html";
+  localStorage.removeItem("token")
+  localStorage.removeItem("auth_token")
+  window.location.href = "login.html"
 }
-
 </script>
-
-
-<!-- AI CHAT SCRIPT -->
-<script>
-
-
-function sendChat(){
-
-let input=document.getElementById("chatInput")
-let text=input.value.trim()
-
-if(text==="") return
-
-addChat(text,"user-msg")
-
-let reply=generateReply(text)
-
-setTimeout(()=>{
-addChat(reply,"ai-msg")
-},500)
-
-input.value=""
-
-}
-
-function addChat(text,type){
-
-let box=document.getElementById("chatMessages")
-
-let div=document.createElement("div")
-
-div.className=type
-div.innerText=text
-
-box.appendChild(div)
-
-box.scrollTop=box.scrollHeight
-
-}
-
-function generateReply(q){
-
-q=q.toLowerCase()
-
-if(q.includes("hazard"))
-return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
-
-if(q.includes("osha"))
-return "OSHA guidelines focus on PPE, fall protection, and safety training."
-
-if(q.includes("accident"))
-return "Reduce accidents by using PPE, safety audits, and hazard reporting."
-
-return "Safety tip: Always conduct risk assessments before starting work."
-
-}
-
-</script>
-
-
-<!-- CHARTS -->
-<script>
-
-const heatmap = document.getElementById("riskHeatmap");
-
-if (heatmap) {
-
-const ctx = heatmap.getContext("2d");
-
-new Chart(ctx,{
-type:"bubble",
-data:{
-datasets:[
-{
-label:"Low Risk",
-data:[
-{x:1,y:1,r:8},
-{x:1,y:2,r:8}
-],
-backgroundColor:"rgba(34,197,94,0.7)"
-},
-{
-label:"Medium Risk",
-data:[
-{x:2,y:3,r:12},
-{x:3,y:3,r:12}
-],
-backgroundColor:"rgba(250,204,21,0.7)"
-},
-{
-label:"High Risk",
-data:[
-{x:4,y:5,r:18},
-{x:5,y:5,r:20}
-],
-backgroundColor:"rgba(239,68,68,0.8)"
-}
-]
-},
-options:{
-responsive:true,
-maintainAspectRatio:false,
-scales:{
-x:{
-title:{display:true,text:"Likelihood"},
-min:0,
-max:5
-},
-y:{
-title:{display:true,text:"Severity"},
-min:0,
-max:5
-}
-}
-}
-});
-
-}
-
-const ctx=document.getElementById("reportChart").getContext("2d")
-
-new Chart(ctx,{
-type:"bar",
-data:{
-labels:["Jan","Feb","Mar","Apr","May","Jun"],
-datasets:[{
-label:"Reports Generated",
-data:[12,19,7,14,10,16],
-backgroundColor:"#2563eb"
-}]
-},
-options:{
-responsive:true,
-maintainAspectRatio:false
-}
-})
-
-
-const ctx2=document.getElementById("hazardChart").getContext("2d")
-
-new Chart(ctx2,{
-type:"pie",
-data:{
-labels:["Fall","Electrical","Equipment"],
-datasets:[{
-data:[12,8,6],
-backgroundColor:["#ff6384","#36a2eb","#ffce56"]
-}]
-},
-options:{
-responsive:true,
-maintainAspectRatio:false
-}
-})
-
-</script>
-
 <script src="../js/main.js"></script>
+<script src="../js/analytics.js"></script>
 </body>
 </html>

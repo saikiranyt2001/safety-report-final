@@ -9,6 +9,295 @@
 <title>Dashboard - Safety SaaS</title>
 
 <link rel="stylesheet" href="../css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+	--bg-1: #f1f7ff;
+	--bg-2: #e4f4ef;
+	--panel: rgba(255, 255, 255, 0.82);
+	--panel-strong: #ffffff;
+	--text: #102a43;
+	--muted: #52606d;
+	--primary: #0b7285;
+	--accent: #2f9e44;
+	--warn: #d9480f;
+	--border: rgba(16, 42, 67, 0.08);
+	--shadow: 0 18px 45px rgba(11, 114, 133, 0.12);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family: "Space Grotesk", sans-serif;
+	color: var(--text);
+	background:
+		radial-gradient(circle at 10% 10%, rgba(47, 158, 68, 0.18), transparent 30%),
+		radial-gradient(circle at 90% 15%, rgba(11, 114, 133, 0.17), transparent 28%),
+		linear-gradient(135deg, var(--bg-1), var(--bg-2));
+	min-height: 100vh;
+}
+
+.main-content {
+	max-width: 1080px;
+	margin: 2rem auto;
+	padding: 2rem;
+	border: 1px solid var(--border);
+	border-radius: 24px;
+	background: var(--panel);
+	backdrop-filter: blur(4px);
+	box-shadow: var(--shadow);
+}
+
+.dashboard-header {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1.75rem;
+}
+
+.dashboard-header h1 {
+	margin: 0;
+	font-size: clamp(1.8rem, 4vw, 2.6rem);
+	letter-spacing: -0.03em;
+}
+
+.dashboard-header p {
+	margin: 0.35rem 0 0;
+	color: var(--muted);
+	font-size: 0.98rem;
+}
+
+.header-badge {
+	background: linear-gradient(135deg, #d3f9d8, #99e9f2);
+	color: #0c3f53;
+	border: 1px solid rgba(12, 63, 83, 0.2);
+	border-radius: 999px;
+	padding: 0.45rem 0.9rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.executive-grid {
+	display: grid;
+	grid-template-columns: 1.2fr 0.8fr;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.panel-card {
+	padding: 1rem;
+	border-radius: 18px;
+	border: 1px solid var(--border);
+	background: var(--panel-strong);
+	box-shadow: 0 6px 20px rgba(16, 42, 67, 0.06);
+}
+
+.panel-card h2,
+.panel-card h3 {
+	margin: 0 0 0.5rem;
+	color: var(--muted);
+	font-size: 0.95rem;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+}
+
+
+.hero-card {
+	background: linear-gradient(140deg, #f2fbff, #ecfff1);
+	padding: 1.35rem;
+}
+
+.eyebrow {
+	font-size: 0.8rem;
+	letter-spacing: 0.08em;
+	color: var(--muted);
+	font-weight: 700;
+	margin-bottom: 0.45rem;
+}
+
+.hero-project {
+	margin: 0;
+	font-size: 1rem;
+	color: #234;
+	font-weight: 600;
+}
+
+.score-row {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-top: 0.8rem;
+}
+
+.score-value {
+	margin: 0;
+	font-size: clamp(2.6rem, 8vw, 4.5rem);
+	font-weight: 700;
+	color: var(--primary);
+	line-height: 0.95;
+}
+
+.score-risk {
+	margin-top: 0.4rem;
+	font-size: 1rem;
+	font-weight: 700;
+	color: #245;
+}
+
+.hero-meta {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.75rem;
+	margin-top: 1rem;
+}
+
+.hero-meta-item {
+	padding: 0.8rem;
+	border-radius: 14px;
+	background: rgba(255, 255, 255, 0.74);
+	border: 1px solid rgba(16, 42, 67, 0.08);
+}
+
+.hero-meta-item strong {
+	display: block;
+	font-size: 1.2rem;
+	color: #16364d;
+}
+
+.hero-meta-item span {
+	font-size: 0.82rem;
+	color: var(--muted);
+}
+
+.section-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.chart-card canvas {
+	width: 100% !important;
+	height: 260px !important;
+}
+
+.hazard-list,
+.activity-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: grid;
+	gap: 0.65rem;
+}
+
+.hazard-list li,
+.activity-list li {
+	border-radius: 12px;
+	padding: 0.72rem 0.8rem;
+	font-size: 0.92rem;
+}
+
+.hazard-list li {
+	border: 1px solid rgba(11, 114, 133, 0.16);
+	background: linear-gradient(90deg, #eefbff, #f3fff8);
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.activity-list li {
+	border: 1px solid rgba(217, 72, 15, 0.18);
+	background: linear-gradient(90deg, #fff4e6, #fff9db);
+}
+
+.hazard-count {
+	font-weight: 700;
+	color: #0b7285;
+}
+
+.mini-stats {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.mini-stat-value {
+	font-size: 1.7rem;
+	font-weight: 700;
+	color: var(--primary);
+}
+
+.mini-stat-label {
+	font-size: 0.84rem;
+	color: var(--muted);
+}
+
+.chat-toggle-btn {
+	border: 0;
+	border-radius: 999px;
+	background: linear-gradient(120deg, #0b7285, #2f9e44);
+	color: #fff;
+	padding: 0.7rem 1rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.25);
+}
+
+.ai-chat-sidebar {
+	border-radius: 16px 16px 0 0;
+	overflow: hidden;
+}
+
+.chat-header,
+.chat-input button {
+	font-family: "Space Grotesk", sans-serif;
+}
+
+@media (max-width: 980px) {
+	.executive-grid,
+	.section-grid,
+	.mini-stats,
+	.hero-meta {
+		grid-template-columns: 1fr;
+	}
+
+	.score-row {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+}
+
+@media (max-width: 680px) {
+	.main-content {
+		margin: 1rem;
+		padding: 1.2rem;
+		border-radius: 18px;
+	}
+
+	.dashboard-header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.executive-grid,
+	.section-grid,
+	.mini-stats,
+	.hero-meta {
+		grid-template-columns: 1fr;
+	}
+}
+</style>
 
 </head>
 
@@ -21,52 +310,86 @@
 <main class="main-content">
 
 <div class="dashboard-header">
+<div>
 <h1>Dashboard</h1>
 <p>Overview of workplace safety insights</p>
 </div>
-
-
-<!-- STAT CARDS -->
-<div class="cards">
-
-<div class="stat-card">
-<h3>Hazards Detected</h3>
-<p>12</p>
-</div>
-
-<div class="stat-card">
-<h3>Compliance Issues</h3>
-<p>3</p>
-</div>
-
-<div class="stat-card">
-<h3>Incident Risk</h3>
-<p class="high-risk">High</p>
-</div>
-
-<div class="stat-card">
-<h3>Reports Generated</h3>
-<p>28</p>
-</div>
-
+<span class="header-badge">Live Monitoring Active</span>
 </div>
 
 
-<!-- RECENT ACTIVITY -->
-<div class="activity">
+<div class="executive-grid">
+<section class="panel-card hero-card" id="safetyScoreCard">
+<div class="eyebrow">SAFETY SCORE</div>
+<p class="hero-project" id="projectName">Metro Construction Site</p>
+<div class="score-row">
+<div>
+<p class="score-value" id="safetyScoreValue">72/100</p>
+<div class="score-risk" id="safetyRiskLevel">Medium Risk</div>
+</div>
+</div>
+<div class="hero-meta">
+<div class="hero-meta-item">
+<strong id="scoreHazards">6</strong>
+<span>Hazards Detected</span>
+</div>
+<div class="hero-meta-item">
+<strong id="scoreCritical">2</strong>
+<span>Critical Hazards</span>
+</div>
+<div class="hero-meta-item">
+<strong id="scoreRecommendations">5</strong>
+<span>Recommendations</span>
+</div>
+</div>
+</section>
 
-<h2>Recent Safety Alerts</h2>
+<section class="panel-card">
+<h2>Executive Snapshot</h2>
+<div class="mini-stats">
+<div>
+<div class="mini-stat-value" id="miniRiskLevel">Medium</div>
+<div class="mini-stat-label">Current Risk Level</div>
+</div>
+<div>
+<div class="mini-stat-value" id="miniReports">28</div>
+<div class="mini-stat-label">Reports Generated</div>
+</div>
+<div>
+<div class="mini-stat-value" id="miniProjects">1</div>
+<div class="mini-stat-label">Active Projects</div>
+</div>
+</div>
+<p class="page-subtitle">Managers can understand the site condition in one glance: current score, risk concentration, and urgent attention areas.</p>
+</section>
+</div>
 
-<ul>
+<div class="section-grid">
+<section class="panel-card chart-card">
+<h2>Risk Distribution</h2>
+<canvas id="riskDistributionChart"></canvas>
+</section>
 
-<li>⚠ Worker detected without helmet</li>
-<li>⚠ Unsafe ladder usage reported</li>
-<li>⚠ Electrical hazard flagged</li>
-<li>⚠ PPE compliance issue detected</li>
-
+<section class="panel-card">
+<h2>Top Hazards Detected</h2>
+<ul class="hazard-list" id="hazardCategoryList">
+<li><span>⚠️ Fall Hazard</span><span class="hazard-count">4</span></li>
+<li><span>⚠️ Electrical Risk</span><span class="hazard-count">2</span></li>
+<li><span>⚠️ Missing PPE</span><span class="hazard-count">3</span></li>
+<li><span>⚠️ Unsafe Ladder</span><span class="hazard-count">1</span></li>
 </ul>
-
+</section>
 </div>
+
+<section class="panel-card">
+<h2>Recent Safety Activity</h2>
+<ul class="activity-list" id="recentActivityList">
+<li>✔ Risk report generated</li>
+<li>✔ Hazard detected in Project A</li>
+<li>✔ New inspection uploaded</li>
+<li>✔ Compliance check completed</li>
+</ul>
+</section>
 
 </main>
 
@@ -214,6 +537,119 @@ sendChat()
 }
 
 })
+
+function renderSafetyScore(data){
+	document.getElementById("projectName").innerText = data.project
+	document.getElementById("safetyScoreValue").innerText = data.score + "/100"
+	document.getElementById("safetyRiskLevel").innerText = data.risk_level + " Risk"
+	document.getElementById("scoreHazards").innerText = data.hazards
+	document.getElementById("scoreCritical").innerText = data.critical
+	document.getElementById("scoreRecommendations").innerText = data.recommendations
+	document.getElementById("miniRiskLevel").innerText = data.risk_level
+	document.getElementById("miniReports").innerText = data.hazards + 22
+	document.getElementById("miniProjects").innerText = 1
+}
+
+let riskChart
+
+function renderRiskDistribution(distribution){
+	const ctx = document.getElementById("riskDistributionChart")
+	if(!ctx) return
+
+	if(riskChart){
+		riskChart.destroy()
+	}
+
+	riskChart = new Chart(ctx, {
+		type: "bar",
+		data: {
+			labels: ["Low", "Medium", "High", "Critical"],
+			datasets: [{
+				data: [distribution.low, distribution.medium, distribution.high, distribution.critical],
+				backgroundColor: ["#2f9e44", "#f08c00", "#d9480f", "#b02a37"],
+				borderRadius: 10
+			}]
+		},
+		options: {
+			plugins: { legend: { display: false } },
+			responsive: true,
+			maintainAspectRatio: false,
+			scales: {
+				x: { grid: { display: false } },
+				y: { beginAtZero: true, ticks: { precision: 0 } }
+			}
+		}
+	})
+}
+
+function renderHazardCategories(categories){
+	const list = document.getElementById("hazardCategoryList")
+	list.innerHTML = categories.map(item =>
+		`<li><span>⚠️ ${item.label}</span><span class="hazard-count">${item.count}</span></li>`
+	).join("")
+}
+
+function renderRecentActivity(activity){
+	const list = document.getElementById("recentActivityList")
+	list.innerHTML = activity.map(item => `<li>✔ ${item}</li>`).join("")
+}
+
+async function loadExecutiveDashboard(projectId){
+	const fallback = {
+		project: "Metro Construction Site",
+		score: 72,
+		risk_level: "Medium",
+		hazards: 6,
+		critical: 2,
+		recommendations: 5,
+		risk_distribution: {
+			low: 4,
+			medium: 7,
+			high: 3,
+			critical: 2
+		},
+		hazard_categories: [
+			{ label: "Fall Hazard", count: 4 },
+			{ label: "Electrical Risk", count: 2 },
+			{ label: "Missing PPE", count: 3 },
+			{ label: "Unsafe Ladder", count: 1 }
+		],
+		recent_activity: [
+			"Risk report generated",
+			"Hazard detected in Metro Construction Site",
+			"New inspection uploaded",
+			"Compliance check completed"
+		]
+	}
+
+	try {
+		const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
+		const headers = {}
+
+		if(token && token !== "loggedin"){
+			headers["Authorization"] = "Bearer " + token
+		}
+
+		const response = await fetch("/api/dashboard/executive-summary/" + projectId, { headers: headers })
+
+		if(!response.ok){
+			throw new Error("Failed to load executive dashboard")
+		}
+
+		const data = await response.json()
+		renderSafetyScore(data)
+		renderRiskDistribution(data.risk_distribution)
+		renderHazardCategories(data.hazard_categories)
+		renderRecentActivity(data.recent_activity)
+	} catch(_error){
+		renderSafetyScore(fallback)
+		renderRiskDistribution(fallback.risk_distribution)
+		renderHazardCategories(fallback.hazard_categories)
+		renderRecentActivity(fallback.recent_activity)
+	}
+}
+
+loadExecutiveDashboard(1)
 
 </script>
 

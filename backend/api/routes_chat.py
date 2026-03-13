@@ -1,29 +1,27 @@
-from fastapi import APIRouter
-from backend.agents.orchestrator import run_safety_pipeline
+from fastapi import APIRouter, Depends
 from backend.rag.rag_engine import RAGEngine
+from backend.core.rbac import require_roles
 
 router = APIRouter()
 
 @router.post("/chat")
-async def chat(data: dict):
+async def chat(
+    data: dict,
+    _user=Depends(require_roles("admin", "manager", "worker")),
+):
 
     message = data.get("message", "")
-
-    # Run safety AI pipeline
-    pipeline_result = run_safety_pipeline(
-        site_type="construction",
-        site_data={"description": message}
-    )
-
-    # Retrieve safety knowledge (RAG)
     rag = RAGEngine()
+    answer = rag.answer_query(message)
     context = rag.retrieve(message)
 
-    response = {
-        "analysis": pipeline_result,
-        "knowledge": context
-    }
-
     return {
-        "reply": response
+        "reply": answer,
+        "sources": [
+            {
+                "category": item.get("category", "General"),
+                "reference": item.get("reference", "Ref N/A"),
+            }
+            for item in context
+        ],
     }

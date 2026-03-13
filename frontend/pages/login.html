@@ -17,11 +17,16 @@
 
 <h2>Login</h2>
 
-<input type="text" placeholder="Username">
+<input id="username" type="text" placeholder="Username">
 
-<input type="password" placeholder="Password">
+<input id="company" type="text" placeholder="Company / workspace name (for signup)">
+
+<input id="password" type="password" placeholder="Password">
+
+<p id="auth-message" style="min-height:20px;color:#b42318;font-size:14px;"></p>
 
 <button onclick="login()">Login</button>
+<button onclick="signup()" style="margin-top:10px;background:#0f766e;">Create Workspace Account</button>
 
 </div>
 
@@ -29,11 +34,91 @@
 
 <script>
 
-function login(){
+function setMessage(message, isError = true){
+const el = document.getElementById("auth-message")
+el.textContent = message
+el.style.color = isError ? "#b42318" : "#166534"
+}
 
-localStorage.setItem("token","loggedin")
+function persistSession(data){
+const role = data.role || "worker"
+const token = data.access_token
+const company = data.company || {}
 
+localStorage.setItem("auth_token", token)
+localStorage.setItem("token", token)
+localStorage.setItem("username", data.username)
+localStorage.setItem("user_name", data.username)
+localStorage.setItem("user_role", role)
+localStorage.setItem("company_id", String(company.id || ""))
+localStorage.setItem("company_name", company.name || "")
+localStorage.setItem("user", JSON.stringify({
+username: data.username,
+role: role,
+company_id: company.id || null,
+company_name: company.name || ""
+}))
+}
+
+async function requestAuth(url, payload){
+const res = await fetch(url, {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify(payload)
+})
+
+const data = await res.json().catch(() => ({}))
+if(!res.ok){
+throw new Error(data.detail || "Authentication failed")
+}
+return data
+}
+
+async function login(){
+
+const username = document.getElementById("username").value.trim() || "worker";
+const password = document.getElementById("password").value;
+
+if(!password){
+setMessage("Enter your password.")
+return
+}
+
+try {
+setMessage("Signing in...", false)
+const data = await requestAuth("/api/login", { username, password })
+persistSession(data)
 window.location.href="../pages/dashboard.html"
+} catch(error) {
+setMessage(error.message || "Login failed")
+}
+
+}
+
+async function signup(){
+
+const username = document.getElementById("username").value.trim() || "worker";
+const companyName = document.getElementById("company").value.trim();
+const password = document.getElementById("password").value;
+
+if(!password){
+setMessage("Enter a password before creating an account.")
+return
+}
+
+try {
+setMessage("Creating workspace account...", false)
+await requestAuth("/api/signup", {
+username,
+password,
+company_name: companyName || undefined
+})
+const data = await requestAuth("/api/login", { username, password })
+persistSession(data)
+window.location.href="../pages/dashboard.html"
+} catch(error) {
+setMessage(error.message || "Signup failed")
+}
 
 }
 

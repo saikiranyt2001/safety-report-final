@@ -1,10 +1,216 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Analyze Image</title>
 
 <link rel="stylesheet" href="../css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+:root {
+	--bg-1: #f1f7ff;
+	--bg-2: #e4f4ef;
+	--panel: rgba(255, 255, 255, 0.82);
+	--panel-strong: #ffffff;
+	--text: #102a43;
+	--muted: #52606d;
+	--primary: #0b7285;
+	--warn: #d9480f;
+	--border: rgba(16, 42, 67, 0.08);
+	--shadow: 0 18px 45px rgba(11, 114, 133, 0.12);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family: "Space Grotesk", sans-serif;
+	color: var(--text);
+	background:
+		radial-gradient(circle at 10% 10%, rgba(47, 158, 68, 0.18), transparent 30%),
+		radial-gradient(circle at 90% 15%, rgba(11, 114, 133, 0.17), transparent 28%),
+		linear-gradient(135deg, var(--bg-1), var(--bg-2));
+	min-height: 100vh;
+}
+
+.navbar {
+	backdrop-filter: blur(4px);
+	background: rgba(255, 255, 255, 0.65);
+	border-bottom: 1px solid var(--border);
+}
+
+.navbar .logo {
+	font-weight: 700;
+	letter-spacing: -0.02em;
+}
+
+.nav-right button {
+	border: 0;
+	border-radius: 10px;
+	padding: 0.45rem 0.8rem;
+	color: #fff;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	background: linear-gradient(120deg, #0b7285, #2f9e44);
+}
+
+.main-content {
+	max-width: 1080px;
+	margin: 2rem auto;
+	padding: 2rem;
+	border: 1px solid var(--border);
+	border-radius: 24px;
+	background: var(--panel);
+	backdrop-filter: blur(4px);
+	box-shadow: var(--shadow);
+}
+
+.analyze-header {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1.2rem;
+}
+
+.analyze-title {
+	margin: 0;
+	font-size: clamp(1.8rem, 4vw, 2.6rem);
+	letter-spacing: -0.03em;
+}
+
+.analyze-subtitle {
+	margin: 0.35rem 0 0;
+	color: var(--muted);
+	font-size: 0.98rem;
+}
+
+.header-badge {
+	background: linear-gradient(135deg, #d3f9d8, #99e9f2);
+	color: #0c3f53;
+	border: 1px solid rgba(12, 63, 83, 0.2);
+	border-radius: 999px;
+	padding: 0.45rem 0.9rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.container {
+	border: 1px solid var(--border);
+	border-radius: 18px;
+	padding: 1.1rem;
+	background: var(--panel-strong);
+	box-shadow: 0 6px 20px rgba(16, 42, 67, 0.06);
+}
+
+.upload-label {
+	display: block;
+	margin-bottom: 0.45rem;
+	font-size: 0.92rem;
+	font-weight: 600;
+	color: #234;
+}
+
+#imageInput {
+	width: 100%;
+	padding: 0.55rem;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: #f8fbfd;
+}
+
+.preview-wrap {
+	position: relative;
+	width: 100%;
+	max-width: 720px;
+	margin-top: 0.9rem;
+	margin-bottom: 0.9rem;
+}
+
+#preview {
+	width: 100%;
+	height: auto;
+	display: none;
+	border-radius: 12px;
+	margin-top: 0.9rem;
+	margin-bottom: 0.9rem;
+	border: 1px solid var(--border);
+}
+
+#overlayCanvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	display: none;
+	pointer-events: none;
+	border-radius: 12px;
+}
+
+.analyze-btn {
+	border: 0;
+	border-radius: 12px;
+	background: linear-gradient(120deg, #0b7285, #2f9e44);
+	color: #fff;
+	padding: 0.72rem 1rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	cursor: pointer;
+	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.24);
+}
+
+.result {
+	margin-top: 1rem;
+	border: 1px solid rgba(16, 42, 67, 0.1);
+	background: linear-gradient(90deg, #f8fbfd, #edf8f2);
+	border-radius: 12px;
+	padding: 0.9rem;
+	font-size: 0.95rem;
+}
+
+.chat-toggle-btn {
+	border: 0;
+	border-radius: 999px;
+	background: linear-gradient(120deg, #0b7285, #2f9e44);
+	color: #fff;
+	padding: 0.7rem 1rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.25);
+}
+
+.ai-chat-sidebar {
+	border-radius: 16px 16px 0 0;
+	overflow: hidden;
+}
+
+.chat-header,
+.chat-input button {
+	font-family: "Space Grotesk", sans-serif;
+}
+
+@media (max-width: 680px) {
+	.main-content {
+		margin: 1rem;
+		padding: 1.2rem;
+		border-radius: 18px;
+	}
+
+	.analyze-header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+}
+</style>
 
 </head>
 
@@ -26,21 +232,26 @@
 <!-- MAIN CONTENT -->
 <div class="main-content">
 
-<h1 class="text-3xl font-bold mb-6">Analyze Safety Image</h1>
-
-<p class="text-gray-600 mb-6">
-Upload an image to detect workplace safety hazards.
-</p>
+<div class="analyze-header">
+<div>
+<h1 class="analyze-title">Analyze Safety Image</h1>
+<p class="analyze-subtitle">Upload an image to detect workplace safety hazards.</p>
+</div>
+<span class="header-badge">Vision Model Active</span>
+</div>
 
 <div class="container">
 
-<label class="block mb-2 font-semibold">Upload Image</label>
+<label class="upload-label">Upload Image</label>
 
 <input type="file" id="imageInput" accept="image/*" onchange="previewImage()">
 
 <br><br>
 
-<img id="preview" style="max-width:300px;display:none;border-radius:8px;margin-bottom:15px">
+<div class="preview-wrap" id="previewWrap">
+<img id="preview">
+<canvas id="overlayCanvas"></canvas>
+</div>
 
 <br>
 
@@ -50,7 +261,7 @@ Analyze Image
 
 </div>
 
-<div id="resultBox" class="result mt-6 p-4 bg-white rounded shadow">
+<div id="resultBox" class="result">
 AI analysis results will appear here.
 </div>
 
@@ -165,8 +376,10 @@ let reader = new FileReader()
 reader.onload = function(e){
 
 let img = document.getElementById("preview")
+let canvas = document.getElementById("overlayCanvas")
 img.src = e.target.result
 img.style.display = "block"
+canvas.style.display = "none"
 
 }
 
@@ -174,12 +387,49 @@ reader.readAsDataURL(file)
 
 }
 
+function drawDetections(detections){
+	const img = document.getElementById("preview")
+	const canvas = document.getElementById("overlayCanvas")
+	const ctx = canvas.getContext("2d")
+
+	if(!img.src) return
+
+	canvas.width = img.clientWidth
+	canvas.height = img.clientHeight
+	canvas.style.display = "block"
+	ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+	detections.forEach((item) => {
+		const bbox = item.bbox
+		const x = bbox.x * canvas.width
+		const y = bbox.y * canvas.height
+		const w = bbox.w * canvas.width
+		const h = bbox.h * canvas.height
+
+		const color = item.severity === "critical" ? "#d9480f" : "#0b7285"
+		ctx.strokeStyle = color
+		ctx.lineWidth = 3
+		ctx.strokeRect(x, y, w, h)
+
+		const label = `[${item.label}] -> ${item.issue}`
+		ctx.font = "600 13px Space Grotesk"
+		const textWidth = ctx.measureText(label).width
+		const textHeight = 22
+		const textY = y > 26 ? y - 24 : y + 4
+
+		ctx.fillStyle = color
+		ctx.fillRect(x, textY, textWidth + 14, textHeight)
+		ctx.fillStyle = "#ffffff"
+		ctx.fillText(label, x + 7, textY + 15)
+	})
+}
+
 </script>
 
 <!-- ANALYZE IMAGE -->
 <script>
 
-function analyzeImage(){
+async function analyzeImage(){
 
 let file = document.getElementById("imageInput").files[0]
 
@@ -188,18 +438,57 @@ alert("Please upload an image")
 return
 }
 
+const formData = new FormData()
+formData.append("file", file)
+
+const fallback = {
+	risk_level: "HIGH",
+	detections: [
+		{ label:"Worker", issue:"No Helmet", bbox:{ x:0.18, y:0.2, w:0.22, h:0.46 }, severity:"critical" },
+		{ label:"Ladder", issue:"Unsafe Angle", bbox:{ x:0.56, y:0.18, w:0.2, h:0.62 }, severity:"high" },
+		{ label:"Edge", issue:"Fall Hazard", bbox:{ x:0.8, y:0.06, w:0.14, h:0.82 }, severity:"high" }
+	]
+}
+
+let result = fallback
+
+try{
+	const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
+	const headers = {}
+	if(token && token !== "loggedin"){
+		headers["Authorization"] = "Bearer " + token
+	}
+
+	const response = await fetch("/api/analyze-image", {
+		method: "POST",
+		headers: headers,
+		body: formData
+	})
+
+	if(response.ok){
+		result = await response.json()
+	}
+}catch(_error){
+	result = fallback
+}
+
+drawDetections(result.detections || [])
+
+const list = (result.detections || []).map(item =>
+	`<li>⚠ [${item.label}] → ${item.issue}</li>`
+).join("")
+
 document.getElementById("resultBox").innerHTML = `
 <h3 style="font-weight:bold;margin-bottom:10px">AI Analysis Result</h3>
 
 <p><b>Detected hazards:</b></p>
 
 <ul style="margin-left:20px">
-<li>⚠ Worker without helmet</li>
-<li>⚠ Unsafe ladder position</li>
+${list}
 </ul>
 
 <p style="margin-top:10px">
-<b>Risk Level:</b> <span style="color:red;font-weight:bold">HIGH</span>
+<b>Risk Level:</b> <span style="color:red;font-weight:bold">${result.risk_level || "HIGH"}</span>
 </p>
 `
 

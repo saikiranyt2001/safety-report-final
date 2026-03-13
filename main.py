@@ -18,6 +18,15 @@ from backend.api.routes_admin import router as admin_router
 from backend.api.routes_uploads import router as uploads_router
 from backend.api.routes_validation import router as validation_router
 from backend.api.routes_auth import router as auth_router
+from backend.api.routes_health import router as health_router
+from backend.api.routes_activity import router as activity_router
+from backend.api.routes_inspection import router as inspection_router
+from backend.api.routes_tasks import router as tasks_router
+from backend.api.routes_incidents import router as incidents_router
+from backend.api.routes_training import router as training_router
+from backend.api.routes_equipment import router as equipment_router
+from backend.api.routes_compliance import router as compliance_router
+from backend.api.routes_integrations import router as integrations_router
 
 
 print("🚀 Starting AI Safety Platform...")
@@ -53,6 +62,15 @@ app.include_router(validation_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(pipeline_router, prefix="/api")
+app.include_router(activity_router, prefix="/api")
+app.include_router(inspection_router, prefix="/api")
+app.include_router(tasks_router, prefix="/api")
+app.include_router(incidents_router, prefix="/api")
+app.include_router(training_router, prefix="/api")
+app.include_router(equipment_router, prefix="/api")
+app.include_router(compliance_router, prefix="/api")
+app.include_router(integrations_router, prefix="/api")
+app.include_router(health_router)
 
 # Static frontend
 if os.path.exists("frontend"):
@@ -62,8 +80,3 @@ if os.path.exists("frontend"):
 @app.get("/")
 def home():
     return {"message": "AI Safety Platform Running"}
-
-# Health
-@app.get("/health")
-def health():
-    return {"status": "ok"}
