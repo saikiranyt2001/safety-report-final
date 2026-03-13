@@ -64,7 +64,6 @@ async def upload_inspection(
         "location": file_location
     }
 
-
 @router.post(
     "/analyze-image",
     tags=["Vision"],
@@ -72,7 +71,6 @@ async def upload_inspection(
 )
 async def analyze_image(
     file: UploadFile = File(...),
-    user=Depends(require_roles("admin", "manager", "worker")),
     db=Depends(get_db),
 ):
     if file.content_type not in ["image/jpeg", "image/png"]:
@@ -93,15 +91,17 @@ async def analyze_image(
 
         detections = result.get("detections", [])
         hazard_count = len(detections)
+
         log_activity(
             db,
-            user.user_id,
+            "system",
             "Hazard detection completed",
             event_type="alert" if hazard_count else "system",
             details=f"AI detected {hazard_count} hazards from {file.filename}",
         )
 
         return result
+
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)

@@ -1,53 +1,115 @@
-
-# backend/vision/image_analyzer.py
-
-import cv2
 import os
+import cv2
+from ultralytics import YOLO
 
 
 class ImageAnalyzer:
+    _model = None
+
+    @classmethod
+    def _get_model(cls):
+        if cls._model is None:
+            # Load YOLO model once
+            cls._model = YOLO("yolov8n.pt")
+        return cls._model
+
+    @staticmethod
+    def _severity_for_label(label: str) -> str:
+        high_labels = {
+            "person", "truck", "bus", "car", "motorcycle", "bicycle", "forklift"
+        }
+        medium_labels = {"ladder", "knife", "scissors", "fire hydrant"}
+
+        normalized = label.lower().strip()
+
+        if normalized in high_labels:
+            return "high"
+        if normalized in medium_labels:
+            return "medium"
+
+        return "low"
+
+    @staticmethod
+    def _risk_level_from_detections(detections: list) -> str:
+        if not detections:
+            return "LOW"
+
+        order = {"low": 1, "medium": 2, "high": 3, "critical": 4}
+        peak = max(order.get(item.get("severity", "low"), 1) for item in detections)
+
+        reverse = {
+            1: "LOW",
+            2: "MEDIUM",
+            3: "HIGH",
+            4: "CRITICAL"
+        }
+
+        return reverse.get(peak, "LOW")
 
     def analyze(self, image_path: str):
-        """
-        Analyze inspection image for safety hazards.
-        Currently placeholder logic.
-        """
+
         if not os.path.exists(image_path):
             return {"error": "Image not found"}
+
         image = cv2.imread(image_path)
+
         if image is None:
             return {"error": "Invalid image file"}
 
         height, width = image.shape[:2]
 
-        # Placeholder detections with normalized bounding boxes.
-        detections = [
-            {
-                "label": "Worker",
-                "issue": "No Helmet",
-                "bbox": {"x": 0.18, "y": 0.2, "w": 0.22, "h": 0.46},
-                "severity": "critical",
-            },
-            {
-                "label": "Ladder",
-                "issue": "Unsafe Angle",
-                "bbox": {"x": 0.56, "y": 0.18, "w": 0.2, "h": 0.62},
-                "severity": "high",
-            },
-            {
-                "label": "Edge",
-                "issue": "Fall Hazard",
-                "bbox": {"x": 0.8, "y": 0.06, "w": 0.14, "h": 0.82},
-                "severity": "high",
-            },
-        ]
+        model = self._get_model()
 
-        hazards = [f"{item['label']} -> {item['issue']}" for item in detections]
+        # Run YOLO detection
+        results = model.predict(source=image_path, conf=0.25, verbose=False)
+
+        detections = []
+
+        if results:
+            result = results[0]
+            names = result.names
+
+            if result.boxes is not None:
+                for box in result.boxes:
+
+                    cls_id = int(box.cls[0].item())
+
+                    if isinstance(names, dict):
+                        label = names.get(cls_id, str(cls_id))
+                    else:
+                        label = str(cls_id)
+
+                    confidence = float(box.conf[0].item())
+
+                    x1, y1, x2, y2 = box.xyxy[0].tolist()
+
+                    bbox = {
+                        "x": round(x1 / width, 4),
+                        "y": round(y1 / height, 4),
+                        "w": round((x2 - x1) / width, 4),
+                        "h": round((y2 - y1) / height, 4),
+                    }
+
+                    detections.append({
+                        "label": label,
+                        "issue": f"Detected {label}",
+                        "confidence": round(confidence, 4),
+                        "bbox": bbox,
+                        "severity": self._severity_for_label(label),
+                    })
+
+        hazards = [
+            f"{item['label']} ({item['confidence']})"
+            for item in detections
+        ]
 
         return {
             "image": image_path,
-            "image_size": {"width": width, "height": height},
+            "image_size": {
+                "width": width,
+                "height": height
+            },
             "hazards": hazards,
             "detections": detections,
-            "risk_level": "HIGH",
+            "risk_level": self._risk_level_from_detections(detections),
         }

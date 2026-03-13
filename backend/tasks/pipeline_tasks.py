@@ -2,7 +2,7 @@
 from backend.celery_app import celery_app
 from backend.agents.orchestrator import run_safety_pipeline
 
-
+from backend.core.ai_client import chat_completion
 @celery_app.task
 def safety_pipeline_task(site_type, site_data):
     """
@@ -15,3 +15,6 @@ def safety_pipeline_task(site_type, site_data):
         "status": "completed",
         "report": result
     }
+@celery_app.task
+def ai_analysis_task(prompt):
+    return chat_completion(prompt)

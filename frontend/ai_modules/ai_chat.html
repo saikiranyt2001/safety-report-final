@@ -244,7 +244,7 @@ fetch("../components/footer.html")
 <script src="../js/main.js"></script>
 
 <script>
-const API_URL = "http://localhost:8000";
+const API_URL = "http://localhost:8001";
 
 function addMessage(text, type){
 	const messages = document.getElementById("chatMessages");
@@ -276,10 +276,10 @@ async function sendChat(){
 			headers["Authorization"] = "Bearer " + token;
 		}
 
-		const response = await fetch(API_URL + "/api/chat", {
+		const response = await fetch(API_URL + "/api/ai-chat", {
 			method: "POST",
 			headers: headers,
-			body: JSON.stringify({ message: message })
+			body: JSON.stringify({ prompt: message })
 		});
 
 		if(!response.ok){
@@ -287,7 +287,7 @@ async function sendChat(){
 		}
 
 		const data = await response.json();
-		addMessage(data.reply || "No response available.", "ai-msg");
+		addMessage(data.response || "No response available.", "ai-msg");
 	} catch(_error){
 		addMessage("AI safety assistant is temporarily unavailable. Please try again.", "ai-msg");
 	}

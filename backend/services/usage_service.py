@@ -8,3 +8,6 @@ def track_usage(user_id, action):
 def get_usage(user_id):
     # Dummy implementation
     return {"message": f"Usage details for user {user_id}"}
+def track_ai_usage(user_id, tokens_used):
+    # store usage in database
+    pass

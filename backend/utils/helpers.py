@@ -3,7 +3,7 @@
 import redis
 import json
 from backend.core.config import settings
-
+from backend.core.ai_client import chat_completion
 # Redis connection
 r = redis.Redis(
     host="localhost",
@@ -52,3 +52,15 @@ def get_cached_report(key):
 
 def cache_report(key, value):
     r.set(key, value, ex=300)
+
+cache = {}
+
+def cached_ai_call(prompt):
+
+    if prompt in cache:
+        return cache[prompt]
+
+    result = chat_completion(prompt)
+    cache[prompt] = result
+
+    return result

@@ -2,7 +2,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 from backend.rag.hazard_database import get_hazards
+from backend.core.ai_client import chat_completion
 
+def identify_hazards(site_description):
+
+    prompt = f"""
+    Identify workplace hazards from the following description:
+
+    {site_description}
+    """
+
+    return chat_completion(prompt)
 
 def identify_hazards(site_type, site_data=None):
 

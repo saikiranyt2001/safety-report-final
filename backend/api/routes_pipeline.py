@@ -10,6 +10,7 @@ from backend.core.limiter import limiter
 from backend.core.rbac import require_roles
 from backend.database.database import SessionLocal
 from backend.services.activity_service import log_activity
+from backend.services.ai_service import ask_ai
 router = APIRouter(prefix="/pipeline", tags=["Pipeline"])
 
 
@@ -85,4 +86,13 @@ async def get_task_status(
         }
 
     return {"status": task.state}
+
+
+@router.post("/ai-chat")
+async def ai_chat(
+    prompt: str,
+    _user=Depends(require_roles("admin", "manager", "worker")),
+):
+    response = ask_ai(prompt)
+    return {"response": response}
 

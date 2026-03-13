@@ -1,7 +1,19 @@
 import os
 
 from backend.rag.regulation_loader import RegulationLoader
+from backend.core.ai_client import chat_completion
 
+def generate_answer(context, question):
+
+    prompt = f"""
+    Context:
+    {context}
+
+    Question:
+    {question}
+    """
+
+    return chat_completion(prompt)
 
 class RAGEngine:
     """Simple rule-based RAG over local safety regulations."""

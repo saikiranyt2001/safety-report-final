@@ -3,15 +3,35 @@ function toggleChat(){
     sidebar.classList.toggle("active");
 }
 
-function sendChat(){
-    let input=document.getElementById("chatInput")
-    let text=input.value
-    if(text.trim()==="") return
-    addChat(text,"user-msg")
-    input.value=""
-    setTimeout(()=>{
-        addChat(generateReply(text),"ai-msg")
-    },500)
+async function sendChat(){
+    let input = document.getElementById("chatInput");
+    let text = input.value;
+
+    if(text.trim() === "") return;
+
+    addChat(text,"user-msg");
+    input.value = "";
+
+    try {
+
+        const response = await fetch("http://127.0.0.1:8001/api/ai-chat",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                prompt:text
+            })
+        });
+
+        const data = await response.json();
+
+        addChat(data.response || "No response","ai-msg");
+
+    } catch(error){
+        console.error(error);
+        addChat("AI safety assistant is temporarily unavailable. Please try again.","ai-msg");
+    }
 }
 
 function addChat(text,type){
@@ -23,13 +43,4 @@ function addChat(text,type){
     box.scrollTop=box.scrollHeight
 }
 
-function generateReply(q){
-    q=q.toLowerCase()
-    if(q.includes("hazard"))
-        return "Common hazards include slips, falls, electrical risks and unsafe machinery."
-    if(q.includes("ppe"))
-        return "PPE includes helmets, gloves, goggles and safety boots."
-    if(q.includes("accident"))
-        return "Accidents can be reduced through safety training and hazard reporting."
-    return "Safety tip: Always conduct a risk assessment before starting work."
-}
+
