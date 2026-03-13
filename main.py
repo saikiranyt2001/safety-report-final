@@ -8,7 +8,7 @@ from backend.middleware.logging_middleware import LoggingMiddleware
 from backend.middleware.tenant_middleware import TenantMiddleware
 from backend.api.routes_pipeline import router as pipeline_router
 
-
+from backend.core.limiter import limiter
 
 
 print("🚀 Starting AI Safety Platform...")
@@ -81,3 +81,6 @@ def home():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+app = FastAPI()
+app.state.limiter = limiter    

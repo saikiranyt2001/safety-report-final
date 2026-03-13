@@ -5,8 +5,8 @@ from celery.result import AsyncResult
 from backend.tasks.pipeline_tasks import safety_pipeline_task
 from backend.celery_app import celery_app
 from backend.schemas.pipeline_schema import PipelineRequest
-from main import limiter
 
+from backend.core.limiter import limiter
 router = APIRouter(prefix="/pipeline", tags=["Pipeline"])
 
 
