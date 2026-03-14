@@ -181,7 +181,7 @@ body {
 	border: 0;
 	border-radius: 999px;
 	background: linear-gradient(120deg, #0b7285, #2f9e44);
-	color: #fff;
+	color: #5f3636;
 	padding: 0.7rem 1rem;
 	font-family: "Space Grotesk", sans-serif;
 	font-weight: 600;
@@ -197,6 +197,9 @@ body {
 .chat-input button {
 	font-family: "Space Grotesk", sans-serif;
 }
+
+
+
 
 @media (max-width: 680px) {
 	.main-content {
@@ -265,6 +268,7 @@ Analyze Image
 <div id="resultBox" class="result">
 AI analysis results will appear here.
 </div>
+<img id="resultImage" style="max-width:100%;margin-top:20px;">
 
 </div>
 
@@ -428,13 +432,13 @@ return
 const formData = new FormData()
 formData.append("file", file)
 
-document.getElementById("resultBox").innerHTML = "Analyzing image..."
+document.getElementById("resultBox").innerHTML = "Uploading image and queuing background analysis..."
 
 try{
 
-const token = localStorage.getItem("token")
+const token = localStorage.getItem("token") || localStorage.getItem("auth_token")
 
-const response = await fetch("http://127.0.0.1:8000/api/analyze-image", {
+const response = await fetch("http://127.0.0.1:8000/api/pipeline/analyze-image", {
 method: "POST",
 headers: {
 "Authorization": "Bearer " + token
@@ -442,20 +446,64 @@ headers: {
 body: formData
 })
 
-const result = await response.json()
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || "Could not queue image analysis")
+}
+
+const taskInfo = await response.json()
+
+document.getElementById("resultBox").innerHTML =
+`<b>Task queued:</b> ${taskInfo.task_id}<br>Waiting for worker result...`
+
+const result = await pollTaskResult(taskInfo.task_id, token)
 
 drawDetections(result.detections || [])
 
 document.getElementById("resultBox").innerHTML =
-`<b>Risk Level:</b> ${result.risk_level}`
+`<b>Risk Level:</b> ${result.risk_level}<br><b>Hazards:</b> ${(result.detections || []).length}`
 
 }catch(error){
 
 console.error(error)
-document.getElementById("resultBox").innerHTML = "AI analysis failed"
+document.getElementById("resultBox").innerHTML = `AI analysis failed: ${error.message}`
 
 }
 
+}
+
+async function pollTaskResult(taskId, token) {
+	const maxAttempts = 30
+
+	for (let attempt = 0; attempt < maxAttempts; attempt++) {
+		const response = await fetch(`http://127.0.0.1:8000/api/pipeline/task-status/${taskId}`, {
+			headers: {
+				"Authorization": "Bearer " + token
+			}
+		})
+
+		if (!response.ok) {
+			const errorText = await response.text()
+			throw new Error(errorText || "Could not read task status")
+		}
+
+		const data = await response.json()
+
+		if (data.status === "SUCCESS") {
+			return data.result
+		}
+
+		if (data.status === "FAILURE") {
+			throw new Error(data.error || "Background analysis failed")
+		}
+
+		document.getElementById("resultBox").innerHTML =
+		`<b>Task queued:</b> ${taskId}<br>Worker status: ${data.status}`
+
+		await new Promise(resolve => setTimeout(resolve, 2000))
+	}
+
+	throw new Error("Timed out waiting for background analysis")
 }
 
 </script>

@@ -2,6 +2,7 @@ import uuid
 import os
 from openai import OpenAI
 
+from backend.celery_app import celery
 from backend.document_export.pdf_generator import generate_pdf_report
 
 # ----------------------------
@@ -143,3 +144,9 @@ def generate_report(project_id, hazards, risk_score):
         "risk_score": risk_score,
         "analysis": ai_analysis
     }
+
+
+@celery.task(name="backend.services.report_service.generate_report_task")
+def generate_report_task(project_id, hazards, risk_score):
+    print("Generating report...")
+    return generate_report(project_id, hazards, risk_score)

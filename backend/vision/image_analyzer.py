@@ -2,6 +2,9 @@ import os
 import cv2
 from ultralytics import YOLO
 
+from backend.services.alert_service import send_alert
+from backend.services.incident_ai import generate_incident_report
+
 
 class ImageAnalyzer:
     _model = None
@@ -103,6 +106,15 @@ class ImageAnalyzer:
             for item in detections
         ]
 
+        risk_level = self._risk_level_from_detections(detections)
+        incident_report = None
+
+        if detections and risk_level in {"MEDIUM", "HIGH", "CRITICAL"}:
+            incident_report = generate_incident_report(hazards, risk_level)
+
+        if risk_level in {"HIGH", "CRITICAL"}:
+            send_alert(f"🔥 {risk_level.title()} risk hazard detected!")
+
         return {
             "image": image_path,
             "image_size": {
@@ -111,5 +123,6 @@ class ImageAnalyzer:
             },
             "hazards": hazards,
             "detections": detections,
-            "risk_level": self._risk_level_from_detections(detections),
+            "risk_level": risk_level,
+            "incident_report": incident_report,
         }

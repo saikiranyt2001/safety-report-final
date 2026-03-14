@@ -1,25 +1,33 @@
-from celery import Celery
 import os
 
-# Redis URL from environment variable (important for deployment)
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+from celery import Celery
 
-celery_app = Celery(
-    "safety_ai",
+from backend.core.config import settings
+
+
+REDIS_URL = os.getenv("REDIS_URL", settings.REDIS_URL)
+
+celery = Celery(
+    "ai_safety",
     broker=REDIS_URL,
-    backend=REDIS_URL
+    backend=REDIS_URL,
 )
 
-celery_app.conf.update(
+celery.conf.update(
     task_serializer="json",
     result_serializer="json",
     accept_content=["json"],
     timezone="UTC",
     enable_utc=True,
+    task_routes={
+        "backend.tasks.pipeline_tasks.*": {"queue": "ai_tasks"},
+    },
 )
 
-# Automatically discover Celery tasks
-celery_app.autodiscover_tasks([
+celery.autodiscover_tasks([
     "backend.tasks",
-    "backend.services"
+    "backend.services",
 ])
+
+# Backward-compatible alias for existing imports.
+celery_app = celery

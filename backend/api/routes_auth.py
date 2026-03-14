@@ -14,7 +14,7 @@ SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.JWT_ALGORITHM
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 class LoginData(BaseModel):
     username: str
@@ -133,17 +133,22 @@ def login(data: LoginData, db: Session = Depends(get_db)):
         "username": user.username,
         "company": {"id": company.id, "name": company.name},
     }
-
-# Get profile
 @router.get("/me")
 def get_profile(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+        username = payload.get("sub")
+
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
         return {
             "username": payload.get("sub"),
             "user_id": payload.get("user_id"),
             "company_id": payload.get("company_id"),
             "role": payload.get("role", RoleEnum.worker.value),
         }
+
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")

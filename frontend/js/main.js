@@ -29,6 +29,7 @@ const ROLE_ACCESS_RULES = {
 "/frontend/pages/download_report.html": ["admin", "manager", "worker"],
 "/frontend/pages/report_history.html": ["admin", "manager", "worker"],
 "/frontend/pages/dashboard.html": ["admin", "manager", "worker"],
+"/frontend/pages/live_detection.html": ["admin", "manager", "worker"],
 "/frontend/ai_modules/hazard_detection.html": ["admin", "manager", "worker"],
 "/frontend/ai_modules/compliance_agent.html": ["admin", "manager", "worker"],
 "/frontend/ai_modules/incident_prediction.html": ["admin", "manager", "worker"],
@@ -138,6 +139,8 @@ const features = {
 "analytics":"analytics.html",
 "upload":"upload_data.html",
 "analyze":"analyze_image.html",
+"live":"live_detection.html",
+"webcam":"live_detection.html",
 "report":"report_history.html",
 "profile":"profile.html",
 "heatmap":"analytics.html"
@@ -164,6 +167,7 @@ const features = [
 { name:"Dashboard", page:"/frontend/pages/dashboard.html", cat:"Pages" },
 { name:"Upload Data", page:"/frontend/pages/upload.html", cat:"Pages" },
 { name:"Analyze Image", page:"/frontend/pages/analyze_image.html", cat:"Pages" },
+{ name:"Live Detection", page:"/frontend/pages/live_detection.html", cat:"Pages" },
 { name:"Generate Report", page:"/frontend/pages/generate_report.html", cat:"Reports" },
 { name:"RAG Report", page:"/frontend/pages/rag_report.html", cat:"Reports" },
 { name:"Report History", page:"/frontend/pages/report_history.html", cat:"Reports" },
@@ -390,3 +394,6 @@ document.getElementById("analyzeBtn").addEventListener("click", function(e){
 })
 
 document.getElementById("imageInput").addEventListener("change", previewImage)
+
+document.getElementById("resultImage").src =
+    "http://127.0.0.1:8000/" + data.annotated_image;

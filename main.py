@@ -46,10 +46,7 @@ Instrumentator().instrument(app).expose(app)
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5500",
-        "http://localhost:5500"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,7 +58,7 @@ app.add_middleware(AuthMiddleware)
 app.add_middleware(TenantMiddleware)
 
 # Routers
-app.include_router(report_router, prefix="/api")
+app.include_router(report_router, prefix="/api",tags=["reports"])
 app.include_router(analytics_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
 app.include_router(uploads_router, prefix="/api")
@@ -77,7 +74,7 @@ app.include_router(training_router, prefix="/api")
 app.include_router(equipment_router, prefix="/api")
 app.include_router(compliance_router, prefix="/api")
 app.include_router(integrations_router, prefix="/api")
-app.include_router(health_router)
+app.include_router(health_router,prefix="/api")
 
 Base.metadata.create_all(bind=engine)
 # Static frontend

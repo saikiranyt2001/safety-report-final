@@ -8,17 +8,14 @@ from fastapi.testclient import TestClient
 from fastapi.routing import APIRoute
 from main import app
 
-print("🚀 Starting AI Safety Platform...")
+print("🚀 Starting AI Safety Platform...\n")
 
 client = TestClient(app)
 
-# ----------------------------
-# Login to obtain JWT token
-# ----------------------------
-
+# LOGIN AND GET TOKEN
 login = client.post(
     "/api/login",
-    json={          # OAuth2 form login
+    json={
         "username": "admin",
         "password": "admin"
     }
@@ -27,31 +24,24 @@ login = client.post(
 print("Login status:", login.status_code)
 
 token = None
+
 try:
     token = login.json().get("access_token")
 except:
     pass
 
-headers = {"Authorization": f"Bearer {token}"} if token else {}
+if not token:
+    print("❌ Login failed. Cannot test protected endpoints.")
+    print(login.json())
+    exit()
 
-if token:
-    print("✅ Auth token obtained\n")
-else:
-    print("⚠️ No auth token received — endpoints may return 401\n")
+print("✅ Auth token obtained\n")
 
+headers = {"Authorization": f"Bearer {token}"}
 
-# ----------------------------
-# Replace path params
-# /api/tasks/{task_id} -> /api/tasks/1
-# ----------------------------
-
-def clean_path(path: str):
+# Replace {id} params
+def clean_path(path):
     return re.sub(r"\{.*?\}", "1", path)
-
-
-# ----------------------------
-# Endpoint Scanner
-# ----------------------------
 
 def test_all_endpoints():
 
@@ -95,7 +85,7 @@ def test_all_endpoints():
 
                 code = response.status_code
 
-                if code < 500:
+                if code < 500 or code == 422:
                     success += 1
                 else:
                     errors += 1
@@ -109,19 +99,15 @@ def test_all_endpoints():
 
     print("\n📊 API HEALTH REPORT")
     print("----------------------------")
-    print(f"Total endpoints: {total}")
-    print(f"Working responses: {success}")
-    print(f"Errors: {errors}")
+    print("Total endpoints:", total)
+    print("Working responses:", success)
+    print("Errors:", errors)
 
     coverage = round((success / total) * 100, 2) if total else 0
-    print(f"Coverage: {coverage}%")
+    print("Coverage:", coverage, "%")
 
     print("\n✅ Endpoint scan complete\n")
 
-
-# ----------------------------
-# Run scanner
-# ----------------------------
 
 if __name__ == "__main__":
     test_all_endpoints()
