@@ -383,3 +383,10 @@ hideLoader()
 
 })
 
+document.getElementById("analyzeBtn").addEventListener("click", function(e){
+    e.preventDefault()
+    e.stopPropagation()
+    analyzeImage()
+})
+
+document.getElementById("imageInput").addEventListener("change", previewImage)

@@ -1,13 +1,5 @@
-# Authentication Middleware
-
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request, HTTPException
-from jose import jwt, JWTError
-from backend.config import settings
-
-SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = settings.JWT_ALGORITHM
-
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -16,38 +8,37 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         path = request.url.path
 
-        public_routes = [
-            "/api/ai-chat",
-            "/api/analyze-image",
-            "/api/login",
-            "/api/signup",
-            "/docs",
-            "/redoc",
-            "/openapi.json",
-            "/health",
-            "/metrics"
-        ]
+        # Allow OPTIONS (CORS)
+        if request.method == "OPTIONS":
+            return await call_next(request)
 
-        # Allow public routes
-        if any(path.startswith(route) for route in public_routes):
+        # Allow frontend static files
+        if path.startswith("/frontend"):
+            return await call_next(request)
+
+        # Allow favicon
+        if path == "/favicon.ico":
+            return await call_next(request)
+
+        # Allow API docs
+        if path.startswith("/docs") or path.startswith("/openapi"):
+            return await call_next(request)
+
+        # ✅ Allow login & signup
+        if path.startswith("/api/login") or path.startswith("/api/signup"):
+            return await call_next(request)
+
+        # Allow health checks
+        if path.startswith("/api/health"):
+            return await call_next(request)
+
+        # Allow image analyze (optional public)
+        if path.startswith("/api/analyze-image"):
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
 
         if not auth_header:
             raise HTTPException(status_code=401, detail="Authorization header missing")
-
-        try:
-            token = auth_header.split(" ")[1]
-
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
-            request.state.user_id = payload.get("user_id")
-            request.state.company_id = payload.get("company_id")
-            request.state.username = payload.get("sub")
-            request.state.role = payload.get("role")
-
-        except (JWTError, IndexError):
-            raise HTTPException(status_code=401, detail="Invalid token")
 
         return await call_next(request)

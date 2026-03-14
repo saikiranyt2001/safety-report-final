@@ -141,20 +141,22 @@ document.getElementById("projectForm").onsubmit = async function(e){
 e.preventDefault()
 
 const form = e.target
+const token = localStorage.getItem("access_token")
+
+try{
 
 const res = await fetch("/api/create-project",{
 
 method:"POST",
 
 headers:{
-"Content-Type":"application/json"
+"Content-Type":"application/json",
+"Authorization": "Bearer " + token
 },
 
 body: JSON.stringify({
-
 project_name: form.project_name.value,
 location: form.location.value
-
 })
 
 })
@@ -162,6 +164,13 @@ location: form.location.value
 const text = await res.text()
 
 document.getElementById("result").innerText = text
+
+}catch(err){
+
+console.error(err)
+document.getElementById("result").innerText = "Project creation failed"
+
+}
 
 }
 

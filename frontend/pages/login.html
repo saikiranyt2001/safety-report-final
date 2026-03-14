@@ -5,6 +5,55 @@
 
 <link rel="stylesheet" href="../css/style.css">
 
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+body{
+background:#f5f7fb !important;
+opacity:1 !important;
+filter:none !important;
+}
+
+.layout,
+.main-content,
+.overlay,
+.modal-backdrop{
+display:none !important;
+}
+
+.login-container{
+max-width:420px;
+margin:120px auto;
+}
+
+.login-card{
+background:#ffffff;
+padding:30px;
+border-radius:10px;
+box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+.login-card input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:1px solid #ddd;
+border-radius:6px;
+}
+
+.login-card button{
+width:100%;
+padding:10px;
+margin-top:15px;
+border:none;
+border-radius:6px;
+background:#2563eb;
+color:white;
+font-weight:600;
+cursor:pointer;
+}
+</style>
+
 </head>
 
 <body>
@@ -46,7 +95,7 @@ const token = data.access_token
 const company = data.company || {}
 
 localStorage.setItem("auth_token", token)
-localStorage.setItem("token", token)
+localStorage.setItem("token", access_token)
 localStorage.setItem("username", data.username)
 localStorage.setItem("user_name", data.username)
 localStorage.setItem("user_role", role)

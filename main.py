@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
-load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 from prometheus_fastapi_instrumentator import Instrumentator
+
+load_dotenv()
 
 from backend.middleware.auth_middleware import AuthMiddleware
 from backend.middleware.logging_middleware import LoggingMiddleware
@@ -29,9 +30,8 @@ from backend.api.routes_training import router as training_router
 from backend.api.routes_equipment import router as equipment_router
 from backend.api.routes_compliance import router as compliance_router
 from backend.api.routes_integrations import router as integrations_router
-from backend.api.routes.ai_routes import router as ai_router
-from fastapi.middleware.cors import CORSMiddleware
-
+from backend.database.database import Base, engine
+import backend.database.models 
 
 print("🚀 Starting AI Safety Platform...")
 
@@ -43,6 +43,7 @@ app.state.limiter = limiter
 # Prometheus monitoring
 Instrumentator().instrument(app).expose(app)
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -77,8 +78,8 @@ app.include_router(equipment_router, prefix="/api")
 app.include_router(compliance_router, prefix="/api")
 app.include_router(integrations_router, prefix="/api")
 app.include_router(health_router)
-app.include_router(ai_router, prefix="/api")
 
+Base.metadata.create_all(bind=engine)
 # Static frontend
 if os.path.exists("frontend"):
     app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")

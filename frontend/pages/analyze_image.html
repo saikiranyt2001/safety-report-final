@@ -255,7 +255,8 @@ body {
 
 <br>
 
-<button onclick="analyzeImage()" class="analyze-btn">
+
+<button id="analyzeBtn" type="button" class="analyze-btn">
 Analyze Image
 </button>
 
@@ -297,53 +298,42 @@ AI analysis results will appear here.
 <script>
 
 /* LOAD SIDEBAR */
-
-
-
-
 fetch("../components/sidebar.html")
 .then(res => res.text())
 .then(data => {
+	document.getElementById("sidebar-container").innerHTML = data
 
-document.getElementById("sidebar-container").innerHTML = data
+	/* Initialize search */
+	initSearch()
 
-/* Initialize search */
-initSearch()
+	/* Sidebar Toggle */
+	const toggleBtn = document.getElementById("menuToggle")
+	const sidebar = document.querySelector(".sidebar")
+	const navbar = document.querySelector(".navbar")
+	const mainContent = document.querySelector(".main-content")
 
-/* Sidebar Toggle */
+	if (toggleBtn) {
+		toggleBtn.onclick = function() {
+			sidebar.classList.toggle("collapsed")
 
-const toggleBtn = document.getElementById("menuToggle")
-const sidebar = document.querySelector(".sidebar")
-const navbar = document.querySelector(".navbar")
-const mainContent = document.querySelector(".main-content")
+			if (navbar) navbar.classList.toggle("expanded")
+			if (mainContent) mainContent.classList.toggle("expanded")
 
-if(toggleBtn){
+			/* footer loads later */
+			const footer = document.querySelector(".footer")
 
-toggleBtn.onclick = function(){
-
-sidebar.classList.toggle("collapsed")
-
-if(navbar) navbar.classList.toggle("expanded")
-if(mainContent) mainContent.classList.toggle("expanded")
-
-/* footer loads later */
-const footer = document.querySelector(".footer")
-
-if(footer){
-footer.classList.toggle("expanded")
-}
-
-}
-
-}
+			if (footer) {
+				footer.classList.toggle("expanded")
+			}
+		}
+	}
 })
-
 
 /* LOAD FOOTER */
 fetch("../components/footer.html")
 .then(res => res.text())
 .then(data => {
-document.getElementById("footer").innerHTML = data
+	document.getElementById("footer").innerHTML = data
 })
 
 </script>
@@ -351,13 +341,13 @@ document.getElementById("footer").innerHTML = data
 <!-- AUTH -->
 <script>
 
-if(!localStorage.getItem("token")){
-window.location.href="login.html";
+if (!localStorage.getItem("token")) {
+	window.location.href = "login.html"
 }
 
-function logout(){
-localStorage.removeItem("token");
-window.location.href="login.html";
+function logout() {
+	localStorage.removeItem("token")
+	window.location.href = "login.html"
 }
 
 </script>
@@ -365,69 +355,66 @@ window.location.href="login.html";
 <!-- IMAGE PREVIEW -->
 <script>
 
-function previewImage(){
+function previewImage() {
+	let file = document.getElementById("imageInput").files[0]
 
-let file = document.getElementById("imageInput").files[0]
+	if (!file) return
 
-if(!file) return
+	let reader = new FileReader()
 
-let reader = new FileReader()
+	reader.onload = function(e) {
+		let img = document.getElementById("preview")
+		let canvas = document.getElementById("overlayCanvas")
 
-reader.onload = function(e){
+		img.src = e.target.result
+		img.style.display = "block"
+		canvas.style.display = "none"
+	}
 
-let img = document.getElementById("preview")
-let canvas = document.getElementById("overlayCanvas")
-img.src = e.target.result
-img.style.display = "block"
-canvas.style.display = "none"
-
+	reader.readAsDataURL(file)
 }
 
-reader.readAsDataURL(file)
-
-}
-
-function drawDetections(detections){
+function drawDetections(detections) {
 	const img = document.getElementById("preview")
 	const canvas = document.getElementById("overlayCanvas")
 	const ctx = canvas.getContext("2d")
 
-	if(!img.src) return
+	if (!img.src) return
 
 	canvas.width = img.clientWidth
 	canvas.height = img.clientHeight
 	canvas.style.display = "block"
+
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 
 	detections.forEach((item) => {
 		const bbox = item.bbox
+
 		const x = bbox.x * canvas.width
 		const y = bbox.y * canvas.height
 		const w = bbox.w * canvas.width
 		const h = bbox.h * canvas.height
 
 		const color = item.severity === "critical" ? "#d9480f" : "#0b7285"
+
 		ctx.strokeStyle = color
 		ctx.lineWidth = 3
 		ctx.strokeRect(x, y, w, h)
 
 		const label = `[${item.label}] -> ${item.issue}`
 		ctx.font = "600 13px Space Grotesk"
+
 		const textWidth = ctx.measureText(label).width
 		const textHeight = 22
 		const textY = y > 26 ? y - 24 : y + 4
 
 		ctx.fillStyle = color
 		ctx.fillRect(x, textY, textWidth + 14, textHeight)
-		ctx.fillStyle = "#ffffff"
+
+		ctx.fillStyle = "#fff"
 		ctx.fillText(label, x + 7, textY + 15)
 	})
 }
-
-</script>
-
-<!-- ANALYZE IMAGE -->
-<script>
 
 async function analyzeImage(){
 
@@ -441,56 +428,33 @@ return
 const formData = new FormData()
 formData.append("file", file)
 
-const fallback = {
-	risk_level: "HIGH",
-	detections: [
-		{ label:"Worker", issue:"No Helmet", bbox:{ x:0.18, y:0.2, w:0.22, h:0.46 }, severity:"critical" },
-		{ label:"Ladder", issue:"Unsafe Angle", bbox:{ x:0.56, y:0.18, w:0.2, h:0.62 }, severity:"high" },
-		{ label:"Edge", issue:"Fall Hazard", bbox:{ x:0.8, y:0.06, w:0.14, h:0.82 }, severity:"high" }
-	]
-}
-
-let result = fallback
+document.getElementById("resultBox").innerHTML = "Analyzing image..."
 
 try{
-	const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
-	const headers = {}
-	if(token && token !== "loggedin"){
-		headers["Authorization"] = "Bearer " + token
-	}
 
-	const response = await fetch("http://127.0.0.1:8001/api/analyze-image", {
-    method: "POST",
-    headers: headers,
-    body: formData
+const token = localStorage.getItem("token")
+
+const response = await fetch("http://127.0.0.1:8000/api/analyze-image", {
+method: "POST",
+headers: {
+"Authorization": "Bearer " + token
+},
+body: formData
 })
 
-	if(response.ok){
-		result = await response.json()
-	}
-}catch(_error){
-	result = fallback
-}
+const result = await response.json()
 
 drawDetections(result.detections || [])
 
-const list = (result.detections || []).map(item =>
-	`<li>⚠ [${item.label}] → ${item.issue}</li>`
-).join("")
+document.getElementById("resultBox").innerHTML =
+`<b>Risk Level:</b> ${result.risk_level}`
 
-document.getElementById("resultBox").innerHTML = `
-<h3 style="font-weight:bold;margin-bottom:10px">AI Analysis Result</h3>
+}catch(error){
 
-<p><b>Detected hazards:</b></p>
+console.error(error)
+document.getElementById("resultBox").innerHTML = "AI analysis failed"
 
-<ul style="margin-left:20px">
-${list}
-</ul>
-
-<p style="margin-top:10px">
-<b>Risk Level:</b> <span style="color:red;font-weight:bold">${result.risk_level || "HIGH"}</span>
-</p>
-`
+}
 
 }
 
@@ -499,63 +463,60 @@ ${list}
 <!-- AI CHAT SCRIPT -->
 <script>
 
+function sendChat() {
+	let input = document.getElementById("chatInput")
+	let text = input.value.trim()
 
-function sendChat(){
+	if (text === "") return
 
-let input=document.getElementById("chatInput")
-let text=input.value.trim()
+	addChat(text, "user-msg")
 
-if(text==="") return
+	let reply = generateReply(text)
 
-addChat(text,"user-msg")
+	setTimeout(() => {
+		addChat(reply, "ai-msg")
+	}, 500)
 
-let reply=generateReply(text)
-
-setTimeout(()=>{
-addChat(reply,"ai-msg")
-},500)
-
-input.value=""
-
+	input.value = ""
 }
 
-function addChat(text,type){
+function addChat(text, type) {
+	let box = document.getElementById("chatMessages")
+	let div = document.createElement("div")
 
-let box=document.getElementById("chatMessages")
+	div.className = type
+	div.innerText = text
 
-let div=document.createElement("div")
-
-div.className=type
-div.innerText=text
-
-box.appendChild(div)
-
-box.scrollTop=box.scrollHeight
-
+	box.appendChild(div)
+	box.scrollTop = box.scrollHeight
 }
 
-function generateReply(q){
+function generateReply(q) {
+	q = q.toLowerCase()
 
-q=q.toLowerCase()
+	if (q.includes("hazard")) {
+		return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
+	}
 
-if(q.includes("hazard"))
-return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
+	if (q.includes("helmet")) {
+		return "Workers should always wear PPE like helmets, gloves, and safety shoes."
+	}
 
-if(q.includes("helmet"))
-return "Workers should always wear PPE like helmets, gloves, and safety shoes."
+	if (q.includes("accident")) {
+		return "Reduce accidents by conducting safety audits and enforcing PPE compliance."
+	}
 
-if(q.includes("accident"))
-return "Reduce accidents by conducting safety audits and enforcing PPE compliance."
-
-return "Safety tip: Always inspect equipment before starting work."
-
+	return "Safety tip: Always inspect equipment before starting work."
 }
 
-document.getElementById("chatInput").addEventListener("keypress",function(e){
-if(e.key==="Enter"){
-sendChat()
-}
+document.getElementById("chatInput").addEventListener("keypress", function(e) {
+	if (e.key === "Enter") {
+		sendChat()
+	}
 })
+
+
+document.getElementById("analyzeBtn").onclick = analyzeImage
 
 </script>
 
