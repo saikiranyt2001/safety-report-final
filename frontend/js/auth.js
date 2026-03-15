@@ -1,6 +1,22 @@
+function getStoredToken(){
+	return localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token");
+}
+
+function clearStoredSession(){
+	localStorage.removeItem("auth_token");
+	localStorage.removeItem("token");
+	localStorage.removeItem("access_token");
+	localStorage.removeItem("username");
+	localStorage.removeItem("user_name");
+	localStorage.removeItem("user_role");
+	localStorage.removeItem("company_id");
+	localStorage.removeItem("company_name");
+	localStorage.removeItem("user");
+}
+
 function checkAuth(){
 
-	const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+	const token = getStoredToken();
 
 	if(!token){
 		window.location.href = "/frontend/pages/login.html";
@@ -34,7 +50,7 @@ function requireRoles(allowedRoles){
 
 function logoutUser(){
 
-	localStorage.clear();
+	clearStoredSession();
 
 	window.location.href = "/frontend/pages/login.html";
 

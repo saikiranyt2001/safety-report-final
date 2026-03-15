@@ -16,6 +16,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if path.startswith("/frontend"):
             return await call_next(request)
 
+        # Allow mounted storage assets used by the frontend
+        if path.startswith("/storage"):
+            return await call_next(request)
+
+        # Allow basic public app entrypoints
+        if path == "/" or path == "/metrics":
+            return await call_next(request)
+
         # Allow favicon
         if path == "/favicon.ico":
             return await call_next(request)

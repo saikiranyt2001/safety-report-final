@@ -64,6 +64,36 @@ async def upload_inspection(
         "location": file_location
     }
 
+
+@router.post("/upload", tags=["Uploads"], summary="Upload evidence file")
+async def upload_file(
+    file: UploadFile = File(...),
+    user=Depends(require_roles("admin", "manager", "worker")),
+    db=Depends(get_db),
+):
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    unique_name = f"{uuid.uuid4()}_{file.filename}"
+    file_location = os.path.join(UPLOAD_DIR, unique_name)
+
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+
+    log_activity(
+        db,
+        user.user_id,
+        "Uploaded report evidence",
+        event_type="user",
+        details=f"Uploaded {file.filename}",
+    )
+
+    return {
+        "filename": unique_name,
+        "url": f"/storage/reports/{unique_name}",
+        "location": file_location,
+    }
+
 @router.post(
     "/analyze-image",
     tags=["Vision"],

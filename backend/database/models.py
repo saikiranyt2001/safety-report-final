@@ -1,11 +1,15 @@
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Float
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import UTC, datetime
 from .database import Base
 import enum
 
 from .tenant_mixin import TenantMixin
+
+
+def utc_now() -> datetime:
+    return datetime.now(UTC)
 # -----------------------------
 # User Roles
 # -----------------------------
@@ -23,7 +27,7 @@ class Company(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
 
     users = relationship(
         "User",
@@ -75,6 +79,20 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    settings = relationship(
+        "UserSettings",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
+    account_state = relationship(
+        "UserAccountState",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
     def __repr__(self):
         return f"<User {self.username}>"
 
@@ -93,7 +111,7 @@ class Project(Base,TenantMixin):
 
     company = relationship("Company", back_populates="projects")
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     reports = relationship(
         "Report",
@@ -124,7 +142,7 @@ class Report(Base,TenantMixin):
     severity = Column(Integer)
     likelihood = Column(Integer)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     usage_records = relationship(
         "Usage",
@@ -154,7 +172,7 @@ class Usage(Base):
     reports = Column(Integer, default=0)
     cost = Column(Float, default=0.0)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     user = relationship("User", back_populates="usage")
     report = relationship("Report", back_populates="usage_records")
@@ -175,7 +193,7 @@ class InspectionTemplate(Base):
     description = Column(String)
     company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     questions = relationship(
         "InspectionQuestion",
@@ -218,7 +236,7 @@ class InspectionResponse(Base):
     answered_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     answer = Column(String, nullable=False)      # "pass", "fail", "na"
     notes = Column(String)
-    submitted_at = Column(DateTime, default=datetime.utcnow, index=True)
+    submitted_at = Column(DateTime, default=utc_now, index=True)
 
     question = relationship("InspectionQuestion", back_populates="responses")
     company = relationship("Company")
@@ -266,8 +284,8 @@ class HazardTask(Base):
     resolved_at  = Column(DateTime, nullable=True)
     proof_notes  = Column(String, nullable=True)               # text proof when resolving
 
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now, index=True)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     assigned_to = relationship("User", foreign_keys=[assigned_to_id])
     created_by  = relationship("User", foreign_keys=[created_by_id])
@@ -311,8 +329,8 @@ class Incident(Base):
 
     immediate_action = Column(String, nullable=True)
     closed_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now, nullable=False, index=True)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     reporter = relationship("User", foreign_keys=[reported_by])
     company = relationship("Company")
@@ -339,8 +357,8 @@ class IncidentInvestigation(Base):
     contributing_factor = Column(String, nullable=True)
     investigated_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     incident = relationship("Incident", back_populates="investigation")
     investigated_by = relationship("User", foreign_keys=[investigated_by_id])
@@ -360,7 +378,7 @@ class TrainingCourse(Base):
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     validity_months = Column(Integer, nullable=False, default=12)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
 
     company = relationship("Company")
     records = relationship("TrainingRecord", back_populates="course", cascade="all, delete-orphan")
@@ -382,8 +400,8 @@ class TrainingRecord(Base):
     expiry_date = Column(DateTime, nullable=True)
     certificate_ref = Column(String, nullable=True)
 
-    assigned_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    assigned_at = Column(DateTime, default=utc_now, nullable=False, index=True)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     company = relationship("Company")
     user = relationship("User", foreign_keys=[user_id])
@@ -409,8 +427,8 @@ class Equipment(Base):
     inspection_interval_days = Column(Integer, nullable=False, default=30)
     last_inspection_date = Column(DateTime, nullable=True)
     next_inspection_date = Column(DateTime, nullable=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     company = relationship("Company")
     inspections = relationship(
@@ -432,7 +450,7 @@ class EquipmentInspection(Base):
     equipment_id = Column(Integer, ForeignKey("equipment.id"), nullable=False, index=True)
     inspector_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     status = Column(String, nullable=False)
-    inspection_date = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    inspection_date = Column(DateTime, default=utc_now, nullable=False, index=True)
     checklist_summary = Column(String, nullable=True)
     issues_found = Column(String, nullable=True)
     maintenance_task_id = Column(Integer, ForeignKey("hazard_tasks.id"), nullable=True)
@@ -458,7 +476,7 @@ class ComplianceRule(Base):
     description = Column(String, nullable=False)
     regulation_source = Column(String, nullable=False)
     category = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
 
     company = relationship("Company")
     checks = relationship(
@@ -485,7 +503,7 @@ class ComplianceCheck(Base):
     evidence = Column(String, nullable=True)
     recommended_action = Column(String, nullable=True)
     maintenance_task_id = Column(Integer, ForeignKey("hazard_tasks.id"), nullable=True)
-    checked_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    checked_at = Column(DateTime, default=utc_now, nullable=False, index=True)
 
     company = relationship("Company")
     rule = relationship("ComplianceRule", back_populates="checks")
@@ -506,7 +524,7 @@ class ActivityLog(Base):
     action = Column(String, nullable=False)
     event_type = Column(String, nullable=False, default="user")
     details = Column(String, nullable=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(DateTime, default=utc_now, nullable=False, index=True)
 
     company = relationship("Company")
     user = relationship("User", back_populates="activity_logs")
@@ -532,8 +550,8 @@ class IntegrationEndpoint(Base):
     target = Column(String, nullable=False)
     secret = Column(String, nullable=True)
     is_active = Column(Integer, default=1, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     company = relationship("Company")
 
@@ -550,10 +568,46 @@ class ApiKey(Base):
     key_prefix = Column(String, index=True, nullable=False)
     key_hash = Column(String, nullable=False)
     is_active = Column(Integer, default=1, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
     last_used_at = Column(DateTime, nullable=True)
 
     company = relationship("Company")
 
     def __repr__(self):
         return f"<ApiKey {self.name} company={self.company_id}>"
+
+
+class UserSettings(Base):
+    __tablename__ = "user_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False, index=True)
+    display_name = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    timezone = Column(String, nullable=False, default="UTC")
+    notify_high_risk = Column(Integer, default=1, nullable=False)
+    notify_weekly = Column(Integer, default=1, nullable=False)
+    notify_maintenance = Column(Integer, default=0, nullable=False)
+    notify_recommendations = Column(Integer, default=1, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
+
+    user = relationship("User", back_populates="settings")
+
+    def __repr__(self):
+        return f"<UserSettings user={self.user_id}>"
+
+
+class UserAccountState(Base):
+    __tablename__ = "user_account_states"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False, index=True)
+    is_active = Column(Integer, default=1, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
+
+    user = relationship("User", back_populates="account_state")
+
+    def __repr__(self):
+        return f"<UserAccountState user={self.user_id} active={self.is_active}>"

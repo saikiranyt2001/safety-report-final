@@ -1,6 +1,6 @@
 import csv
 import io
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
@@ -189,7 +189,7 @@ def export_reports(
         )
 
     output.seek(0)
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
     if format == "excel":
         media_type = "application/vnd.ms-excel"

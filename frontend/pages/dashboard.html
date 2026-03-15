@@ -478,65 +478,7 @@ document.getElementById("footer").innerHTML = data
 
 <script>
 
-
-function sendChat(){
-
-let input=document.getElementById("chatInput")
-let text=input.value.trim()
-
-if(text==="") return
-
-addChat(text,"user-msg")
-
-let reply=generateReply(text)
-
-setTimeout(()=>{
-addChat(reply,"ai-msg")
-},400)
-
-input.value=""
-
-}
-
-function addChat(text,type){
-
-let box=document.getElementById("chatMessages")
-
-let div=document.createElement("div")
-
-div.className=type
-div.innerText=text
-
-box.appendChild(div)
-
-box.scrollTop=box.scrollHeight
-
-}
-
-function generateReply(q){
-
-q=q.toLowerCase()
-
-if(q.includes("hazard"))
-return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
-
-if(q.includes("helmet"))
-return "Workers must always wear PPE like helmets, gloves, and safety shoes."
-
-if(q.includes("accident"))
-return "Reduce accidents by conducting safety audits and enforcing PPE."
-
-return "Safety tip: Always inspect equipment before starting work."
-
-}
-
-document.getElementById("chatInput").addEventListener("keypress",function(e){
-
-if(e.key==="Enter"){
-sendChat()
-}
-
-})
+wireBackendChat()
 
 function renderSafetyScore(data){
 	document.getElementById("projectName").innerText = data.project
@@ -623,7 +565,7 @@ async function loadExecutiveDashboard(projectId){
 	}
 
 	try {
-		const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
+		const token = getStoredToken()
 		const headers = {}
 
 		if(token && token !== "loggedin"){

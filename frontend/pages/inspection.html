@@ -214,58 +214,7 @@ color: #1e6f43;
 <th>Actions</th>
 </tr>
 </thead>
-<tbody>
-<tr data-status="scheduled">
-<td>INSP-312</td>
-<td>Warehouse PPE Audit</td>
-<td><span class="status-pill scheduled">Scheduled</span></td>
-<td><span class="result-pill warning">Pending</span></td>
-<td>Warehouse 2</td>
-<td>K. Mehta</td>
-<td>13 Mar 2026</td>
-<td class="row-actions">
-<button onclick="startInspection(this)">Start</button>
-<button onclick="viewInspection(this)">View</button>
-</td>
-</tr>
-<tr data-status="in-progress">
-<td>INSP-311</td>
-<td>Electrical Panel Checklist</td>
-<td><span class="status-pill in-progress">In Progress</span></td>
-<td><span class="result-pill warning">Warning</span></td>
-<td>Plant A</td>
-<td>S. Thomas</td>
-<td>13 Mar 2026</td>
-<td class="row-actions">
-<button onclick="completeInspection(this)">Complete</button>
-<button onclick="viewInspection(this)">View</button>
-</td>
-</tr>
-<tr data-status="completed">
-<td>INSP-310</td>
-<td>Emergency Exit Review</td>
-<td><span class="status-pill completed">Completed</span></td>
-<td><span class="result-pill pass">Pass</span></td>
-<td>Office Block</td>
-<td>A. Singh</td>
-<td>12 Mar 2026</td>
-<td class="row-actions">
-<button onclick="viewInspection(this)">View</button>
-</td>
-</tr>
-<tr data-status="completed">
-<td>INSP-309</td>
-<td>Scaffold Stability Check</td>
-<td><span class="status-pill completed">Completed</span></td>
-<td><span class="result-pill fail">Fail</span></td>
-<td>Construction Yard</td>
-<td>R. Menon</td>
-<td>11 Mar 2026</td>
-<td class="row-actions">
-<button onclick="viewInspection(this)">View</button>
-</td>
-</tr>
-</tbody>
+<tbody></tbody>
 </table>
 </div>
 
@@ -307,18 +256,110 @@ fetch("../components/footer.html")
 document.getElementById("footer").innerHTML = data
 })
 
-if(!localStorage.getItem("token")){
+if(!(localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token"))){
 window.location.href = "login.html"
 }
 
 function logout(){
+localStorage.removeItem("auth_token")
 localStorage.removeItem("token")
+localStorage.removeItem("access_token")
 window.location.href = "login.html"
 }
 
 const inspectionSearch = document.getElementById("inspectionSearch")
 const inspectionTableBody = document.querySelector("#inspectionTable tbody")
+const inspectionToken = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 let activeInspectionFilter = "all"
+let inspectionCache = []
+
+function inspectionHeaders(){
+return {
+"Content-Type": "application/json",
+"Authorization": "Bearer " + inspectionToken
+}
+}
+
+function uiInspectionStatus(result){
+if(!result) return "scheduled"
+if(result === "passed") return "completed"
+if(result === "failed" || result === "needs_attention") return "in-progress"
+return "scheduled"
+}
+
+function resultPill(result){
+if(result === "passed") return '<span class="result-pill pass">Pass</span>'
+if(result === "failed") return '<span class="result-pill fail">Fail</span>'
+if(result === "needs_attention") return '<span class="result-pill warning">Warning</span>'
+return '<span class="result-pill warning">Pending</span>'
+}
+
+function statusPill(status){
+if(status === "completed") return '<span class="status-pill completed">Completed</span>'
+if(status === "in-progress") return '<span class="status-pill in-progress">In Progress</span>'
+return '<span class="status-pill scheduled">Scheduled</span>'
+}
+
+function formatInspectionDate(value){
+if(!value) return "-"
+return new Date(value).toLocaleDateString()
+}
+
+function renderInspectionSummary(items){
+const total = items.length
+const scheduled = items.filter(item => uiInspectionStatus(item.status) === "scheduled").length
+const openFindings = items.filter(item => item.status === "failed" || item.status === "needs_attention").length
+const passed = items.filter(item => item.status === "passed").length
+const passRate = total ? Math.round((passed / total) * 100) : 0
+
+document.querySelectorAll(".inspection-card h3")[0].textContent = String(total)
+document.querySelectorAll(".inspection-card h3")[1].textContent = String(scheduled)
+document.querySelectorAll(".inspection-card h3")[2].textContent = String(openFindings)
+document.querySelectorAll(".inspection-card h3")[3].textContent = `${passRate}%`
+}
+
+function renderInspections(items){
+inspectionCache = items
+renderInspectionSummary(items)
+
+if(!items.length){
+inspectionTableBody.innerHTML = `<tr><td colspan="8">No inspections recorded yet.</td></tr>`
+return
+}
+
+inspectionTableBody.innerHTML = items.map(item => {
+const rowStatus = uiInspectionStatus(item.status)
+return `
+<tr data-status="${rowStatus}">
+<td>INSP-${item.id}</td>
+<td>${item.equipment_name || "Equipment Inspection"}</td>
+<td>${statusPill(rowStatus)}</td>
+<td>${resultPill(item.status)}</td>
+<td>${item.equipment_location || "-"}</td>
+<td>${item.inspector_name || "-"}</td>
+<td>${formatInspectionDate(item.inspection_date)}</td>
+<td class="row-actions">
+<button onclick="viewInspection(${item.id})">View</button>
+</td>
+</tr>
+`
+}).join("")
+
+applyInspectionFilters()
+}
+
+async function loadInspections(){
+try {
+const response = await fetch("/api/equipment/inspections", { headers: inspectionHeaders() })
+if(!response.ok){
+throw new Error("Unable to load inspections")
+}
+const inspections = await response.json()
+renderInspections(inspections)
+} catch(error){
+setInspectionStatus(error.message)
+}
+}
 
 function applyInspectionFilters(){
 const term = inspectionSearch.value.trim().toLowerCase()
@@ -334,47 +375,13 @@ row.style.display = matchesStatus && matchesText ? "table-row" : "none"
 }
 
 function scheduleInspection(){
-setInspectionStatus("Inspection scheduling flow requested.")
+window.location.href = "/frontend/pages/equipment.html"
 }
 
-function viewInspection(button){
-const row = button.closest("tr")
-if(!row) return
-setInspectionStatus("Viewing inspection " + row.children[0].textContent.trim() + ".")
-}
-
-function startInspection(button){
-const row = button.closest("tr")
-if(!row) return
-row.setAttribute("data-status", "in-progress")
-const status = row.querySelector(".status-pill")
-status.className = "status-pill in-progress"
-status.textContent = "In Progress"
-const result = row.querySelector(".result-pill")
-result.className = "result-pill warning"
-result.textContent = "Warning"
-button.textContent = "Complete"
-button.setAttribute("onclick", "completeInspection(this)")
-setInspectionStatus("Inspection started.")
-applyInspectionFilters()
-}
-
-function completeInspection(button){
-const row = button.closest("tr")
-if(!row) return
-row.setAttribute("data-status", "completed")
-const status = row.querySelector(".status-pill")
-status.className = "status-pill completed"
-status.textContent = "Completed"
-const result = row.querySelector(".result-pill")
-if(result.textContent.trim() === "Pending"){
-result.className = "result-pill pass"
-result.textContent = "Pass"
-}
-button.textContent = "View"
-button.setAttribute("onclick", "viewInspection(this)")
-setInspectionStatus("Inspection completed.")
-applyInspectionFilters()
+function viewInspection(inspectionId){
+const item = inspectionCache.find(entry => entry.id === inspectionId)
+if(!item) return
+setInspectionStatus(`${item.equipment_name || "Inspection"} | ${item.checklist_summary || "No checklist summary"}${item.issues_found ? ` | Issue: ${item.issues_found}` : ""}`)
 }
 
 function setInspectionStatus(message){
@@ -391,6 +398,7 @@ applyInspectionFilters()
 })
 
 inspectionSearch.addEventListener("input", applyInspectionFilters)
+loadInspections()
 </script>
 
 <script src="../js/main.js"></script>

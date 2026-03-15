@@ -14,10 +14,11 @@ async function sendChat(){
 
     try {
 
-        const response = await fetch("http://127.0.0.1:8001/api/ai-chat",{
+        const response = await fetch(window.location.origin + "/api/ai-chat",{
             method:"POST",
             headers:{
-                "Content-Type":"application/json"
+                "Content-Type":"application/json",
+                "Authorization":"Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("token") || "")
             },
             body: JSON.stringify({
                 prompt:text

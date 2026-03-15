@@ -214,23 +214,50 @@ fetch("../components/footer.html")
 document.getElementById("footer").innerHTML = data
 })
 
-if(!localStorage.getItem("token")){
+if(!(localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token"))){
 window.location.href = "login.html"
 }
 
 function logout(){
+localStorage.removeItem("auth_token")
 localStorage.removeItem("token")
+localStorage.removeItem("access_token")
 window.location.href = "login.html"
 }
 
+const settingsToken = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
+
+function settingsHeaders(){
+return {
+"Content-Type": "application/json",
+"Authorization": "Bearer " + settingsToken
+}
+}
+
 function loadSettings(){
-document.getElementById("displayName").value = localStorage.getItem("settings_display_name") || ""
-document.getElementById("email").value = localStorage.getItem("settings_email") || ""
-document.getElementById("timezone").value = localStorage.getItem("settings_timezone") || "UTC"
-document.getElementById("notifyHighRisk").checked = localStorage.getItem("settings_notify_high") !== "false"
-document.getElementById("notifyWeekly").checked = localStorage.getItem("settings_notify_weekly") !== "false"
-document.getElementById("notifyMaintenance").checked = localStorage.getItem("settings_notify_maintenance") === "true"
-document.getElementById("notifyRecommendations").checked = localStorage.getItem("settings_notify_recommendations") !== "false"
+fetch("/api/settings/me", {
+headers: settingsHeaders()
+})
+.then(async res => {
+if(!res.ok){
+throw new Error("Unable to load settings")
+}
+return res.json()
+})
+.then(data => {
+document.getElementById("displayName").value = data.display_name || ""
+document.getElementById("email").value = data.email || ""
+document.getElementById("timezone").value = data.timezone || "UTC"
+document.getElementById("notifyHighRisk").checked = !!data.notify_high_risk
+document.getElementById("notifyWeekly").checked = !!data.notify_weekly
+document.getElementById("notifyMaintenance").checked = !!data.notify_maintenance
+document.getElementById("notifyRecommendations").checked = !!data.notify_recommendations
+})
+.catch(error => {
+const status = document.getElementById("settingsStatus")
+status.style.color = "#b3261e"
+status.textContent = error.message
+})
 }
 
 function saveSettings(){
@@ -244,21 +271,36 @@ status.textContent = "Password confirmation does not match."
 return
 }
 
-localStorage.setItem("settings_display_name", document.getElementById("displayName").value)
-localStorage.setItem("settings_email", document.getElementById("email").value)
-localStorage.setItem("settings_timezone", document.getElementById("timezone").value)
-localStorage.setItem("settings_notify_high", document.getElementById("notifyHighRisk").checked)
-localStorage.setItem("settings_notify_weekly", document.getElementById("notifyWeekly").checked)
-localStorage.setItem("settings_notify_maintenance", document.getElementById("notifyMaintenance").checked)
-localStorage.setItem("settings_notify_recommendations", document.getElementById("notifyRecommendations").checked)
-
+fetch("/api/settings/me", {
+method: "PUT",
+headers: settingsHeaders(),
+body: JSON.stringify({
+display_name: document.getElementById("displayName").value,
+email: document.getElementById("email").value,
+timezone: document.getElementById("timezone").value,
+notify_high_risk: document.getElementById("notifyHighRisk").checked,
+notify_weekly: document.getElementById("notifyWeekly").checked,
+notify_maintenance: document.getElementById("notifyMaintenance").checked,
+notify_recommendations: document.getElementById("notifyRecommendations").checked,
+current_password: document.getElementById("currentPassword").value,
+new_password: newPassword
+})
+})
+.then(async res => {
+const data = await res.json().catch(() => ({}))
+if(!res.ok){
+throw new Error(data.detail || "Unable to save settings")
+}
 status.style.color = "#1e6f43"
-status.textContent = "Settings saved successfully."
-
-// Password fields are cleared after save for safety.
+status.textContent = data.message || "Settings saved successfully."
 document.getElementById("currentPassword").value = ""
 document.getElementById("newPassword").value = ""
 document.getElementById("confirmPassword").value = ""
+})
+.catch(error => {
+status.style.color = "#b3261e"
+status.textContent = error.message
+})
 }
 
 function resetSettings(){

@@ -346,7 +346,7 @@ fetch("../components/footer.html")
 <script>
 function checkAuth(){
 
-const token = localStorage.getItem("token")
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 
 if(!token){
 window.location.href="login.html"
@@ -357,7 +357,9 @@ return
 checkAuth()
 
 function logout() {
+	localStorage.removeItem("auth_token")
 	localStorage.removeItem("token")
+	localStorage.removeItem("access_token")
 	window.location.href = "login.html"
 }
 
@@ -443,9 +445,9 @@ document.getElementById("resultBox").innerHTML = "Uploading image and queuing ba
 
 try{
 
-const token = localStorage.getItem("token") || localStorage.getItem("auth_token")
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 
-const response = await fetch("http://127.0.0.1:8000/api/pipeline/analyze-image", {
+const response = await fetch(window.location.origin + "/api/pipeline/analyze-image", {
 method: "POST",
 headers: {
 "Authorization": "Bearer " + token
@@ -483,7 +485,7 @@ async function pollTaskResult(taskId, token) {
 	const maxAttempts = 30
 
 	for (let attempt = 0; attempt < maxAttempts; attempt++) {
-		const response = await fetch(`http://127.0.0.1:8000/api/pipeline/task-status/${taskId}`, {
+		const response = await fetch(`${window.location.origin}/api/pipeline/task-status/${taskId}`, {
 			headers: {
 				"Authorization": "Bearer " + token
 			}
@@ -517,60 +519,7 @@ async function pollTaskResult(taskId, token) {
 
 <!-- AI CHAT SCRIPT -->
 <script>
-
-function sendChat() {
-	let input = document.getElementById("chatInput")
-	let text = input.value.trim()
-
-	if (text === "") return
-
-	addChat(text, "user-msg")
-
-	let reply = generateReply(text)
-
-	setTimeout(() => {
-		addChat(reply, "ai-msg")
-	}, 500)
-
-	input.value = ""
-}
-
-function addChat(text, type) {
-	let box = document.getElementById("chatMessages")
-	let div = document.createElement("div")
-
-	div.className = type
-	div.innerText = text
-
-	box.appendChild(div)
-	box.scrollTop = box.scrollHeight
-}
-
-function generateReply(q) {
-	q = q.toLowerCase()
-
-	if (q.includes("hazard")) {
-		return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
-	}
-
-	if (q.includes("helmet")) {
-		return "Workers should always wear PPE like helmets, gloves, and safety shoes."
-	}
-
-	if (q.includes("accident")) {
-		return "Reduce accidents by conducting safety audits and enforcing PPE compliance."
-	}
-
-	return "Safety tip: Always inspect equipment before starting work."
-}
-
-document.getElementById("chatInput").addEventListener("keypress", function(e) {
-	if (e.key === "Enter") {
-		sendChat()
-	}
-})
-
-
+wireBackendChat()
 document.getElementById("analyzeBtn").onclick = analyzeImage
 
 </script>

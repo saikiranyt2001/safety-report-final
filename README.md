@@ -84,14 +84,14 @@ WHS Regulation Part 4.4 – Falls
 	```
 2. Install Python dependencies:
 	```bash
-	pip install -r safety_report_trial/backend/requirements.txt
+	pip install -r requirements.txt
 	```
 3. Start backend (FastAPI):
 	```bash
-	uvicorn safety_report_trial.backend.main:app --reload
+	uvicorn main:app --reload
 	```
 4. Start frontend:
-	- Open frontend/dashboard.html in browser
+	- Open `frontend/pages/dashboard.html` in the browser, or serve the `frontend` folder from the FastAPI app
 5. (Optional) Start Celery workers and Flower for job monitoring
 6. (Optional) Deploy with Docker:
 	```bash
@@ -135,6 +135,11 @@ This makes the platform easier to review, test, and present professionally.
 - `/analytics/{company_id}` — Safety KPIs
 - `/safety-advisor` — AI safety Q&A
 - `/validate-report` — Validate report quality
+
+Note:
+- Most app routes are mounted under `/api`
+- Uploaded files are served from `/storage`
+- The current backend entrypoint is `main.py` at the project root
 
 ## Project Structure
 

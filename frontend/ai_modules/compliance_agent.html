@@ -307,68 +307,7 @@ document.getElementById("footer").innerHTML = data
 
 <!-- AI CHAT SCRIPT -->
 <script>
-
-
-
-function sendChat(){
-
-let input=document.getElementById("chatInput")
-let text=input.value.trim()
-
-if(text==="") return
-
-addChat(text,"user-msg")
-
-let reply=generateReply(text)
-
-setTimeout(()=>{
-addChat(reply,"ai-msg")
-},400)
-
-input.value=""
-
-}
-
-function addChat(text,type){
-
-let box=document.getElementById("chatMessages")
-
-let div=document.createElement("div")
-
-div.className=type
-div.innerText=text
-
-box.appendChild(div)
-
-box.scrollTop=box.scrollHeight
-
-}
-
-function generateReply(q){
-
-q=q.toLowerCase()
-
-if(q.includes("hazard"))
-return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
-
-if(q.includes("osha"))
-return "OSHA guidelines focus on PPE, fall protection, and safety training."
-
-if(q.includes("accident"))
-return "Reduce accidents by safety audits and enforcing PPE."
-
-return "Safety tip: Always conduct risk assessments before starting work."
-
-}
-
-document.getElementById("chatInput").addEventListener("keypress",function(e){
-
-if(e.key==="Enter"){
-sendChat()
-}
-
-})
-
+wireBackendChat()
 </script>
 
 
@@ -384,19 +323,34 @@ alert("Please enter report text")
 return
 }
 
+fetch("/api/compliance/analyze-text", {
+method: "POST",
+headers: {
+"Content-Type": "application/json",
+"Authorization": "Bearer " + (getStoredToken() || "")
+},
+body: JSON.stringify({ text: input })
+})
+.then(async res => {
+if(!res.ok){
+const errorText = await res.text()
+throw new Error(errorText || "Compliance analysis failed")
+}
+return res.json()
+})
+.then(data => {
 document.getElementById("resultBox").innerHTML=
-
 `
 <h3>Compliance Analysis</h3>
-
 <ul>
-<li>✔ PPE compliance check required</li>
-<li>⚠ Fall protection measures unclear</li>
-<li>⚠ Electrical hazard mention detected</li>
+${(data.findings || []).map(item => `<li>${item}</li>`).join("")}
 </ul>
-
-<p><b>Status:</b> <span class="risk-high">Review Required</span></p>
+<p><b>Status:</b> <span class="risk-high">${data.status}</span></p>
 `
+})
+.catch(error => {
+document.getElementById("resultBox").innerHTML = `<p>${error.message}</p>`
+})
 
 }
 

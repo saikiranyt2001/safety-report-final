@@ -129,3 +129,12 @@ def get_equipment_inspections(
         raise HTTPException(status_code=404, detail="Equipment not found")
     history = equipment_service.get_inspection_history(db, user.company_id, equipment_id)
     return [equipment_service._inspection_to_dict(item) for item in history]
+
+
+@router.get("/equipment/inspections")
+def list_all_equipment_inspections(
+    user=Depends(require_roles("admin", "manager", "worker")),
+    db: Session = Depends(get_db),
+):
+    history = equipment_service.list_all_inspections(db, company_id=user.company_id)
+    return [equipment_service._inspection_to_dict(item) for item in history]

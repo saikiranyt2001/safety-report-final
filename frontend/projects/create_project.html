@@ -141,7 +141,7 @@ document.getElementById("projectForm").onsubmit = async function(e){
 e.preventDefault()
 
 const form = e.target
-const token = localStorage.getItem("access_token")
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 
 try{
 
@@ -162,8 +162,9 @@ location: form.location.value
 })
 
 const text = await res.text()
-
-document.getElementById("result").innerText = text
+const data = JSON.parse(text)
+document.getElementById("result").innerText = "Project created: " + (data.name || form.project_name.value)
+form.reset()
 
 }catch(err){
 

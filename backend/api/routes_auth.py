@@ -1,20 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from backend.database.models import Company, RoleEnum, User
 from backend.database.database import SessionLocal
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
-import hashlib
+from datetime import UTC, datetime, timedelta
+from jose import jwt
 from pydantic import BaseModel
 from backend.core.config import settings
+from backend.core.passwords import hash_password, verify_password
+from backend.core.security import get_current_user_context
+from backend.services.account_state_service import get_or_create_account_state, is_user_active
 from backend.services.activity_service import log_activity
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.JWT_ALGORITHM
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 class LoginData(BaseModel):
     username: str
@@ -23,7 +23,7 @@ class LoginData(BaseModel):
 
 class SignupData(LoginData):
     company_name: str | None = None
-    role: RoleEnum | None = None
+    role: RoleEnum | None = RoleEnum.worker
 
 def get_db():
     db = SessionLocal()
@@ -31,9 +31,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-def hash_password(password: str):
-    return hashlib.sha256(password.encode()).hexdigest()
 
 
 def _unique_company_name(db: Session, base_name: str) -> str:
@@ -65,6 +62,9 @@ def _ensure_user_company(db: Session, user: User) -> Company:
 def signup(data: SignupData, db: Session = Depends(get_db)):
     if db.query(User).filter(User.username == data.username).first():
         raise HTTPException(status_code=400, detail="Username already exists")
+    requested_role = data.role or RoleEnum.worker
+    if requested_role != RoleEnum.worker:
+        raise HTTPException(status_code=403, detail="Public signup can only create worker accounts")
 
     company = Company(name=_unique_company_name(db, data.company_name or f"{data.username} Workspace"))
     db.add(company)
@@ -73,11 +73,13 @@ def signup(data: SignupData, db: Session = Depends(get_db)):
     user = User(
         username=data.username,
         password_hash=hash_password(data.password),
-        role=data.role or RoleEnum.worker,
+        role=RoleEnum.worker,
         company_id=company.id,
     )
 
     db.add(user)
+    db.flush()
+    get_or_create_account_state(db, user)
     db.commit()
     db.refresh(user)
 
@@ -100,8 +102,16 @@ def signup(data: SignupData, db: Session = Depends(get_db)):
 def login(data: LoginData, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == data.username).first()
 
-    if not user or user.password_hash != hash_password(data.password):
+    is_valid, upgraded_hash = verify_password(data.password, user.password_hash if user else None)
+    if not user or not is_valid:
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    if upgraded_hash:
+        user.password_hash = upgraded_hash
+        db.commit()
+        db.refresh(user)
+    if not is_user_active(db, user):
+        db.commit()
+        raise HTTPException(status_code=403, detail="Account is inactive")
 
     company = _ensure_user_company(db, user)
 
@@ -120,7 +130,7 @@ def login(data: LoginData, db: Session = Depends(get_db)):
             "user_id": user.id,
             "company_id": user.company_id,
             "role": user.role.value if user.role else RoleEnum.worker.value,
-            "exp": datetime.utcnow() + timedelta(hours=2)
+            "exp": datetime.now(UTC) + timedelta(hours=2)
         },
         SECRET_KEY,
         algorithm=ALGORITHM
@@ -134,21 +144,10 @@ def login(data: LoginData, db: Session = Depends(get_db)):
         "company": {"id": company.id, "name": company.name},
     }
 @router.get("/me")
-def get_profile(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
-        username = payload.get("sub")
-
-        if username is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-
-        return {
-            "username": payload.get("sub"),
-            "user_id": payload.get("user_id"),
-            "company_id": payload.get("company_id"),
-            "role": payload.get("role", RoleEnum.worker.value),
-        }
-
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+def get_profile(current_user=Depends(get_current_user_context)):
+    return {
+        "username": current_user.username,
+        "user_id": current_user.user_id,
+        "company_id": current_user.company_id,
+        "role": current_user.role,
+    }

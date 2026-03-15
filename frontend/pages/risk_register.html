@@ -222,61 +222,6 @@ color: #1e6f43;
 </tr>
 </thead>
 <tbody>
-<tr data-status="open">
-<td>RISK-101</td>
-<td>Repeated PPE non-compliance in loading zone</td>
-<td>Operational Safety</td>
-<td><span class="level-pill high">High</span></td>
-<td><span class="status-pill open">Open</span></td>
-<td><span class="owner-pill">N. Verma</span></td>
-<td>Increase spot checks and supervisor audits</td>
-<td>15 Mar 2026</td>
-<td class="row-actions">
-<button onclick="advanceRisk(this)">Mitigate</button>
-<button onclick="viewRisk(this)">View</button>
-</td>
-</tr>
-<tr data-status="mitigating">
-<td>RISK-098</td>
-<td>Electrical overheating in control room</td>
-<td>Infrastructure</td>
-<td><span class="level-pill medium">Medium</span></td>
-<td><span class="status-pill mitigating">Mitigating</span></td>
-<td><span class="owner-pill">R. Menon</span></td>
-<td>Thermal scan and panel replacement plan</td>
-<td>14 Mar 2026</td>
-<td class="row-actions">
-<button onclick="closeRisk(this)">Close</button>
-<button onclick="viewRisk(this)">View</button>
-</td>
-</tr>
-<tr data-status="closed">
-<td>RISK-094</td>
-<td>Wet-floor slip exposure in corridor</td>
-<td>Facilities</td>
-<td><span class="level-pill low">Low</span></td>
-<td><span class="status-pill closed">Closed</span></td>
-<td><span class="owner-pill">A. Singh</span></td>
-<td>Drainage fix and anti-slip signage installed</td>
-<td>10 Mar 2026</td>
-<td class="row-actions">
-<button onclick="viewRisk(this)">View</button>
-</td>
-</tr>
-<tr data-status="open">
-<td>RISK-089</td>
-<td>Inconsistent incident escalation workflow</td>
-<td>Process Governance</td>
-<td><span class="level-pill medium">Medium</span></td>
-<td><span class="status-pill open">Open</span></td>
-<td><span class="owner-pill">S. Thomas</span></td>
-<td>Define escalation matrix and approval path</td>
-<td>18 Mar 2026</td>
-<td class="row-actions">
-<button onclick="advanceRisk(this)">Mitigate</button>
-<button onclick="viewRisk(this)">View</button>
-</td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -319,18 +264,117 @@ fetch("../components/footer.html")
 document.getElementById("footer").innerHTML = data
 })
 
-if(!localStorage.getItem("token")){
+if(!(localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token"))){
 window.location.href = "login.html"
 }
 
 function logout(){
+localStorage.removeItem("auth_token")
 localStorage.removeItem("token")
+localStorage.removeItem("access_token")
 window.location.href = "login.html"
 }
 
 const riskSearch = document.getElementById("riskSearch")
 const riskTableBody = document.querySelector("#riskTable tbody")
+const riskToken = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 let activeRiskFilter = "all"
+let riskCache = []
+
+function riskHeaders(){
+return {
+"Content-Type": "application/json",
+"Authorization": "Bearer " + riskToken
+}
+}
+
+function uiStatus(status){
+if(status === "in_progress") return "mitigating"
+if(status === "resolved" || status === "closed") return "closed"
+return "open"
+}
+
+function levelClass(priority){
+const normalized = (priority || "").toLowerCase()
+if(normalized === "critical" || normalized === "high") return "high"
+if(normalized === "medium") return "medium"
+return "low"
+}
+
+function levelLabel(priority){
+const normalized = (priority || "medium").toLowerCase()
+return normalized.charAt(0).toUpperCase() + normalized.slice(1)
+}
+
+function statusLabel(status){
+const normalized = uiStatus(status)
+if(normalized === "mitigating") return "Mitigating"
+if(normalized === "closed") return "Closed"
+return "Open"
+}
+
+function formatDeadline(value){
+if(!value) return "-"
+return new Date(value).toLocaleDateString()
+}
+
+function renderSummary(items){
+document.querySelectorAll(".risk-card h3")[0].textContent = String(items.length)
+document.querySelectorAll(".risk-card h3")[1].textContent = String(items.filter(item => levelClass(item.priority) === "high").length)
+document.querySelectorAll(".risk-card h3")[2].textContent = String(items.filter(item => uiStatus(item.status) === "mitigating").length)
+document.querySelectorAll(".risk-card h3")[3].textContent = String(items.filter(item => uiStatus(item.status) === "closed").length)
+}
+
+function renderRisks(items){
+riskCache = items
+renderSummary(items)
+
+if(!items.length){
+riskTableBody.innerHTML = `<tr><td colspan="9">No risks logged yet.</td></tr>`
+return
+}
+
+riskTableBody.innerHTML = items.map(item => {
+const rowStatus = uiStatus(item.status)
+const primaryAction = rowStatus === "open"
+? `<button onclick="advanceRisk(${item.id})">Mitigate</button>`
+: rowStatus === "mitigating"
+? `<button onclick="closeRisk(${item.id})">Close</button>`
+: ""
+
+return `
+<tr data-status="${rowStatus}">
+<td>RISK-${item.id}</td>
+<td>${item.title}</td>
+<td>${item.hazard_type || "-"}</td>
+<td><span class="level-pill ${levelClass(item.priority)}">${levelLabel(item.priority)}</span></td>
+<td><span class="status-pill ${rowStatus}">${statusLabel(item.status)}</span></td>
+<td><span class="owner-pill">${item.assigned_to || item.created_by || "Unassigned"}</span></td>
+<td>${item.description || "-"}</td>
+<td>${formatDeadline(item.deadline)}</td>
+<td class="row-actions">
+${primaryAction}
+<button onclick="viewRisk(${item.id})">View</button>
+</td>
+</tr>
+`
+}).join("")
+
+applyRiskFilters()
+}
+
+async function loadRisks(){
+try {
+const response = await fetch("/api/tasks", { headers: riskHeaders() })
+if(!response.ok){
+throw new Error("Unable to load risks")
+}
+const risks = await response.json()
+renderRisks(risks)
+} catch(error){
+setRiskStatus(error.message)
+}
+}
 
 function applyRiskFilters(){
 const term = riskSearch.value.trim().toLowerCase()
@@ -345,40 +389,78 @@ row.style.display = matchesStatus && matchesText ? "table-row" : "none"
 })
 }
 
-function addRisk(){
-setRiskStatus("Risk creation flow requested.")
+async function addRisk(){
+const title = prompt("Risk title:")
+if(!title) return
+const hazardType = prompt("Risk category:", "Operational Safety") || ""
+const priority = prompt("Priority (low, medium, high, critical):", "medium") || "medium"
+const description = prompt("Mitigation / notes:", "") || ""
+const deadline = prompt("Review date (YYYY-MM-DD):", "") || ""
+
+try {
+const response = await fetch("/api/tasks", {
+method: "POST",
+headers: riskHeaders(),
+body: JSON.stringify({
+title,
+hazard_type: hazardType,
+priority,
+description,
+deadline: deadline ? `${deadline}T00:00:00` : null
+})
+})
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || "Unable to create risk")
+}
+setRiskStatus("Risk created.")
+await loadRisks()
+} catch(error){
+setRiskStatus(error.message)
+}
 }
 
-function viewRisk(button){
-const row = button.closest("tr")
-if(!row) return
-setRiskStatus("Viewing risk " + row.children[0].textContent.trim() + ".")
+function viewRisk(taskId){
+const item = riskCache.find(risk => risk.id === taskId)
+if(!item) return
+setRiskStatus(`${item.title} | ${item.description || "No extra notes"} | Owner: ${item.assigned_to || item.created_by || "Unassigned"}`)
 }
 
-function advanceRisk(button){
-const row = button.closest("tr")
-if(!row) return
-row.setAttribute("data-status", "mitigating")
-const status = row.querySelector(".status-pill")
-status.className = "status-pill mitigating"
-status.textContent = "Mitigating"
-button.textContent = "Close"
-button.setAttribute("onclick", "closeRisk(this)")
+async function advanceRisk(taskId){
+try {
+const response = await fetch(`/api/tasks/${taskId}/status`, {
+method: "PUT",
+headers: riskHeaders(),
+body: JSON.stringify({ status: "in_progress", proof_notes: "" })
+})
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || "Unable to update risk")
+}
 setRiskStatus("Risk moved into mitigation.")
-applyRiskFilters()
+await loadRisks()
+} catch(error){
+setRiskStatus(error.message)
+}
 }
 
-function closeRisk(button){
-const row = button.closest("tr")
-if(!row) return
-row.setAttribute("data-status", "closed")
-const status = row.querySelector(".status-pill")
-status.className = "status-pill closed"
-status.textContent = "Closed"
-button.textContent = "View"
-button.setAttribute("onclick", "viewRisk(this)")
+async function closeRisk(taskId){
+const proofNotes = prompt("Closure notes:", "") || ""
+try {
+const response = await fetch(`/api/tasks/${taskId}/status`, {
+method: "PUT",
+headers: riskHeaders(),
+body: JSON.stringify({ status: "closed", proof_notes: proofNotes })
+})
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || "Unable to close risk")
+}
 setRiskStatus("Risk closed.")
-applyRiskFilters()
+await loadRisks()
+} catch(error){
+setRiskStatus(error.message)
+}
 }
 
 function setRiskStatus(message){
@@ -395,6 +477,7 @@ applyRiskFilters()
 })
 
 riskSearch.addEventListener("input", applyRiskFilters)
+loadRisks()
 </script>
 
 <script src="../js/main.js"></script>

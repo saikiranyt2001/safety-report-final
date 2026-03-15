@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = window.location.origin;
 
 // Helper to get JWT token
 function getAuthToken(){
@@ -8,7 +8,7 @@ function getAuthToken(){
 // Fetch analytics
 async function fetchAnalytics(){
 
-    const res = await fetch(API_URL + "/api/analytics",{
+    const res = await fetch(API_URL + "/api/analytics/safety-summary",{
         method:"GET",
         headers:{
             "Authorization": `Bearer ${getAuthToken()}`

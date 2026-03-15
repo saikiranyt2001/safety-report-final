@@ -168,39 +168,6 @@ color: #1e6f43;
 </tr>
 </thead>
 <tbody>
-<tr>
-<td>Aryan Singh</td>
-<td>aryan@safety.ai</td>
-<td><span class="role-pill admin">Admin</span></td>
-<td><span class="status-pill active">Active</span></td>
-<td>13 Mar 2026, 10:42</td>
-<td class="row-actions">
-<button onclick="toggleUserStatus(this)">Deactivate</button>
-<button onclick="editUser(this)">Edit</button>
-</td>
-</tr>
-<tr>
-<td>Neha Verma</td>
-<td>neha@safety.ai</td>
-<td><span class="role-pill manager">Manager</span></td>
-<td><span class="status-pill active">Active</span></td>
-<td>13 Mar 2026, 09:58</td>
-<td class="row-actions">
-<button onclick="toggleUserStatus(this)">Deactivate</button>
-<button onclick="editUser(this)">Edit</button>
-</td>
-</tr>
-<tr>
-<td>Ravi Menon</td>
-<td>ravi@safety.ai</td>
-<td><span class="role-pill viewer">Viewer</span></td>
-<td><span class="status-pill inactive">Inactive</span></td>
-<td>11 Mar 2026, 17:10</td>
-<td class="row-actions">
-<button onclick="toggleUserStatus(this)">Activate</button>
-<button onclick="editUser(this)">Edit</button>
-</td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -243,17 +210,87 @@ fetch("../components/footer.html")
 document.getElementById("footer").innerHTML = data
 })
 
-if(!localStorage.getItem("token")){
+if(!(localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token"))){
 window.location.href = "login.html"
 }
 
 function logout(){
+localStorage.removeItem("auth_token")
 localStorage.removeItem("token")
+localStorage.removeItem("access_token")
 window.location.href = "login.html"
 }
 
 const userSearch = document.getElementById("userSearch")
 const usersTableBody = document.querySelector("#usersTable tbody")
+const usersToken = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
+let usersCache = []
+
+function apiHeaders(){
+return {
+"Content-Type": "application/json",
+"Authorization": "Bearer " + usersToken
+}
+}
+
+function rolePillClass(role){
+const normalized = (role || "").toLowerCase()
+if(normalized === "admin") return "admin"
+if(normalized === "manager") return "manager"
+return "viewer"
+}
+
+function roleLabel(role){
+const normalized = (role || "").toLowerCase()
+if(normalized === "worker") return "Worker"
+return normalized.charAt(0).toUpperCase() + normalized.slice(1)
+}
+
+function formatLastLogin(value){
+if(!value) return "-"
+return new Date(value).toLocaleString()
+}
+
+function toEmail(username){
+return `${username}@safety.ai`
+}
+
+function renderUsers(items){
+usersCache = items
+usersTableBody.innerHTML = items.map(user => `
+<tr data-id="${user.id}">
+<td>${user.username}</td>
+<td>${toEmail(user.username)}</td>
+<td><span class="role-pill ${rolePillClass(user.role)}">${roleLabel(user.role)}</span></td>
+<td><span class="status-pill ${user.is_active ? "active" : "inactive"}">${user.is_active ? "Active" : "Inactive"}</span></td>
+<td>${formatLastLogin(user.last_activity)}</td>
+<td class="row-actions">
+<button onclick="deleteUser(${user.id})">Delete</button>
+<button onclick="editUser(${user.id})">Edit</button>
+<button onclick="toggleUserStatus(${user.id})">${user.is_active ? "Deactivate" : "Activate"}</button>
+</td>
+</tr>
+`).join("")
+
+if(!items.length){
+usersTableBody.innerHTML = `<tr><td colspan="6">No users found.</td></tr>`
+}
+
+filterUsers()
+}
+
+async function loadUsers(){
+try {
+const response = await fetch("/api/admin/users", { headers: apiHeaders() })
+if(!response.ok){
+throw new Error("Unable to load users")
+}
+const users = await response.json()
+renderUsers(users)
+} catch(error){
+setStatusMessage(error.message)
+}
+}
 
 function filterUsers(){
 const term = userSearch.value.trim().toLowerCase()
@@ -265,41 +302,118 @@ row.style.display = term === "" || text.includes(term) ? "table-row" : "none"
 })
 }
 
-function toggleUserStatus(button){
-const row = button.closest("tr")
-if(!row) return
+async function editUser(userId){
+const target = usersCache.find(item => item.id === userId)
+if(!target) return
 
-const statusPill = row.querySelector(".status-pill")
-if(!statusPill) return
+const nextUsername = prompt("Update username:", target.username)
+if(!nextUsername){
+return
+}
 
-if(statusPill.classList.contains("active")){
-statusPill.classList.remove("active")
-statusPill.classList.add("inactive")
-statusPill.textContent = "Inactive"
-button.textContent = "Activate"
-setStatusMessage("User has been deactivated.")
-} else {
-statusPill.classList.remove("inactive")
-statusPill.classList.add("active")
-statusPill.textContent = "Active"
-button.textContent = "Deactivate"
-setStatusMessage("User has been activated.")
+const nextRole = prompt("Update role (admin, manager, worker):", target.role)
+if(!nextRole){
+return
+}
+
+try {
+const response = await fetch(`/api/admin/users/${userId}`, {
+method: "PUT",
+headers: apiHeaders(),
+body: JSON.stringify({
+username: nextUsername,
+role: nextRole
+})
+})
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || "Unable to update user")
+}
+setStatusMessage("User updated.")
+await loadUsers()
+} catch(error){
+setStatusMessage(error.message)
 }
 }
 
-function editUser(button){
-const row = button.closest("tr")
-if(!row) return
-const name = row.children[0].textContent.trim()
-setStatusMessage("Edit requested for " + name + ".")
+async function addSampleUser(){
+const username = prompt("Username for the new user:")
+if(!username){
+return
 }
 
-function addSampleUser(){
-const row = document.createElement("tr")
-row.innerHTML = "<td>New User</td><td>new.user@safety.ai</td><td><span class=\"role-pill viewer\">Viewer</span></td><td><span class=\"status-pill active\">Active</span></td><td>Just now</td><td class=\"row-actions\"><button onclick=\"toggleUserStatus(this)\">Deactivate</button><button onclick=\"editUser(this)\">Edit</button></td>"
-usersTableBody.prepend(row)
-setStatusMessage("Sample user added.")
-filterUsers()
+const password = prompt("Temporary password:")
+if(!password){
+return
+}
+
+const role = prompt("Role (admin, manager, worker):", "worker") || "worker"
+
+try {
+const response = await fetch("/api/admin/users", {
+method: "POST",
+headers: apiHeaders(),
+body: JSON.stringify({ username, password, role })
+})
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || "Unable to create user")
+}
+setStatusMessage("User created.")
+await loadUsers()
+} catch(error){
+setStatusMessage(error.message)
+}
+}
+
+async function deleteUser(userId){
+if(!confirm("Delete this user?")){
+return
+}
+
+async function toggleUserStatus(userId){
+const target = usersCache.find(item => item.id === userId)
+if(!target){
+return
+}
+
+const nextActiveState = !target.is_active
+const actionLabel = nextActiveState ? "activate" : "deactivate"
+if(!confirm(`Do you want to ${actionLabel} ${target.username}?`)){
+return
+}
+
+try {
+const response = await fetch(`/api/admin/users/${userId}/status`, {
+method: "PUT",
+headers: apiHeaders(),
+body: JSON.stringify({ is_active: nextActiveState })
+})
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || `Unable to ${actionLabel} user`)
+}
+setStatusMessage(`User ${nextActiveState ? "activated" : "deactivated"}.`)
+await loadUsers()
+} catch(error){
+setStatusMessage(error.message)
+}
+}
+
+try {
+const response = await fetch(`/api/admin/users/${userId}`, {
+method: "DELETE",
+headers: apiHeaders()
+})
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || "Unable to delete user")
+}
+setStatusMessage("User deleted.")
+await loadUsers()
+} catch(error){
+setStatusMessage(error.message)
+}
 }
 
 function exportUsers(){
@@ -340,6 +454,7 @@ status.textContent = message
 }
 
 userSearch.addEventListener("input", filterUsers)
+loadUsers()
 </script>
 
 <script src="../js/main.js"></script>

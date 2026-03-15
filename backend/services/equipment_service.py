@@ -39,6 +39,8 @@ def _inspection_to_dict(inspection: EquipmentInspection) -> dict:
     return {
         "id": inspection.id,
         "equipment_id": inspection.equipment_id,
+        "equipment_name": inspection.equipment.name if inspection.equipment else None,
+        "equipment_location": inspection.equipment.location if inspection.equipment else None,
         "inspector_id": inspection.inspector_id,
         "inspector_name": inspection.inspector.username if inspection.inspector else None,
         "status": inspection.status,
@@ -156,6 +158,15 @@ def get_inspection_history(db: Session, company_id: int | None, equipment_id: in
             EquipmentInspection.equipment_id == equipment_id,
             EquipmentInspection.company_id == company_id,
         )
+        .order_by(EquipmentInspection.inspection_date.desc())
+        .all()
+    )
+
+
+def list_all_inspections(db: Session, company_id: int | None) -> list[EquipmentInspection]:
+    return (
+        db.query(EquipmentInspection)
+        .filter(EquipmentInspection.company_id == company_id)
         .order_by(EquipmentInspection.inspection_date.desc())
         .all()
     )

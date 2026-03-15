@@ -596,7 +596,7 @@ function sleep(ms) {
 
 async function pollTaskResult(taskId) {
 	for (let attempt = 0; attempt < 20; attempt++) {
-		const response = await fetch(`http://127.0.0.1:8000/api/pipeline/task-status/${taskId}`, {
+		const response = await fetch(`${window.location.origin}/api/pipeline/task-status/${taskId}`, {
 			headers: buildAuthHeaders(),
 		})
 
@@ -650,7 +650,7 @@ async function analyzeCurrentFrame() {
 	formData.append("file", blob, "webcam-frame.jpg")
 
 	try {
-		const response = await fetch("http://127.0.0.1:8000/api/pipeline/analyze-image", {
+		const response = await fetch(window.location.origin + "/api/pipeline/analyze-image", {
 			method: "POST",
 			headers: buildAuthHeaders(),
 			body: formData
@@ -759,7 +759,9 @@ return
 checkAuth()
 
 function logout() {
+	localStorage.removeItem("auth_token")
 	localStorage.removeItem("token")
+	localStorage.removeItem("access_token")
 	window.location.href = "login.html"
 }
 

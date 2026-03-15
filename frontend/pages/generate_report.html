@@ -766,7 +766,7 @@ fetch("../components/footer.html")
 /* Auth */
 function checkAuth(){
 
-const token = localStorage.getItem("token")
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 
 if(!token){
 window.location.href="login.html"
@@ -885,44 +885,28 @@ el.focus()
 return false
 }
 }
+document.getElementById("validationMsg").style.display = "none"
+return true
+}
 
 async function saveReportToBackend(data) {
+const token = localStorage.getItem("token") || localStorage.getItem("auth_token")
 
-const token = localStorage.getItem("token")
-
-try {
-
-const response = await fetch("http://127.0.0.1:8000/api/reports", {
-
+const response = await fetch(window.location.origin + "/api/reports", {
 method: "POST",
-
 headers: {
 "Content-Type": "application/json",
 "Authorization": "Bearer " + token
 },
-
 body: JSON.stringify(data)
-
 })
 
-if (!response.ok) throw new Error("Failed to save report")
-
-const result = await response.json()
-
-console.log("Report saved:", result)
-
-} catch (err) {
-
-console.error(err)
-alert("Error saving report")
-
+if (!response.ok) {
+const errorText = await response.text()
+throw new Error(errorText || "Failed to save report")
 }
 
-}
-
-
-document.getElementById("validationMsg").style.display = "none"
-return true
+return await response.json()
 }
 
 /* Generate Report */
@@ -945,10 +929,31 @@ date: document.getElementById("f_date").value,
 time: document.getElementById("f_time").value,
 location: document.getElementById("f_location").value,
 department: document.getElementById("f_department").value,
+employee_name: document.getElementById("f_empName").value,
+employee_id: document.getElementById("f_empId").value,
+role: document.getElementById("f_role").value,
+hazard_type: document.getElementById("f_hazardType").value,
+risk_level: document.getElementById("f_riskLevel").value,
+description: document.getElementById("f_description").value,
+risk_score: Number(document.getElementById("f_aiScore").value || 0),
+severity: document.getElementById("f_aiSeverity").value,
+probability: document.getElementById("f_aiProbability").value,
+root_cause: Array.from(document.querySelectorAll("input[name='rootCause']:checked")).map(cb => cb.value).join(", "),
+immediate_action: document.getElementById("f_immediateAction").value,
+preventive_action: document.getElementById("f_preventiveAction").value,
+responsible_person: document.getElementById("f_responsible").value,
+deadline: document.getElementById("f_deadline").value,
+status: document.getElementById("f_status").value,
 evidence_url: evidenceUrl
 }
 
-saveReportToBackend(reportData)
+try {
+const result = await saveReportToBackend(reportData)
+alert(`Report saved successfully with ID ${result.id}`)
+} catch (error) {
+console.error(error)
+alert(error.message || "Error saving report")
+}
 
 }
 /* Reset */
@@ -973,68 +978,7 @@ document.getElementById("f_time").value = pad(now.getHours()) + ":" + pad(now.ge
 </script>
 
 <script>
-function sendChat() {
-let input = document.getElementById("chatInput")
-let text  = input.value.trim()
-if (!text) return
-addChat(text, "user-msg")
-setTimeout(() => addChat(generateReply(text), "ai-msg"), 400)
-input.value = ""
-}
-function addChat(text, type) {
-let box = document.getElementById("chatMessages")
-let div = document.createElement("div")
-div.className = type
-div.innerText = text
-box.appendChild(div)
-box.scrollTop = box.scrollHeight
-}
-function generateReply(q) {
-q = q.toLowerCase()
-if (q.includes("hazard"))     return "Common hazards: slips, falls, electrical risks, and unsafe machinery."
-if (q.includes("helmet"))     return "Workers must wear PPE: helmets, gloves, and safety shoes at all times."
-if (q.includes("accident"))   return "Reduce accidents by conducting regular safety audits and enforcing PPE policies."
-if (q.includes("root cause")) return "Root cause analysis finds the underlying reason for an incident, not just the symptom."
-if (q.includes("corrective")) return "Corrective actions must address root causes with both immediate containment and long-term prevention."
-if (q.includes("score"))      return "The risk score (0-100) combines hazard severity and probability. Above 70 requires urgent action."
-return "Safety tip: Always inspect equipment before starting work and complete all PPE checks."
-}
-document.getElementById("chatInput").addEventListener("keypress", function (e) {
-if (e.key === "Enter") sendChat()
-})
-
-const reportData = {
-
-report_id: document.getElementById("f_reportId").value,
-date: document.getElementById("f_date").value,
-time: document.getElementById("f_time").value,
-location: document.getElementById("f_location").value,
-department: document.getElementById("f_department").value,
-
-employee_name: document.getElementById("f_empName").value,
-employee_id: document.getElementById("f_empId").value,
-role: document.getElementById("f_role").value,
-
-hazard_type: document.getElementById("f_hazardType").value,
-risk_level: document.getElementById("f_riskLevel").value,
-description: document.getElementById("f_description").value,
-
-risk_score: score,
-severity: sev,
-probability: prob,
-
-root_cause: rootCauseTxt,
-
-immediate_action: document.getElementById("f_immediateAction").value,
-preventive_action: document.getElementById("f_preventiveAction").value,
-
-responsible_person: document.getElementById("f_responsible").value,
-deadline: document.getElementById("f_deadline").value,
-status: document.getElementById("f_status").value
-
-}
-
-
+wireBackendChat()
 </script>
 
 <script src="../js/main.js"></script>

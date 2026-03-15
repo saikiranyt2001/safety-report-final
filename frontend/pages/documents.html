@@ -309,17 +309,20 @@ fetch("../components/footer.html")
 document.getElementById("footer").innerHTML = data
 })
 
-if(!localStorage.getItem("token")){
+if(!(localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token"))){
 window.location.href = "login.html"
 }
 
 function logout(){
+localStorage.removeItem("auth_token")
 localStorage.removeItem("token")
+localStorage.removeItem("access_token")
 window.location.href = "login.html"
 }
 
 const documentsSearch = document.getElementById("documentsSearch")
 const documentsTableBody = document.querySelector("#documentsTable tbody")
+const documentsToken = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 let activeDocumentsFilter = "all"
 
 function applyDocumentsFilters(){
@@ -335,8 +338,35 @@ row.style.display = matchesType && matchesText ? "table-row" : "none"
 })
 }
 
+function updateSummary(items){
+document.querySelectorAll(".documents-card h3")[0].textContent = String(items.length)
+document.querySelectorAll(".documents-card h3")[1].textContent = String(items.filter(item => item.status === "Review").length)
+document.querySelectorAll(".documents-card h3")[2].textContent = String(items.filter(item => item.status === "Approved").length)
+document.querySelectorAll(".documents-card h3")[3].textContent = String(items.filter(item => item.status === "Draft").length)
+}
+
+function renderDocuments(items){
+documentsTableBody.innerHTML = items.map(item => `
+<tr data-type="${item.typeKey}">
+<td>${item.id}</td>
+<td>${item.title}</td>
+<td><span class="type-pill ${item.typeKey}">${item.type}</span></td>
+<td><span class="status-pill ${item.statusClass}">${item.status}</span></td>
+<td>${item.owner}</td>
+<td>${item.updated}</td>
+<td>${item.version}</td>
+<td class="row-actions">
+<button onclick="reviewDocument(this)">View</button>
+${item.downloadUrl ? `<button onclick="downloadDocument(this)" data-url="${item.downloadUrl}">Download</button>` : ""}
+</td>
+</tr>
+`).join("")
+updateSummary(items)
+applyDocumentsFilters()
+}
+
 function uploadDocument(){
-setDocumentsStatus("Document upload flow requested.")
+window.location.href = "/frontend/pages/upload.html"
 }
 
 function reviewDocument(button){
@@ -348,6 +378,11 @@ setDocumentsStatus("Viewing document " + row.children[0].textContent.trim() + ".
 function downloadDocument(button){
 const row = button.closest("tr")
 if(!row) return
+const downloadUrl = button.getAttribute("data-url")
+if(downloadUrl){
+window.open(downloadUrl, "_blank")
+return
+}
 setDocumentsStatus("Download requested for " + row.children[1].textContent.trim() + ".")
 }
 
@@ -387,6 +422,60 @@ applyDocumentsFilters()
 })
 
 documentsSearch.addEventListener("input", applyDocumentsFilters)
+
+Promise.all([
+fetch("/api/reports", {
+headers: { "Authorization": "Bearer " + documentsToken }
+}).then(res => res.ok ? res.json() : []),
+fetch("/api/inspection-templates", {
+headers: { "Authorization": "Bearer " + documentsToken }
+}).then(res => res.ok ? res.json() : []),
+fetch("/api/compliance/rules", {
+headers: { "Authorization": "Bearer " + documentsToken }
+}).then(res => res.ok ? res.json() : [])
+]).then(([reports, templates, rules]) => {
+const items = [
+...reports.map(item => ({
+id: `RPT-${item.id}`,
+title: item.content ? item.content.split("\n")[0].slice(0, 40) : `Report ${item.id}`,
+type: "Report",
+typeKey: "report",
+status: "Approved",
+statusClass: "approved",
+owner: "System",
+updated: item.created_at ? new Date(item.created_at).toLocaleDateString() : "-",
+version: "v1.0",
+downloadUrl: `/frontend/pages/download_report.html?report_id=${item.id}`
+})),
+...templates.map(item => ({
+id: `TPL-${item.id}`,
+title: item.name,
+type: "Checklist",
+typeKey: "checklist",
+status: "Approved",
+statusClass: "approved",
+owner: "Inspection",
+updated: item.created_at ? new Date(item.created_at).toLocaleDateString() : "-",
+version: "v1.0",
+downloadUrl: ""
+})),
+...rules.map(item => ({
+id: `POL-${item.id}`,
+title: item.rule_name,
+type: "Policy",
+typeKey: "policy",
+status: "Review",
+statusClass: "review",
+owner: item.regulation_source || "Compliance",
+updated: item.created_at ? new Date(item.created_at).toLocaleDateString() : "-",
+version: "v1.0",
+downloadUrl: ""
+}))
+]
+renderDocuments(items)
+}).catch(() => {
+setDocumentsStatus("Unable to load documents right now.")
+})
 </script>
 
 <script src="../js/main.js"></script>

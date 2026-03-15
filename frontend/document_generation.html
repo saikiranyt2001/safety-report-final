@@ -100,7 +100,7 @@ Go to AI Report Chat
 <script>
 
 /* LOAD NAVBAR */
-fetch("../components/sidebar.html")
+fetch("components/sidebar.html")
 .then(res => res.text())
 .then(data => {
 
@@ -148,19 +148,16 @@ function generateDocument(){
 
 const reportType = document.getElementById("reportType").value
 const projectId = document.getElementById("projectId").value
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 
-fetch("/api/generate-report",{
+fetch(`/api/generate-report?project_id=${encodeURIComponent(projectId)}`,{
 
 method:"POST",
 
 headers:{
-"Content-Type":"application/json"
-},
-
-body: JSON.stringify({
-report_type: reportType,
-project_id: parseInt(projectId)
-})
+"Content-Type":"application/json",
+"Authorization":"Bearer " + token
+}
 
 })
 
@@ -168,7 +165,7 @@ project_id: parseInt(projectId)
 .then(data => {
 
 document.getElementById("docResult").innerText =
-data.document || "No document generated."
+data.message || `Document request submitted for ${reportType}.`
 
 })
 

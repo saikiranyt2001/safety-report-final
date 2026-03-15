@@ -49,27 +49,6 @@ checkAuth();
 </thead>
 
 <tbody id="projectTable">
-
-<tr>
-<td>Factory Safety AI</td>
-<td>Hyderabad</td>
-<td><span class="badge low">Active</span></td>
-<td>
-<button class="primary-btn">View</button>
-<button class="danger-btn">Delete</button>
-</td>
-</tr>
-
-<tr>
-<td>Autonomous Vehicle Safety</td>
-<td>Bangalore</td>
-<td><span class="badge medium">Pending</span></td>
-<td>
-<button class="primary-btn">View</button>
-<button class="danger-btn">Delete</button>
-</td>
-</tr>
-
 </tbody>
 
 </table>
@@ -155,6 +134,73 @@ document.getElementById("footer").innerHTML = data
 
 })
 
+</script>
+
+<script>
+const projectToken = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
+
+function projectHeaders() {
+return {
+"Content-Type": "application/json",
+"Authorization": "Bearer " + projectToken
+}
+}
+
+function renderProjects(items) {
+const table = document.getElementById("projectTable")
+
+if (!items.length) {
+table.innerHTML = `
+<tr>
+<td colspan="4">No projects created yet.</td>
+</tr>
+`
+return
+}
+
+table.innerHTML = items.map((item) => `
+<tr>
+<td>${item.name}</td>
+<td>${item.location || "-"}</td>
+<td><span class="badge low">${item.status || "Active"}</span></td>
+<td>
+<button class="danger-btn" onclick="deleteProject(${item.id})">Delete</button>
+</td>
+</tr>
+`).join("")
+}
+
+async function loadProjects() {
+try {
+const res = await fetch("/api/projects", { headers: projectHeaders() })
+if (!res.ok) throw new Error("Could not load projects")
+const items = await res.json()
+renderProjects(items)
+} catch (error) {
+console.error(error)
+document.getElementById("projectTable").innerHTML = `
+<tr>
+<td colspan="4">Failed to load projects.</td>
+</tr>
+`
+}
+}
+
+async function deleteProject(projectId) {
+try {
+const res = await fetch(`/api/projects/${projectId}`, {
+method: "DELETE",
+headers: projectHeaders()
+})
+if (!res.ok) throw new Error("Could not delete project")
+await loadProjects()
+} catch (error) {
+console.error(error)
+alert("Project deletion failed")
+}
+}
+
+loadProjects()
 </script>
 
 <script src="../js/main.js"></script>

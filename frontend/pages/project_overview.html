@@ -38,10 +38,10 @@
 
 <h2>Project Information</h2>
 
-<p><strong>Project Name:</strong></p>
-<p><strong>Location:</strong></p>
-<p><strong>Manager:</strong></p>
-<p><strong>Start Date:</strong></p>
+<p><strong>Project Name:</strong> <span id="projectName">Loading...</span></p>
+<p><strong>Location:</strong> <span id="projectLocation">-</span></p>
+<p><strong>Manager:</strong> <span id="projectManager">-</span></p>
+<p><strong>Start Date:</strong> <span id="projectStartDate">-</span></p>
 
 </div>
 
@@ -50,10 +50,10 @@
 
 <h2>Project Status</h2>
 
-<p>Safety Score:</p>
-<p>Active Hazards:</p>
-<p>Reports Generated:</p>
-<p>Risk Alerts:</p>
+<p>Safety Score: <span id="projectSafetyScore">-</span></p>
+<p>Active Hazards: <span id="projectHazards">-</span></p>
+<p>Reports Generated: <span id="projectReports">-</span></p>
+<p>Risk Alerts: <span id="projectRiskAlerts">-</span></p>
 
 </div>
 
@@ -62,12 +62,8 @@
 
 <h2>Recent Activity</h2>
 
-<ul>
-
-<li></li>
-<li></li>
-<li></li>
-
+<ul id="projectActivity">
+<li>Loading activity...</li>
 </ul>
 
 </div>
@@ -139,18 +135,82 @@ document.getElementById("footer").innerHTML = data
 <!-- AUTH -->
 <script>
 
-if(!localStorage.getItem("token")){
+if(!(localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token"))){
 window.location.href="login.html";
 }
 
 function logout(){
+localStorage.removeItem("auth_token");
 localStorage.removeItem("token");
+localStorage.removeItem("access_token");
 window.location.href="login.html";
 }
 
 </script>
 
 <script src="../js/main.js"></script>
+<script>
+const projectToken = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
+
+function projectHeaders() {
+return {
+"Authorization": "Bearer " + projectToken
+}
+}
+
+function fmtDate(value) {
+if(!value) return "-"
+return new Date(value).toLocaleDateString()
+}
+
+async function loadProjectOverview() {
+try {
+const [projectsRes, reportsRes, activityRes] = await Promise.all([
+fetch("/api/projects", { headers: projectHeaders() }),
+fetch("/api/reports", { headers: projectHeaders() }),
+fetch("/api/activity-logs?limit=10", { headers: projectHeaders() }),
+])
+
+if(!projectsRes.ok){
+throw new Error("Unable to load project overview")
+}
+
+const projects = await projectsRes.json()
+const reports = reportsRes.ok ? await reportsRes.json() : []
+const activity = activityRes.ok ? await activityRes.json() : []
+const project = projects[0]
+
+if(!project){
+document.getElementById("projectName").textContent = "No project created yet"
+document.getElementById("projectActivity").innerHTML = "<li>Create a project to see details here.</li>"
+return
+}
+
+document.getElementById("projectName").textContent = project.name
+document.getElementById("projectLocation").textContent = project.location || "-"
+document.getElementById("projectManager").textContent = localStorage.getItem("username") || "Admin"
+document.getElementById("projectStartDate").textContent = fmtDate(project.created_at)
+
+const scoreRes = await fetch(`/api/projects/${project.id}/safety-score`, { headers: projectHeaders() })
+const score = scoreRes.ok ? await scoreRes.json() : null
+const projectReports = reports.filter(item => item.project_id === project.id)
+const alerts = projectReports.filter(item => (item.risk_level || "").toLowerCase() === "high" || (item.risk_level || "").toLowerCase() === "critical")
+
+document.getElementById("projectSafetyScore").textContent = score ? `${score.score}/100 (${score.risk_level})` : "-"
+document.getElementById("projectHazards").textContent = score ? score.hazards : projectReports.length
+document.getElementById("projectReports").textContent = projectReports.length
+document.getElementById("projectRiskAlerts").textContent = alerts.length
+
+const activityItems = activity.slice(0, 5).map(item => `<li>${item.action}${item.details ? ` - ${item.details}` : ""}</li>`)
+document.getElementById("projectActivity").innerHTML = activityItems.length ? activityItems.join("") : "<li>No recent activity.</li>"
+} catch(error) {
+document.getElementById("projectName").textContent = "Unable to load overview"
+document.getElementById("projectActivity").innerHTML = `<li>${error.message}</li>`
+}
+}
+
+loadProjectOverview()
+</script>
 
 </body>
 </html>

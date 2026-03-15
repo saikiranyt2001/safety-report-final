@@ -4,7 +4,7 @@
 from backend.database.database import get_db
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.core.security import get_current_user
+from backend.core.security import get_current_user_context
 
 
 def get_database(db: Session = Depends(get_db)):
@@ -13,7 +13,7 @@ def get_database(db: Session = Depends(get_db)):
 
 def require_role(role: str):
 
-    def role_checker(user=Depends(get_current_user)):
+    def role_checker(user=Depends(get_current_user_context)):
         user_role = user.role.value if hasattr(user.role, "value") else str(user.role)
         if user_role != role:
             raise HTTPException(

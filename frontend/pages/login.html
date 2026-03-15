@@ -82,7 +82,7 @@ cursor:pointer;
 </div>
 
 <script>
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = window.location.origin;
 function setMessage(message, isError = true){
 const el = document.getElementById("auth-message")
 el.textContent = message
@@ -97,6 +97,7 @@ const company = data.company || {}
 
 localStorage.setItem("auth_token", token)
 localStorage.setItem("token", token)
+localStorage.setItem("access_token", token)
 
 localStorage.setItem("username", data.username)
 localStorage.setItem("user_name", data.username)

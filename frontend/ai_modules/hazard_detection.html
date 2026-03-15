@@ -347,18 +347,37 @@ alert("Please upload an image first.");
 return;
 }
 
-document.getElementById("resultBox").innerHTML=
+const formData = new FormData()
+formData.append("file", file)
 
+fetch("/api/analyze-image", {
+method: "POST",
+headers: {
+"Authorization": "Bearer " + (getStoredToken() || "")
+},
+body: formData
+})
+.then(async res => {
+if(!res.ok){
+const errorText = await res.text()
+throw new Error(errorText || "Hazard detection failed")
+}
+return res.json()
+})
+.then(data => {
+const detections = data.detections || []
+document.getElementById("resultBox").innerHTML=
 `
 <h3>Detection Result</h3>
-
 <ul>
-<li>⚠ Worker without helmet</li>
-<li>⚠ Unsafe ladder position</li>
+${detections.length ? detections.map(item => `<li>${item.issue || item.label}</li>`).join("") : "<li>No hazards detected</li>"}
 </ul>
-
-<p><b>Risk Level:</b> <span class="risk-high">HIGH</span></p>
+<p><b>Risk Level:</b> <span class="risk-high">${data.risk_level || "LOW"}</span></p>
 `
+})
+.catch(error => {
+document.getElementById("resultBox").innerHTML = `<p>${error.message}</p>`
+})
 
 }
 
@@ -367,68 +386,7 @@ document.getElementById("resultBox").innerHTML=
 
 <!-- AI CHAT SCRIPT -->
 <script>
-
-
-
-function sendChat(){
-
-let input=document.getElementById("chatInput")
-let text=input.value.trim()
-
-if(text==="") return
-
-addChat(text,"user-msg")
-
-let reply=generateReply(text)
-
-setTimeout(()=>{
-addChat(reply,"ai-msg")
-},400)
-
-input.value=""
-
-}
-
-function addChat(text,type){
-
-let box=document.getElementById("chatMessages")
-
-let div=document.createElement("div")
-
-div.className=type
-div.innerText=text
-
-box.appendChild(div)
-
-box.scrollTop=box.scrollHeight
-
-}
-
-function generateReply(q){
-
-q=q.toLowerCase()
-
-if(q.includes("hazard"))
-return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
-
-if(q.includes("helmet"))
-return "Workers must always wear PPE like helmets, gloves, and safety shoes."
-
-if(q.includes("accident"))
-return "Reduce accidents by conducting safety audits and enforcing PPE."
-
-return "Safety tip: Always inspect equipment before starting work."
-
-}
-
-document.getElementById("chatInput").addEventListener("keypress",function(e){
-
-if(e.key==="Enter"){
-sendChat()
-}
-
-})
-
+wireBackendChat()
 </script>
 
 </body>

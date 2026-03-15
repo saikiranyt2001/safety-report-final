@@ -291,6 +291,7 @@ document.getElementById("footer").innerHTML = data
 
 <!-- FILE UPLOAD LOGIC -->
 <script>
+wireBackendChat()
 
 function uploadFile(){
 
@@ -301,85 +302,36 @@ alert("Please select a file first")
 return
 }
 
-document.getElementById("resultBox").innerHTML=
+const formData = new FormData()
+formData.append("file", file)
 
+fetch("/api/upload", {
+method: "POST",
+headers: {
+"Authorization": "Bearer " + (getStoredToken() || "")
+},
+body: formData
+})
+.then(async res => {
+if(!res.ok){
+const errorText = await res.text()
+throw new Error(errorText || "Upload failed")
+}
+return res.json()
+})
+.then(data => {
+document.getElementById("resultBox").innerHTML=
 `
 <h3>Upload Successful</h3>
-
-<p><b>File:</b> ${file.name}</p>
-
-<p>Your file has been uploaded and is ready for AI safety analysis.</p>
+<p><b>File:</b> ${data.filename}</p>
+<p><b>Stored at:</b> <a href="${data.url}" target="_blank">${data.url}</a></p>
 `
-
-}
-
-</script>
-
-
-<!-- AI CHAT SCRIPT -->
-<script>
-
-
-
-
-function sendChat(){
-
-let input=document.getElementById("chatInput")
-let text=input.value.trim()
-
-if(text==="") return
-
-addChat(text,"user-msg")
-
-let reply=generateReply(text)
-
-setTimeout(()=>{
-addChat(reply,"ai-msg")
-},400)
-
-input.value=""
-
-}
-
-function addChat(text,type){
-
-let box=document.getElementById("chatMessages")
-
-let div=document.createElement("div")
-
-div.className=type
-div.innerText=text
-
-box.appendChild(div)
-
-box.scrollTop=box.scrollHeight
-
-}
-
-function generateReply(q){
-
-q=q.toLowerCase()
-
-if(q.includes("hazard"))
-return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
-
-if(q.includes("helmet"))
-return "Workers must always wear PPE like helmets, gloves, and safety shoes."
-
-if(q.includes("accident"))
-return "Reduce accidents by conducting safety audits and enforcing PPE."
-
-return "Safety tip: Always inspect equipment before starting work."
-
-}
-
-document.getElementById("chatInput").addEventListener("keypress",function(e){
-
-if(e.key==="Enter"){
-sendChat()
-}
-
 })
+.catch(error => {
+document.getElementById("resultBox").innerHTML = `<p>${error.message}</p>`
+})
+
+}
 
 </script>
 

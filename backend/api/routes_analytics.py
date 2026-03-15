@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
@@ -57,7 +57,7 @@ def _month_key(value: datetime | None) -> str | None:
 
 def _month_labels(months: int) -> list[tuple[str, str]]:
     labels = []
-    today = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    today = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     for offset in range(months - 1, -1, -1):
         month_start = today - timedelta(days=offset * 30)
         labels.append((month_start.strftime("%Y-%m"), month_start.strftime("%b")))
@@ -94,7 +94,7 @@ def _inspection_completion_rate(db: Session, company_id: int | None) -> int:
     current = sum(
         1
         for item in equipment
-        if item.last_inspection_date and item.next_inspection_date and item.next_inspection_date >= datetime.utcnow()
+        if item.last_inspection_date and item.next_inspection_date and item.next_inspection_date >= datetime.now(UTC)
     )
     return round((current / len(equipment)) * 100)
 
@@ -177,7 +177,7 @@ async def analytics_safety_summary(
     user=Depends(require_roles("admin", "manager", "worker")),
     db: Session = Depends(get_db),
 ):
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(UTC) - timedelta(days=days)
     reports = db.query(Report).filter(Report.company_id == user.company_id, Report.created_at >= cutoff).all()
     incidents = db.query(Incident).filter(Incident.company_id == user.company_id, Incident.created_at >= cutoff).all()
     tasks = db.query(HazardTask).filter(HazardTask.company_id == user.company_id).all()

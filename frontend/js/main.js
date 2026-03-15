@@ -12,6 +12,109 @@ if(window.location.pathname.includes(href.replace("../",""))){
 link.classList.add("active")
 }
 
+function getApiBaseUrl() {
+return window.location.origin
+}
+
+function buildApiUrl(path) {
+return path.startsWith("http") ? path : getApiBaseUrl() + path
+}
+
+function getStoredToken() {
+return localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
+}
+
+function clearStoredSession() {
+localStorage.removeItem("auth_token")
+localStorage.removeItem("token")
+localStorage.removeItem("access_token")
+localStorage.removeItem("username")
+localStorage.removeItem("user_name")
+localStorage.removeItem("user_role")
+localStorage.removeItem("company_id")
+localStorage.removeItem("company_name")
+localStorage.removeItem("user")
+}
+
+function redirectToLogin() {
+window.location.href = "/frontend/pages/login.html"
+}
+
+function ensureAuthenticated() {
+if(!getStoredToken()){
+redirectToLogin()
+return false
+}
+return true
+}
+
+function logoutUser() {
+clearStoredSession()
+redirectToLogin()
+}
+
+function addChatMessage(text, type, messagesId = "chatMessages") {
+const box = document.getElementById(messagesId)
+if(!box) return
+
+const div = document.createElement("div")
+div.className = type
+div.innerText = text
+box.appendChild(div)
+box.scrollTop = box.scrollHeight
+}
+
+async function sendBackendChatMessage(message) {
+const response = await fetch(buildApiUrl("/api/ai-chat"), {
+method: "POST",
+headers: {
+"Content-Type": "application/json",
+"Authorization": "Bearer " + (getStoredToken() || "")
+},
+body: JSON.stringify({ prompt: message })
+})
+
+if(!response.ok){
+throw new Error("AI safety assistant unavailable")
+}
+
+const data = await response.json()
+return data.response || "No response available."
+}
+
+function wireBackendChat(inputId = "chatInput", messagesId = "chatMessages") {
+const input = document.getElementById(inputId)
+if(!input){
+return
+}
+
+window.sendChat = async function(){
+const text = input.value.trim()
+if(text === ""){
+return
+}
+
+addChatMessage(text, "user-msg", messagesId)
+input.value = ""
+
+try {
+const reply = await sendBackendChatMessage(text)
+addChatMessage(reply, "ai-msg", messagesId)
+} catch (_error) {
+addChatMessage("AI safety assistant unavailable. Try again.", "ai-msg", messagesId)
+}
+}
+
+if(!input.dataset.backendChatBound){
+input.addEventListener("keypress", function(e){
+if(e.key === "Enter"){
+window.sendChat()
+}
+})
+input.dataset.backendChatBound = "1"
+}
+}
+
 })
 
 }
@@ -63,7 +166,7 @@ return true;
 }
 
 function enforcePageAccess(){
-const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+const token = getStoredToken();
 if(!token){
 return;
 }
@@ -413,8 +516,12 @@ if(imageInput){
 imageInput.addEventListener("change", previewImage)
 }
 
-document.getElementById("resultImage").src =
-    "http://127.0.0.1:8000/" + data.annotated_image;
+function setResultImage(path) {
+const resultImage = document.getElementById("resultImage")
+if(resultImage && path){
+resultImage.src = buildApiUrl(path.startsWith("/") ? path : "/" + path)
+}
+}
 
 
 
@@ -423,9 +530,9 @@ async function uploadEvidence(file){
 const formData = new FormData()
 formData.append("file", file)
 
-const token = localStorage.getItem("token")
+const token = getStoredToken()
 
-const res = await fetch("http://127.0.0.1:8000/api/upload",{
+const res = await fetch(buildApiUrl("/api/upload"),{
 
 method:"POST",
 headers:{
@@ -434,6 +541,10 @@ headers:{
 body:formData
 
 })
+
+if(!res.ok){
+throw new Error("Failed to upload evidence")
+}
 
 return await res.json()
 

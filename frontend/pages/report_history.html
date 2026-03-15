@@ -207,34 +207,6 @@ body {
 </thead>
 
 <tbody id="reportTable">
-
-<tr>
-<td>RPT-101</td>
-<td>Construction AI</td>
-<td>Vision Model v2</td>
-<td><span class="badge high">High</span></td>
-<td>12 Mar 2026</td>
-<td><button class="primary-btn">View</button></td>
-</tr>
-
-<tr>
-<td>RPT-102</td>
-<td>Factory Monitor</td>
-<td>SafetyNet AI</td>
-<td><span class="badge medium">Medium</span></td>
-<td>11 Mar 2026</td>
-<td><button class="primary-btn">View</button></td>
-</tr>
-
-<tr>
-<td>RPT-103</td>
-<td>Warehouse Vision</td>
-<td>Hazard Detect</td>
-<td><span class="badge low">Low</span></td>
-<td>10 Mar 2026</td>
-<td><button class="primary-btn">View</button></td>
-</tr>
-
 </tbody>
 
 </table>
@@ -325,31 +297,66 @@ document.getElementById("footer").innerHTML = data
 
 })
 
+const reportHistoryToken = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 
+function badgeClass(level){
+const normalized = (level || "").toLowerCase()
+if(normalized === "high" || normalized === "critical") return "high"
+if(normalized === "medium") return "medium"
+return "low"
+}
 
+function formatDate(value){
+if(!value) return "-"
+return new Date(value).toLocaleDateString()
+}
 
-const reports = JSON.parse(localStorage.getItem("reports") || "[]")
+function renderReports(items){
+const table = document.getElementById("reportTable")
 
-reports.forEach(report => {
+if(!items.length){
+table.innerHTML = `<tr><td colspan="6">No reports saved yet.</td></tr>`
+return
+}
 
-const row = document.createElement("tr")
+table.innerHTML = items.map(item => `
+<tr>
+<td>RPT-${item.id}</td>
+<td>Project ${item.project_id || "-"}</td>
+<td>Saved Report</td>
+<td><span class="badge ${badgeClass(item.risk_level)}">${item.risk_level}</span></td>
+<td>${formatDate(item.created_at)}</td>
+<td><button class="primary-btn" onclick="viewReport(${item.id})">View</button></td>
+</tr>
+`).join("")
+}
 
-row.innerHTML = `
-<td>${report.report_id}</td>
-<td>${report.date}</td>
-<td>${report.location}</td>
-<td>${report.hazard}</td>
-<td>${report.risk}</td>
-<td>${report.status}</td>
-`
+function viewReport(reportId){
+window.location.href = `/frontend/pages/download_report.html?report_id=${reportId}`
+}
 
-document.getElementById("reportTableBody").appendChild(row)
-
+fetch("/api/reports", {
+headers: {
+"Authorization": "Bearer " + reportHistoryToken
+}
+})
+.then(async res => {
+if(!res.ok){
+throw new Error("Failed to load reports")
+}
+return res.json()
+})
+.then(renderReports)
+.catch(() => {
+document.getElementById("reportTable").innerHTML = `<tr><td colspan="6">Unable to load report history.</td></tr>`
 })
 
 </script>
 
 <script src="../js/main.js"></script>
+<script>
+wireBackendChat()
+</script>
 
 </body>
 </html>
