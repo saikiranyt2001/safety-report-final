@@ -746,10 +746,17 @@ fetch("../components/footer.html")
 	.then(data => {
 		document.getElementById("footer").innerHTML = data
 	})
+function checkAuth(){
 
-if (!localStorage.getItem("token")) {
-	window.location.href = "login.html"
+const token = localStorage.getItem("token")
+
+if(!token){
+window.location.href="login.html"
+return
 }
+
+}
+checkAuth()
 
 function logout() {
 	localStorage.removeItem("token")

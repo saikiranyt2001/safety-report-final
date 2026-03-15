@@ -8,7 +8,7 @@ from email.message import EmailMessage
 import requests
 from sqlalchemy.orm import Session
 
-from backend.config import settings
+from backend.core.config import settings
 from backend.database.models import ApiKey, IntegrationEndpoint, IntegrationTypeEnum
 
 logger = logging.getLogger("integrations")

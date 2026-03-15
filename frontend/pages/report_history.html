@@ -328,7 +328,24 @@ document.getElementById("footer").innerHTML = data
 
 
 
+const reports = JSON.parse(localStorage.getItem("reports") || "[]")
 
+reports.forEach(report => {
+
+const row = document.createElement("tr")
+
+row.innerHTML = `
+<td>${report.report_id}</td>
+<td>${report.date}</td>
+<td>${report.location}</td>
+<td>${report.hazard}</td>
+<td>${report.risk}</td>
+<td>${report.status}</td>
+`
+
+document.getElementById("reportTableBody").appendChild(row)
+
+})
 
 </script>
 

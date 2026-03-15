@@ -15,434 +15,1028 @@
 
 <style>
 :root {
-	--bg-1: #f1f7ff;
-	--bg-2: #e4f4ef;
-	--panel: rgba(255, 255, 255, 0.82);
-	--panel-strong: #ffffff;
-	--text: #102a43;
-	--muted: #52606d;
-	--primary: #0b7285;
-	--accent: #2f9e44;
-	--warn: #d9480f;
-	--border: rgba(16, 42, 67, 0.08);
-	--shadow: 0 18px 45px rgba(11, 114, 133, 0.12);
+--bg-1: #f1f7ff;
+--bg-2: #e4f4ef;
+--panel: rgba(255, 255, 255, 0.82);
+--panel-strong: #ffffff;
+--text: #102a43;
+--muted: #52606d;
+--primary: #0b7285;
+--accent: #2f9e44;
+--warn: #d9480f;
+--border: rgba(16, 42, 67, 0.08);
+--shadow: 0 18px 45px rgba(11, 114, 133, 0.12);
 }
 
-* {
-	box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
-	margin: 0;
-	font-family: "Space Grotesk", sans-serif;
-	color: var(--text);
-	background:
-		radial-gradient(circle at 10% 10%, rgba(47, 158, 68, 0.18), transparent 30%),
-		radial-gradient(circle at 90% 15%, rgba(11, 114, 133, 0.17), transparent 28%),
-		linear-gradient(135deg, var(--bg-1), var(--bg-2));
-	min-height: 100vh;
+margin: 0;
+font-family: "Space Grotesk", sans-serif;
+color: var(--text);
+background:
+radial-gradient(circle at 10% 10%, rgba(47, 158, 68, 0.18), transparent 30%),
+radial-gradient(circle at 90% 15%, rgba(11, 114, 133, 0.17), transparent 28%),
+linear-gradient(135deg, var(--bg-1), var(--bg-2));
+min-height: 100vh;
 }
 
 .main-content {
-	max-width: 1080px;
-	margin: 2rem auto;
-	padding: 2rem;
-	border: 1px solid var(--border);
-	border-radius: 24px;
-	background: var(--panel);
-	backdrop-filter: blur(4px);
-	box-shadow: var(--shadow);
+max-width: 1080px;
+margin: 2rem auto;
+padding: 2rem;
+border: 1px solid var(--border);
+border-radius: 24px;
+background: var(--panel);
+backdrop-filter: blur(4px);
+box-shadow: var(--shadow);
 }
 
+/* Page header */
 .report-header {
-	display: flex;
-	align-items: end;
-	justify-content: space-between;
-	gap: 1rem;
-	margin-bottom: 1.5rem;
+display: flex;
+align-items: flex-end;
+justify-content: space-between;
+gap: 1rem;
+margin-bottom: 2rem;
 }
-
 .report-title {
-	margin: 0;
-	font-size: clamp(1.8rem, 4vw, 2.6rem);
-	letter-spacing: -0.03em;
+margin: 0;
+font-size: clamp(1.8rem, 4vw, 2.6rem);
+letter-spacing: -0.03em;
 }
-
 .report-subtitle {
-	margin: 0.35rem 0 0;
-	color: var(--muted);
-	font-size: 0.98rem;
+margin: 0.35rem 0 0;
+color: var(--muted);
+font-size: 0.98rem;
 }
-
 .header-badge {
-	background: linear-gradient(135deg, #d3f9d8, #99e9f2);
-	color: #0c3f53;
-	border: 1px solid rgba(12, 63, 83, 0.2);
-	border-radius: 999px;
-	padding: 0.45rem 0.9rem;
-	font-size: 0.82rem;
-	font-weight: 600;
-	white-space: nowrap;
+background: linear-gradient(135deg, #d3f9d8, #99e9f2);
+color: #0c3f53;
+border: 1px solid rgba(12, 63, 83, 0.2);
+border-radius: 999px;
+padding: 0.45rem 0.9rem;
+font-size: 0.82rem;
+font-weight: 600;
+white-space: nowrap;
 }
 
-.report-form {
-	border: 1px solid var(--border);
-	border-radius: 18px;
-	padding: 1.1rem;
-	background: var(--panel-strong);
-	box-shadow: 0 6px 20px rgba(16, 42, 67, 0.06);
-	max-width: 720px;
+/* Section cards */
+.form-section {
+border: 1px solid rgba(16, 42, 67, 0.1);
+border-radius: 16px;
+padding: 1.4rem 1.6rem;
+background: var(--panel-strong);
+box-shadow: 0 4px 14px rgba(16, 42, 67, 0.05);
+margin-bottom: 1.4rem;
+}
+.section-heading {
+display: flex;
+align-items: center;
+gap: 0.6rem;
+font-size: 1rem;
+font-weight: 700;
+color: var(--primary);
+margin: 0 0 1.2rem;
+padding-bottom: 0.7rem;
+border-bottom: 1px solid rgba(11, 114, 133, 0.12);
+}
+.section-heading .tag {
+font-size: 0.72rem;
+font-weight: 600;
+background: linear-gradient(135deg, #d3f9d8, #99e9f2);
+color: #0c3f53;
+border-radius: 999px;
+padding: 0.18rem 0.6rem;
 }
 
-.report-label {
-	display: block;
-	margin-bottom: 0.45rem;
-	font-size: 0.92rem;
-	font-weight: 600;
-	color: #234;
+/* Field grid */
+.field-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+gap: 1rem;
+}
+.field-full { grid-column: 1 / -1; }
+
+/* Labels & inputs */
+.field-label {
+display: block;
+font-size: 0.86rem;
+font-weight: 600;
+color: #234;
+margin-bottom: 0.38rem;
+}
+.field-required::after { content: " *"; color: var(--warn); }
+.field-input,
+.field-select,
+.field-textarea {
+width: 100%;
+padding: 0.58rem 0.72rem;
+border: 1px solid rgba(16, 42, 67, 0.14);
+border-radius: 10px;
+background: #f6fafd;
+font-family: "Space Grotesk", sans-serif;
+font-size: 0.93rem;
+color: var(--text);
+transition: border-color 0.18s, box-shadow 0.18s;
+outline: none;
+}
+.field-input:focus,
+.field-select:focus,
+.field-textarea:focus {
+border-color: var(--primary);
+box-shadow: 0 0 0 3px rgba(11, 114, 133, 0.1);
+background: #fff;
+}
+.field-textarea { resize: vertical; }
+
+/* Risk badges */
+.risk-pill {
+display: inline-flex;
+align-items: center;
+gap: 0.4rem;
+border-radius: 999px;
+padding: 0.35rem 0.85rem;
+font-size: 0.82rem;
+font-weight: 700;
+border: 1.5px solid transparent;
+}
+.risk-low     { background:#d3f9d8; color:#1a6b2a; border-color:#2f9e44; }
+.risk-medium  { background:#fff3bf; color:#744210; border-color:#f59f00; }
+.risk-high    { background:#ffe3e3; color:#7b2d2d; border-color:#e03131; }
+.risk-critical{ background:#f8d7da; color:#5c0000; border-color:#c92a2a; }
+
+/* AI Analysis */
+.ai-analysis-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 1rem;
+}
+.ai-metric-card {
+border: 1px solid rgba(16, 42, 67, 0.1);
+border-radius: 12px;
+padding: 1rem;
+text-align: center;
+background: linear-gradient(135deg, #f6fafd, #edf8f2);
+}
+.ai-metric-value {
+font-size: 2.2rem;
+font-weight: 700;
+line-height: 1;
+color: var(--primary);
+}
+.ai-metric-label {
+font-size: 0.78rem;
+font-weight: 600;
+color: var(--muted);
+margin-top: 0.3rem;
 }
 
-.report-input,
-.report-select,
-.report-textarea {
-	width: 100%;
-	padding: 0.62rem 0.68rem;
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	background: #f8fbfd;
-	font-family: "Space Grotesk", sans-serif;
-	font-size: 0.95rem;
-	margin-bottom: 0.9rem;
+/* Root cause checklist */
+.checklist {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+gap: 0.6rem;
+}
+.check-item {
+display: flex;
+align-items: center;
+gap: 0.6rem;
+padding: 0.55rem 0.8rem;
+border: 1px solid rgba(16, 42, 67, 0.1);
+border-radius: 10px;
+background: #f6fafd;
+cursor: pointer;
+transition: background 0.15s, border-color 0.15s;
+}
+.check-item:hover { background: #edf4fb; border-color: rgba(11,114,133,0.2); }
+.check-item input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; }
+.check-item label { margin: 0; font-size: 0.88rem; cursor: pointer; user-select: none; }
+
+/* Approval grid */
+.approval-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 1.2rem;
+}
+.approval-card {
+border: 1px solid rgba(11,114,133,0.15);
+border-radius: 14px;
+padding: 1.2rem;
+background: linear-gradient(135deg,#f6fafd,#edf8f2);
+display: flex;
+flex-direction: column;
+gap: 0.6rem;
+}
+.approval-role {
+font-size: 0.75rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+color: var(--primary);
 }
 
-.report-textarea {
-	resize: vertical;
+/* Action buttons */
+.action-bar {
+display: flex;
+gap: 0.8rem;
+align-items: center;
+flex-wrap: wrap;
+margin-top: 2rem;
 }
-
-.report-btn {
-	border: 0;
-	border-radius: 12px;
-	background: linear-gradient(120deg, #0b7285, #2f9e44);
-	color: #fff;
-	padding: 0.72rem 1rem;
-	font-family: "Space Grotesk", sans-serif;
-	font-weight: 600;
-	cursor: pointer;
-	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.24);
+.btn-primary {
+border: 0;
+border-radius: 12px;
+background: linear-gradient(120deg, #0b7285, #2f9e44);
+color: #fff;
+padding: 0.78rem 1.6rem;
+font-family: "Space Grotesk", sans-serif;
+font-size: 0.97rem;
+font-weight: 700;
+cursor: pointer;
+box-shadow: 0 12px 24px rgba(11, 114, 133, 0.24);
+transition: opacity 0.18s, transform 0.12s;
 }
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-secondary {
+border: 1.5px solid rgba(16,42,67,0.18);
+border-radius: 12px;
+background: #fff;
+color: var(--text);
+padding: 0.78rem 1.3rem;
+font-family: "Space Grotesk", sans-serif;
+font-size: 0.93rem;
+font-weight: 600;
+cursor: pointer;
+transition: background 0.15s;
+}
+.btn-secondary:hover { background: #f0f4f8; }
 
+/* Output */
 .report-output {
-	margin-top: 1rem;
+border: 1.5px solid rgba(11,114,133,0.18);
+border-radius: 18px;
+padding: 1.8rem;
+background: var(--panel-strong);
+box-shadow: 0 8px 28px rgba(11,114,133,0.09);
+margin-top: 2rem;
+}
+.output-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 1.4rem;
+padding-bottom: 0.9rem;
+border-bottom: 1px solid rgba(16,42,67,0.1);
+}
+.output-title { margin: 0; font-size: 1.2rem; font-weight: 700; }
+.print-btn {
+border: 0;
+border-radius: 10px;
+background: linear-gradient(120deg, #0b7285, #2f9e44);
+color: #fff;
+padding: 0.46rem 1rem;
+font-family: "Space Grotesk", sans-serif;
+font-weight: 600;
+font-size: 0.85rem;
+cursor: pointer;
+}
+.out-section-title {
+font-size: 0.82rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+color: var(--primary);
+margin: 1.1rem 0 0.5rem;
+}
+.out-row {
+display: flex;
+gap: 0.5rem;
+flex-wrap: wrap;
+margin-bottom: 0.35rem;
+font-size: 0.91rem;
+}
+.out-key { font-weight: 600; min-width: 160px; color: #234; }
+.out-value { color: var(--muted); }
+.out-divider { border: none; border-top: 1px solid rgba(16,42,67,0.08); margin: 0.8rem 0; }
+.approval-out-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 1rem;
+margin-top: 0.8rem;
+}
+.approval-out-card {
+border: 1px solid rgba(16,42,67,0.1);
+border-radius: 12px;
+padding: 0.9rem;
+background: #f6fafd;
+}
+.approval-out-role {
+font-size: 0.72rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+color: var(--primary);
+margin-bottom: 0.35rem;
+}
+.signature-line {
+border-bottom: 1.5px dashed rgba(16,42,67,0.2);
+height: 32px;
+margin-top: 0.5rem;
 }
 
-.output-title {
-	margin: 0 0 0.7rem;
-	font-size: 1.15rem;
-	font-weight: 700;
-}
+/* Utilities */
+.hidden { display: none !important; }
+.required-note { font-size: 0.8rem; color: var(--muted); margin-bottom: 1.6rem; }
 
-.output-card {
-	border: 1px solid rgba(16, 42, 67, 0.1);
-	background: linear-gradient(90deg, #f8fbfd, #edf8f2);
-	border-radius: 12px;
-	padding: 0.9rem;
-	max-width: 720px;
-}
-
-.output-desc {
-	color: var(--muted);
-}
-
+/* Chat */
 .chat-toggle-btn {
-	border: 0;
-	border-radius: 999px;
-	background: linear-gradient(120deg, #0b7285, #2f9e44);
-	color: #fff;
-	padding: 0.7rem 1rem;
-	font-family: "Space Grotesk", sans-serif;
-	font-weight: 600;
-	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.25);
+border: 0;
+border-radius: 999px;
+background: linear-gradient(120deg, #0b7285, #2f9e44);
+color: #fff;
+padding: 0.7rem 1rem;
+font-family: "Space Grotesk", sans-serif;
+font-weight: 600;
+box-shadow: 0 12px 24px rgba(11, 114, 133, 0.25);
 }
+.ai-chat-sidebar { border-radius: 16px 16px 0 0; overflow: hidden; }
+.chat-header, .chat-input button { font-family: "Space Grotesk", sans-serif; }
 
-.ai-chat-sidebar {
-	border-radius: 16px 16px 0 0;
-	overflow: hidden;
-}
-
-.chat-header,
-.chat-input button {
-	font-family: "Space Grotesk", sans-serif;
-}
-
-@media (max-width: 680px) {
-	.main-content {
-		margin: 1rem;
-		padding: 1.2rem;
-		border-radius: 18px;
-	}
-
-	.report-header {
-		align-items: flex-start;
-		flex-direction: column;
-	}
+@media (max-width: 700px) {
+.main-content { margin: 1rem; padding: 1.2rem; border-radius: 18px; }
+.report-header { flex-direction: column; align-items: flex-start; }
+.ai-analysis-grid, .approval-grid, .approval-out-grid { grid-template-columns: 1fr; }
+.action-bar { flex-direction: column; align-items: stretch; }
 }
 </style>
-
 </head>
-
 <body>
 
 <!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
-
-<!-- MAIN CONTENT -->
+<!-- MAIN -->
 <main class="main-content">
 
+<!-- Page header -->
 <div class="report-header">
 <div>
-<h1 class="report-title">Generate Report</h1>
-<p class="report-subtitle">Fill in details to generate a safety report.</p>
+<h1 class="report-title">Incident Report</h1>
+<p class="report-subtitle">Complete all sections and submit for AI-assisted risk analysis &amp; approval.</p>
 </div>
 <span class="header-badge">Report Engine Ready</span>
 </div>
 
+<p class="required-note"><span style="color:var(--warn)">*</span> Marked fields are required.</p>
 
-<!-- REPORT FORM -->
-<div class="report-form">
-
-<label class="report-label">Project Name</label>
-<input
-id="project"
-class="report-input"
-placeholder="Enter project name"
-/>
-
-<label class="report-label">Model Name</label>
-<input
-id="model"
-class="report-input"
-placeholder="Enter AI model"
-/>
-
-<label class="report-label">Risk Level</label>
-
-<select id="risk" class="report-select">
-<option>Low</option>
-<option>Medium</option>
-<option>High</option>
-</select>
-
-<label class="report-label">Description</label>
-
-<textarea
-id="description"
-class="report-textarea"
-rows="4"
-placeholder="Describe the risk or safety issue"
-></textarea>
-
-<button
-onclick="generateReport()"
-class="report-btn"
->
-Generate Report
-</button>
-
+<!-- SECTION 1: INCIDENT INFORMATION -->
+<div class="form-section">
+<h2 class="section-heading">
+<span>1</span>&nbsp; Incident Information
+<span class="tag">Required</span>
+</h2>
+<div class="field-grid">
+<div>
+<label class="field-label">Report ID</label>
+<input id="f_reportId" class="field-input" placeholder="Auto-generated" readonly>
+</div>
+<div>
+<label class="field-label field-required">Date</label>
+<input id="f_date" type="date" class="field-input">
+</div>
+<div>
+<label class="field-label field-required">Time</label>
+<input id="f_time" type="time" class="field-input">
+</div>
+<div>
+<label class="field-label field-required">Location</label>
+<input id="f_location" class="field-input" placeholder="e.g. Warehouse Block B">
+</div>
+<div>
+<label class="field-label field-required">Department</label>
+<input id="f_department" class="field-input" placeholder="e.g. Operations">
+</div>
+</div>
 </div>
 
+<!-- SECTION 2: PERSON INVOLVED -->
+<div class="form-section">
+<h2 class="section-heading"><span>2</span>&nbsp; Person Involved</h2>
+<div class="field-grid">
+<div>
+<label class="field-label field-required">Employee Name</label>
+<input id="f_empName" class="field-input" placeholder="Full name">
+</div>
+<div>
+<label class="field-label field-required">Employee ID</label>
+<input id="f_empId" class="field-input" placeholder="e.g. EMP-1045">
+</div>
+<div>
+<label class="field-label field-required">Role / Designation</label>
+<input id="f_role" class="field-input" placeholder="e.g. Machine Operator">
+</div>
+</div>
+</div>
+
+<!-- SECTION 3: HAZARD DETAILS -->
+<div class="form-section">
+<h2 class="section-heading"><span>3</span>&nbsp; Hazard Details</h2>
+<div class="field-grid">
+<div>
+<label class="field-label field-required">Hazard Type</label>
+<select id="f_hazardType" class="field-select">
+<option value="">-- Select --</option>
+<option>Slip / Trip / Fall</option>
+<option>Electrical</option>
+<option>Chemical / Toxic Exposure</option>
+<option>Fire / Explosion</option>
+<option>Machinery / Equipment</option>
+<option>Ergonomic / Overexertion</option>
+<option>Struck-By / Falling Object</option>
+<option>Environmental</option>
+<option>PPE Non-Compliance</option>
+<option>Other</option>
+</select>
+</div>
+<div>
+<label class="field-label field-required">Risk Level</label>
+<select id="f_riskLevel" class="field-select" onchange="updateRiskBadge()">
+<option value="">-- Select --</option>
+<option value="Low">Low</option>
+<option value="Medium">Medium</option>
+<option value="High">High</option>
+<option value="Critical">Critical</option>
+</select>
+</div>
+<div id="riskBadgeWrap" class="hidden" style="align-self:flex-end;padding-bottom:0.1rem;">
+<span id="riskBadge" class="risk-pill"></span>
+</div>
+<div class="field-full">
+<label class="field-label field-required">Description</label>
+<textarea id="f_description" class="field-textarea" rows="3"
+placeholder="Describe the hazard, conditions leading to the incident, and any injuries..."></textarea>
+</div>
+<div class="field-full">
+<label class="field-label">Upload Evidence</label>
+<input id="f_evidence" type="file" accept="image/*,video/*,.pdf"
+class="field-input" style="padding:0.42rem 0.72rem;">
+<p id="evidenceFileName" style="font-size:0.8rem;color:var(--muted);margin:0.3rem 0 0;">No file selected.</p>
+</div>
+</div>
+</div>
+
+<!-- SECTION 4: AI RISK ANALYSIS -->
+<div class="form-section">
+<h2 class="section-heading">
+<span>4</span>&nbsp; AI Risk Analysis
+<span class="tag">Auto-filled</span>
+</h2>
+<div class="ai-analysis-grid">
+<div class="ai-metric-card">
+<div class="ai-metric-value" id="aiScore">--</div>
+<div class="ai-metric-label">Risk Score (0-100)</div>
+</div>
+<div class="ai-metric-card">
+<div class="ai-metric-value" id="aiSeverity">--</div>
+<div class="ai-metric-label">Severity</div>
+</div>
+<div class="ai-metric-card">
+<div class="ai-metric-value" id="aiProbability">--</div>
+<div class="ai-metric-label">Probability</div>
+</div>
+</div>
+<p style="font-size:0.82rem;color:var(--muted);margin-top:0.85rem;">
+Click <b>Run AI Analysis</b> to compute metrics from Hazard Type and Risk Level, or override manually below.
+</p>
+<div class="field-grid" style="margin-top:0.8rem;">
+<div>
+<label class="field-label">Risk Score (override)</label>
+<input id="f_aiScore" type="number" min="0" max="100" class="field-input" placeholder="0 - 100">
+</div>
+<div>
+<label class="field-label">Severity (override)</label>
+<select id="f_aiSeverity" class="field-select">
+<option value="">-- Select --</option>
+<option>Minor</option>
+<option>Moderate</option>
+<option>Major</option>
+<option>Catastrophic</option>
+</select>
+</div>
+<div>
+<label class="field-label">Probability (override)</label>
+<select id="f_aiProbability" class="field-select">
+<option value="">-- Select --</option>
+<option>Rare</option>
+<option>Unlikely</option>
+<option>Possible</option>
+<option>Likely</option>
+<option>Almost Certain</option>
+</select>
+</div>
+</div>
+<button type="button" onclick="runAiAnalysis()" class="btn-secondary" style="margin-top:0.9rem;">
+Run AI Analysis
+</button>
+</div>
+
+<!-- SECTION 5: ROOT CAUSE -->
+<div class="form-section">
+<h2 class="section-heading"><span>5</span>&nbsp; Root Cause Analysis</h2>
+<p style="font-size:0.88rem;color:var(--muted);margin:0 0 1rem;">Select all contributing root causes:</p>
+<div class="checklist">
+<div class="check-item"><input type="checkbox" id="rc1" name="rootCause" value="Inadequate training"><label for="rc1">Inadequate training / competency</label></div>
+<div class="check-item"><input type="checkbox" id="rc2" name="rootCause" value="Lack of PPE"><label for="rc2">Lack of / improper PPE</label></div>
+<div class="check-item"><input type="checkbox" id="rc3" name="rootCause" value="Equipment failure"><label for="rc3">Equipment / machinery failure</label></div>
+<div class="check-item"><input type="checkbox" id="rc4" name="rootCause" value="Unsafe work condition"><label for="rc4">Unsafe work environment / condition</label></div>
+<div class="check-item"><input type="checkbox" id="rc5" name="rootCause" value="Human error"><label for="rc5">Human error / inattention</label></div>
+<div class="check-item"><input type="checkbox" id="rc6" name="rootCause" value="Poor housekeeping"><label for="rc6">Poor housekeeping / 5S failure</label></div>
+<div class="check-item"><input type="checkbox" id="rc7" name="rootCause" value="Design deficiency"><label for="rc7">Design / engineering deficiency</label></div>
+<div class="check-item"><input type="checkbox" id="rc8" name="rootCause" value="Procedure non-compliance"><label for="rc8">Procedure non-compliance / SOP gap</label></div>
+<div class="check-item"><input type="checkbox" id="rc9" name="rootCause" value="Communication failure"><label for="rc9">Communication failure / signage absent</label></div>
+<div class="check-item"><input type="checkbox" id="rc10" name="rootCause" value="Environmental factor"><label for="rc10">Environmental / weather factor</label></div>
+</div>
+</div>
+
+<!-- SECTION 6: CORRECTIVE ACTIONS -->
+<div class="form-section">
+<h2 class="section-heading"><span>6</span>&nbsp; Corrective Actions</h2>
+<div class="field-grid">
+<div class="field-full">
+<label class="field-label field-required">Immediate Action Taken</label>
+<textarea id="f_immediateAction" class="field-textarea" rows="3"
+placeholder="Describe the immediate steps taken to contain the hazard or assist the affected person..."></textarea>
+</div>
+<div class="field-full">
+<label class="field-label field-required">Preventive Action Planned</label>
+<textarea id="f_preventiveAction" class="field-textarea" rows="3"
+placeholder="Describe long-term measures to prevent recurrence (training, process change, engineering controls)..."></textarea>
+</div>
+</div>
+</div>
+
+<!-- SECTION 7: ASSIGNMENT -->
+<div class="form-section">
+<h2 class="section-heading"><span>7</span>&nbsp; Assignment</h2>
+<div class="field-grid">
+<div>
+<label class="field-label field-required">Responsible Person</label>
+<input id="f_responsible" class="field-input" placeholder="Full name">
+</div>
+<div>
+<label class="field-label field-required">Deadline</label>
+<input id="f_deadline" type="date" class="field-input">
+</div>
+<div>
+<label class="field-label field-required">Status</label>
+<select id="f_status" class="field-select">
+<option value="">-- Select --</option>
+<option value="Open">Open</option>
+<option value="In Progress">In Progress</option>
+<option value="Resolved">Resolved</option>
+<option value="Closed">Closed</option>
+</select>
+</div>
+</div>
+</div>
+
+<!-- SECTION 8: APPROVAL -->
+<div class="form-section">
+<h2 class="section-heading"><span>8</span>&nbsp; Approval</h2>
+<div class="approval-grid">
+<div class="approval-card">
+<div class="approval-role">Reporter</div>
+<label class="field-label">Name</label>
+<input id="f_reporterName" class="field-input" placeholder="Reporter name">
+<label class="field-label">Digital Signature / Initials</label>
+<input id="f_reporterSig" class="field-input" placeholder="Initials or e-signature ref">
+<label class="field-label">Date</label>
+<input id="f_reporterDate" type="date" class="field-input">
+</div>
+<div class="approval-card">
+<div class="approval-role">Supervisor</div>
+<label class="field-label">Name</label>
+<input id="f_supervisorName" class="field-input" placeholder="Supervisor name">
+<label class="field-label">Digital Signature / Initials</label>
+<input id="f_supervisorSig" class="field-input" placeholder="Initials or e-signature ref">
+<label class="field-label">Date</label>
+<input id="f_supervisorDate" type="date" class="field-input">
+</div>
+<div class="approval-card">
+<div class="approval-role">Safety Officer</div>
+<label class="field-label">Name</label>
+<input id="f_safetyName" class="field-input" placeholder="Safety officer name">
+<label class="field-label">Digital Signature / Initials</label>
+<input id="f_safetySig" class="field-input" placeholder="Initials or e-signature ref">
+<label class="field-label">Date</label>
+<input id="f_safetyDate" type="date" class="field-input">
+</div>
+</div>
+</div>
+
+<!-- ACTION BAR -->
+<div class="action-bar">
+<button type="button" class="btn-primary" onclick="generateReport()">Generate Report</button>
+<button type="button" class="btn-secondary" onclick="resetForm()">Reset Form</button>
+<span id="validationMsg" style="font-size:0.88rem;color:var(--warn);display:none;"></span>
+</div>
 
 <!-- REPORT OUTPUT -->
 <div id="reportOutput" class="report-output hidden">
-
-<h2 class="output-title">Generated Report</h2>
-
-<div class="output-card">
-
-<p><b>Project:</b> <span id="outProject"></span></p>
-<p><b>Model:</b> <span id="outModel"></span></p>
-<p><b>Risk Level:</b> <span id="outRisk"></span></p>
-
-<p class="mt-2"><b>Description:</b></p>
-<p id="outDesc" class="output-desc"></p>
-
+<div class="output-header">
+<h2 class="output-title">Incident Report -- <span id="out_reportId"></span></h2>
+<button class="print-btn" onclick="window.print()">Print / PDF</button>
 </div>
 
+<div class="out-section-title">Incident Information</div>
+<div class="out-row"><span class="out-key">Date &amp; Time</span><span class="out-value" id="out_datetime"></span></div>
+<div class="out-row"><span class="out-key">Location</span><span class="out-value" id="out_location"></span></div>
+<div class="out-row"><span class="out-key">Department</span><span class="out-value" id="out_department"></span></div>
+<hr class="out-divider">
+
+<div class="out-section-title">Person Involved</div>
+<div class="out-row"><span class="out-key">Name</span><span class="out-value" id="out_empName"></span></div>
+<div class="out-row"><span class="out-key">Employee ID</span><span class="out-value" id="out_empId"></span></div>
+<div class="out-row"><span class="out-key">Role</span><span class="out-value" id="out_role"></span></div>
+<hr class="out-divider">
+
+<div class="out-section-title">Hazard Details</div>
+<div class="out-row"><span class="out-key">Hazard Type</span><span class="out-value" id="out_hazardType"></span></div>
+<div class="out-row"><span class="out-key">Risk Level</span><span id="out_riskBadge"></span></div>
+<div class="out-row" style="flex-direction:column;gap:0.2rem;"><span class="out-key">Description</span><span class="out-value" id="out_description" style="white-space:pre-wrap;"></span></div>
+<hr class="out-divider">
+
+<div class="out-section-title">AI Risk Analysis</div>
+<div class="out-row"><span class="out-key">Risk Score</span><span class="out-value" id="out_aiScore"></span></div>
+<div class="out-row"><span class="out-key">Severity</span><span class="out-value" id="out_aiSeverity"></span></div>
+<div class="out-row"><span class="out-key">Probability</span><span class="out-value" id="out_aiProbability"></span></div>
+<hr class="out-divider">
+
+<div class="out-section-title">Root Cause</div>
+<div class="out-value" id="out_rootCause" style="font-size:0.91rem;"></div>
+<hr class="out-divider">
+
+<div class="out-section-title">Corrective Actions</div>
+<div class="out-row" style="flex-direction:column;gap:0.2rem;"><span class="out-key">Immediate Action</span><span class="out-value" id="out_immediateAction" style="white-space:pre-wrap;"></span></div>
+<div class="out-row" style="flex-direction:column;gap:0.2rem;"><span class="out-key">Preventive Action</span><span class="out-value" id="out_preventiveAction" style="white-space:pre-wrap;"></span></div>
+<hr class="out-divider">
+
+<div class="out-section-title">Assignment</div>
+<div class="out-row"><span class="out-key">Responsible Person</span><span class="out-value" id="out_responsible"></span></div>
+<div class="out-row"><span class="out-key">Deadline</span><span class="out-value" id="out_deadline"></span></div>
+<div class="out-row"><span class="out-key">Status</span><span class="out-value" id="out_status"></span></div>
+<hr class="out-divider">
+
+<div class="out-section-title">Approval</div>
+<div class="approval-out-grid">
+<div class="approval-out-card">
+<div class="approval-out-role">Reporter</div>
+<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Name</span><span class="out-value" id="out_reporterName"></span></div>
+<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Signature</span><span class="out-value" id="out_reporterSig"></span></div>
+<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Date</span><span class="out-value" id="out_reporterDate"></span></div>
+<div class="signature-line"></div>
+</div>
+<div class="approval-out-card">
+<div class="approval-out-role">Supervisor</div>
+<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Name</span><span class="out-value" id="out_supervisorName"></span></div>
+<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Signature</span><span class="out-value" id="out_supervisorSig"></span></div>
+<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Date</span><span class="out-value" id="out_supervisorDate"></span></div>
+<div class="signature-line"></div>
+</div>
+<div class="approval-out-card">
+<div class="approval-out-role">Safety Officer</div>
+<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Name</span><span class="out-value" id="out_safetyName"></span></div>
+<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Signature</span><span class="out-value" id="out_safetySig"></span></div>
+<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Date</span><span class="out-value" id="out_safetyDate"></span></div>
+<div class="signature-line"></div>
+</div>
+</div>
 </div>
 
 </main>
 
-
 <!-- AI CHAT -->
 <div class="ai-chat-sidebar" id="aiChat">
-
 <div class="chat-header">
 <span>AI Safety Assistant</span>
-<button onclick="toggleChat()">✖</button>
+<button onclick="toggleChat()">X</button>
 </div>
-
 <div class="chat-messages" id="chatMessages">
-<div class="ai-msg">Hello! Ask me about workplace safety.</div>
+<div class="ai-msg">Hello! Ask me about workplace safety or this report.</div>
 </div>
-
 <div class="chat-input">
 <input id="chatInput" placeholder="Ask a question...">
 <button onclick="sendChat()">Send</button>
 </div>
-
 </div>
 
-<button class="chat-toggle-btn" onclick="toggleChat()">
-💬 AI Assistant
-</button>
-
+<button class="chat-toggle-btn" onclick="toggleChat()">AI Assistant</button>
 
 <!-- FOOTER -->
 <div id="footer"></div>
 
-
 <script>
 
-/* LOAD SIDEBAR */
+/* Sidebar and Footer */
 fetch("../components/sidebar.html")
-.then(res => res.text())
+.then(r => r.text())
 .then(data => {
-
 document.getElementById("sidebar-container").innerHTML = data
-
-/* Initialize search */
-initSearch()
-
-/* Sidebar Toggle */
-
-const toggleBtn = document.getElementById("menuToggle")
-const sidebar = document.querySelector(".sidebar")
-const navbar = document.querySelector(".navbar")
-const mainContent = document.querySelector(".main-content")
-
-if(toggleBtn){
-
-toggleBtn.onclick = function(){
-
+if (typeof initSearch === "function") initSearch()
+const toggleBtn  = document.getElementById("menuToggle")
+const sidebar    = document.querySelector(".sidebar")
+const navbar     = document.querySelector(".navbar")
+const mainContent= document.querySelector(".main-content")
+if (toggleBtn) {
+toggleBtn.onclick = function () {
 sidebar.classList.toggle("collapsed")
-
-if(navbar) navbar.classList.toggle("expanded")
-if(mainContent) mainContent.classList.toggle("expanded")
-
-/* footer loads later */
+if (navbar)      navbar.classList.toggle("expanded")
+if (mainContent) mainContent.classList.toggle("expanded")
 const footer = document.querySelector(".footer")
-
-if(footer){
-footer.classList.toggle("expanded")
+if (footer) footer.classList.toggle("expanded")
 }
-
-}
-
 }
 })
 
-/* LOAD FOOTER */
 fetch("../components/footer.html")
-.then(res => res.text())
-.then(data => {
+.then(r => r.text())
+.then(data => { document.getElementById("footer").innerHTML = data })
 
-document.getElementById("footer").innerHTML = data
+/* Auth */
+function checkAuth(){
+
+const token = localStorage.getItem("token")
+
+if(!token){
+window.location.href="login.html"
+return
+}
+
+}
+checkAuth();
+
+/* Auto Report ID and today date */
+(function () {
+const pad = n => String(n).padStart(2, "0")
+const now = new Date()
+const id  = "INC-" + now.getFullYear() + "-" + pad(now.getMonth()+1) + pad(now.getDate()) + "-" + Math.floor(1000 + Math.random() * 9000)
+document.getElementById("f_reportId").value        = id
+document.getElementById("f_date").value            = now.toISOString().slice(0, 10)
+document.getElementById("f_time").value            = pad(now.getHours()) + ":" + pad(now.getMinutes())
+document.getElementById("f_reporterDate").value    = now.toISOString().slice(0, 10)
+document.getElementById("f_supervisorDate").value  = now.toISOString().slice(0, 10)
+document.getElementById("f_safetyDate").value      = now.toISOString().slice(0, 10)
+})()
+
+/* Evidence file name */
+document.getElementById("f_evidence").addEventListener("change", function () {
+document.getElementById("evidenceFileName").textContent = this.files[0] ? this.files[0].name : "No file selected."
+})
+
+/* Risk level badge */
+const RISK_MAP = {
+Low:      { cls: "risk-low",      label: "Low" },
+Medium:   { cls: "risk-medium",   label: "Medium" },
+High:     { cls: "risk-high",     label: "High" },
+Critical: { cls: "risk-critical", label: "Critical" }
+}
+function updateRiskBadge() {
+const val   = document.getElementById("f_riskLevel").value
+const wrap  = document.getElementById("riskBadgeWrap")
+const badge = document.getElementById("riskBadge")
+if (!val) { wrap.classList.add("hidden"); return }
+badge.className  = "risk-pill " + RISK_MAP[val].cls
+badge.textContent = val
+wrap.classList.remove("hidden")
+}
+
+/* AI analysis (rule-based) */
+const HAZARD_SCORES = {
+"Slip / Trip / Fall":         { score: 52, severity: "Moderate",    prob: "Likely" },
+"Electrical":                 { score: 78, severity: "Major",       prob: "Possible" },
+"Chemical / Toxic Exposure":  { score: 85, severity: "Major",       prob: "Possible" },
+"Fire / Explosion":           { score: 95, severity: "Catastrophic",prob: "Unlikely" },
+"Machinery / Equipment":      { score: 72, severity: "Major",       prob: "Possible" },
+"Ergonomic / Overexertion":   { score: 38, severity: "Minor",       prob: "Likely" },
+"Struck-By / Falling Object": { score: 68, severity: "Moderate",    prob: "Possible" },
+"Environmental":              { score: 44, severity: "Moderate",    prob: "Possible" },
+"PPE Non-Compliance":         { score: 55, severity: "Moderate",    prob: "Almost Certain" },
+"Other":                      { score: 50, severity: "Moderate",    prob: "Possible" }
+}
+const LEVEL_MULT = { Low: 0.6, Medium: 1.0, High: 1.35, Critical: 1.7 }
+
+function runAiAnalysis() {
+const hazard = document.getElementById("f_hazardType").value
+const level  = document.getElementById("f_riskLevel").value
+if (!hazard || !level) { alert("Please select Hazard Type and Risk Level first."); return }
+const base  = HAZARD_SCORES[hazard] || { score: 50, severity: "Moderate", prob: "Possible" }
+const score = Math.min(100, Math.round(base.score * (LEVEL_MULT[level] || 1.0)))
+document.getElementById("aiScore").textContent       = score
+document.getElementById("aiSeverity").textContent    = base.severity
+document.getElementById("aiProbability").textContent = base.prob
+document.getElementById("f_aiScore").value      = score
+document.getElementById("f_aiSeverity").value   = base.severity
+document.getElementById("f_aiProbability").value = base.prob
+
+let reports = JSON.parse(localStorage.getItem("reports") || "[]")
+
+reports.push({
+report_id: document.getElementById("f_reportId").value,
+date: document.getElementById("f_date").value,
+time: document.getElementById("f_time").value,
+location: document.getElementById("f_location").value,
+department: document.getElementById("f_department").value,
+employee: document.getElementById("f_empName").value,
+hazard: document.getElementById("f_hazardType").value,
+risk: document.getElementById("f_riskLevel").value,
+status: document.getElementById("f_status").value
+})
+
+localStorage.setItem("reports", JSON.stringify(reports))
+
+}
+
+/* Validation */
+const REQUIRED = [
+{ id: "f_date",            label: "Date" },
+{ id: "f_time",            label: "Time" },
+{ id: "f_location",        label: "Location" },
+{ id: "f_department",      label: "Department" },
+{ id: "f_empName",         label: "Employee Name" },
+{ id: "f_empId",           label: "Employee ID" },
+{ id: "f_role",            label: "Role" },
+{ id: "f_hazardType",      label: "Hazard Type" },
+{ id: "f_riskLevel",       label: "Risk Level" },
+{ id: "f_description",     label: "Description" },
+{ id: "f_immediateAction", label: "Immediate Action" },
+{ id: "f_preventiveAction",label: "Preventive Action" },
+{ id: "f_responsible",     label: "Responsible Person" },
+{ id: "f_deadline",        label: "Deadline" },
+{ id: "f_status",          label: "Status" }
+]
+function validate() {
+for (const f of REQUIRED) {
+const el = document.getElementById(f.id)
+if (!el.value.trim()) {
+document.getElementById("validationMsg").textContent = '"' + f.label + '" is required.'
+document.getElementById("validationMsg").style.display = "inline"
+el.focus()
+return false
+}
+}
+
+async function saveReportToBackend(data) {
+
+const token = localStorage.getItem("token")
+
+try {
+
+const response = await fetch("http://127.0.0.1:8000/api/reports", {
+
+method: "POST",
+
+headers: {
+"Content-Type": "application/json",
+"Authorization": "Bearer " + token
+},
+
+body: JSON.stringify(data)
 
 })
 
-</script>
+if (!response.ok) throw new Error("Failed to save report")
+
+const result = await response.json()
+
+console.log("Report saved:", result)
+
+} catch (err) {
+
+console.error(err)
+alert("Error saving report")
+
+}
+
+}
 
 
-<!-- REPORT GENERATOR -->
-<script>
+document.getElementById("validationMsg").style.display = "none"
+return true
+}
 
-function generateReport(){
+/* Generate Report */
+async function generateReport() {
 
-const project = document.getElementById("project").value;
-const model = document.getElementById("model").value;
-const risk = document.getElementById("risk").value;
-const description = document.getElementById("description").value;
+if (!validate()) return
 
-document.getElementById("outProject").innerText = project;
-document.getElementById("outModel").innerText = model;
-document.getElementById("outRisk").innerText = risk;
-document.getElementById("outDesc").innerText = description;
+const file = document.getElementById("f_evidence").files[0]
 
-document.getElementById("reportOutput").classList.remove("hidden");
+let evidenceUrl = null
 
+if(file){
+const uploadResult = await uploadEvidence(file)
+evidenceUrl = uploadResult.url
+}
+
+const reportData = {
+report_id: document.getElementById("f_reportId").value,
+date: document.getElementById("f_date").value,
+time: document.getElementById("f_time").value,
+location: document.getElementById("f_location").value,
+department: document.getElementById("f_department").value,
+evidence_url: evidenceUrl
+}
+
+saveReportToBackend(reportData)
+
+}
+/* Reset */
+function resetForm() {
+if (!confirm("Reset all form fields?")) return
+document.querySelectorAll(".field-input:not([readonly]), .field-select, .field-textarea").forEach(el => { el.value = "" })
+document.querySelectorAll("input[name='rootCause']").forEach(cb => cb.checked = false)
+document.getElementById("riskBadgeWrap").classList.add("hidden")
+document.getElementById("aiScore").textContent = "--"
+document.getElementById("aiSeverity").textContent = "--"
+document.getElementById("aiProbability").textContent = "--"
+document.getElementById("evidenceFileName").textContent = "No file selected."
+document.getElementById("reportOutput").classList.add("hidden")
+document.getElementById("validationMsg").style.display = "none"
+const pad = n => String(n).padStart(2, "0")
+const now = new Date()
+document.getElementById("f_reportId").value = "INC-" + now.getFullYear() + "-" + pad(now.getMonth()+1) + pad(now.getDate()) + "-" + Math.floor(1000 + Math.random() * 9000)
+document.getElementById("f_date").value = now.toISOString().slice(0, 10)
+document.getElementById("f_time").value = pad(now.getHours()) + ":" + pad(now.getMinutes())
 }
 
 </script>
 
-
-<!-- AI CHAT SCRIPT -->
 <script>
-
-
-function sendChat(){
-
-let input=document.getElementById("chatInput")
-let text=input.value.trim()
-
-if(text==="") return
-
-addChat(text,"user-msg")
-
-let reply=generateReply(text)
-
-setTimeout(()=>{
-addChat(reply,"ai-msg")
-},400)
-
-input.value=""
-
+function sendChat() {
+let input = document.getElementById("chatInput")
+let text  = input.value.trim()
+if (!text) return
+addChat(text, "user-msg")
+setTimeout(() => addChat(generateReply(text), "ai-msg"), 400)
+input.value = ""
 }
-
-function addChat(text,type){
-
-let box=document.getElementById("chatMessages")
-
-let div=document.createElement("div")
-
-div.className=type
-div.innerText=text
-
+function addChat(text, type) {
+let box = document.getElementById("chatMessages")
+let div = document.createElement("div")
+div.className = type
+div.innerText = text
 box.appendChild(div)
-
-box.scrollTop=box.scrollHeight
-
+box.scrollTop = box.scrollHeight
 }
-
-function generateReply(q){
-
-q=q.toLowerCase()
-
-if(q.includes("hazard"))
-return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
-
-if(q.includes("helmet"))
-return "Workers must always wear PPE like helmets, gloves, and safety shoes."
-
-if(q.includes("accident"))
-return "Reduce accidents by conducting safety audits and enforcing PPE."
-
-return "Safety tip: Always inspect equipment before starting work."
-
+function generateReply(q) {
+q = q.toLowerCase()
+if (q.includes("hazard"))     return "Common hazards: slips, falls, electrical risks, and unsafe machinery."
+if (q.includes("helmet"))     return "Workers must wear PPE: helmets, gloves, and safety shoes at all times."
+if (q.includes("accident"))   return "Reduce accidents by conducting regular safety audits and enforcing PPE policies."
+if (q.includes("root cause")) return "Root cause analysis finds the underlying reason for an incident, not just the symptom."
+if (q.includes("corrective")) return "Corrective actions must address root causes with both immediate containment and long-term prevention."
+if (q.includes("score"))      return "The risk score (0-100) combines hazard severity and probability. Above 70 requires urgent action."
+return "Safety tip: Always inspect equipment before starting work and complete all PPE checks."
 }
-
-document.getElementById("chatInput").addEventListener("keypress",function(e){
-
-if(e.key==="Enter"){
-sendChat()
-}
-
+document.getElementById("chatInput").addEventListener("keypress", function (e) {
+if (e.key === "Enter") sendChat()
 })
+
+const reportData = {
+
+report_id: document.getElementById("f_reportId").value,
+date: document.getElementById("f_date").value,
+time: document.getElementById("f_time").value,
+location: document.getElementById("f_location").value,
+department: document.getElementById("f_department").value,
+
+employee_name: document.getElementById("f_empName").value,
+employee_id: document.getElementById("f_empId").value,
+role: document.getElementById("f_role").value,
+
+hazard_type: document.getElementById("f_hazardType").value,
+risk_level: document.getElementById("f_riskLevel").value,
+description: document.getElementById("f_description").value,
+
+risk_score: score,
+severity: sev,
+probability: prob,
+
+root_cause: rootCauseTxt,
+
+immediate_action: document.getElementById("f_immediateAction").value,
+preventive_action: document.getElementById("f_preventiveAction").value,
+
+responsible_person: document.getElementById("f_responsible").value,
+deadline: document.getElementById("f_deadline").value,
+status: document.getElementById("f_status").value
+
+}
+
 
 </script>
 
-
-<!-- REQUIRED FOR SIDEBAR -->
 <script src="../js/main.js"></script>
-
 </body>
 </html>

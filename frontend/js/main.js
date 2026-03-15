@@ -20,7 +20,7 @@ const ROLE_ACCESS_RULES = {
 "/frontend/pages/settings.html": ["admin"],
 "/frontend/pages/activity_log.html": ["admin", "manager"],
 "/frontend/pages/analytics.html": ["admin", "manager"],
-"/frontend/pages/generate_report.html": ["admin", "manager"],
+"/frontend/pages/generate_report.html": ["admin", "manager","worker"],
 "/frontend/pages/rag_report.html": ["admin", "manager"],
 "/frontend/pages/recommendations.html": ["admin", "manager"],
 "/frontend/pages/risk_assessment.html": ["admin", "manager"],
@@ -37,7 +37,17 @@ const ROLE_ACCESS_RULES = {
 };
 
 function getCurrentRole(){
-return (localStorage.getItem("user_role") || "worker").toLowerCase();
+
+const storedUser = JSON.parse(localStorage.getItem("user") || "null")
+
+if(storedUser && storedUser.role){
+return storedUser.role.toLowerCase()
+}
+
+const role = localStorage.getItem("user_role") || localStorage.getItem("role")
+
+return (role || "worker").toLowerCase()
+
 }
 
 function canAccessPath(path, role){
@@ -387,13 +397,44 @@ hideLoader()
 
 })
 
-document.getElementById("analyzeBtn").addEventListener("click", function(e){
-    e.preventDefault()
-    e.stopPropagation()
-    analyzeImage()
-})
+const analyzeBtn = document.getElementById("analyzeBtn")
 
-document.getElementById("imageInput").addEventListener("change", previewImage)
+if(analyzeBtn){
+analyzeBtn.addEventListener("click", function(e){
+e.preventDefault()
+e.stopPropagation()
+analyzeImage()
+})
+}
+
+const imageInput = document.getElementById("imageInput")
+
+if(imageInput){
+imageInput.addEventListener("change", previewImage)
+}
 
 document.getElementById("resultImage").src =
     "http://127.0.0.1:8000/" + data.annotated_image;
+
+
+
+async function uploadEvidence(file){
+
+const formData = new FormData()
+formData.append("file", file)
+
+const token = localStorage.getItem("token")
+
+const res = await fetch("http://127.0.0.1:8000/api/upload",{
+
+method:"POST",
+headers:{
+"Authorization":"Bearer "+token
+},
+body:formData
+
+})
+
+return await res.json()
+
+}	

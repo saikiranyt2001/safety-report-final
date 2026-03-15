@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 import hashlib
 from pydantic import BaseModel
-from backend.config import settings
+from backend.core.config import settings
 from backend.services.activity_service import log_activity
 
 SECRET_KEY = settings.SECRET_KEY

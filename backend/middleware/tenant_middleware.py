@@ -2,7 +2,7 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request
 from jose import jwt, JWTError
-from backend.config import settings
+from backend.core.config import settings
 
 
 class TenantMiddleware(BaseHTTPMiddleware):
