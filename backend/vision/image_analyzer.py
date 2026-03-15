@@ -1,6 +1,5 @@
 import os
 import cv2
-from ultralytics import YOLO
 
 from backend.services.alert_service import send_alert
 from backend.services.incident_ai import generate_incident_report
@@ -12,6 +11,10 @@ class ImageAnalyzer:
     @classmethod
     def _get_model(cls):
         if cls._model is None:
+            try:
+                from ultralytics import YOLO
+            except ImportError as exc:
+                raise RuntimeError("ultralytics is not installed") from exc
             # Load YOLO model once
             cls._model = YOLO("yolov8n.pt")
         return cls._model

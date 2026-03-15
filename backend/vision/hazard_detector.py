@@ -1,4 +1,3 @@
-from ultralytics import YOLO
 import cv2
 import os
 
@@ -8,6 +7,10 @@ from backend.services.incident_ai import generate_incident_report
 class HazardDetector:
 
     def __init__(self):
+        try:
+            from ultralytics import YOLO
+        except ImportError as exc:
+            raise RuntimeError("ultralytics is not installed") from exc
         self.model = YOLO("yolov8n.pt")
 
     def detect(self, image_path):

@@ -10,6 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_main_imports_without_openai_key():
     env = os.environ.copy()
     env.pop("OPENAI_API_KEY", None)
+    env["PYTHONPATH"] = str(PROJECT_ROOT) + os.pathsep + env.get("PYTHONPATH", "")
 
     result = subprocess.run(
         [sys.executable, "-c", "import main; print('startup import ok')"],

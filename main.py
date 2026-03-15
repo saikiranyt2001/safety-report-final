@@ -37,7 +37,7 @@ from backend.api.routes_settings import router as settings_router
 from backend.database.database import Base, engine
 import backend.database.models 
 
-print("🚀 Starting AI Safety Platform...")
+print("Starting AI Safety Platform...")
 
 app = FastAPI(title="AI Safety Platform")
 
