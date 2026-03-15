@@ -371,6 +371,22 @@ if(!confirm("Delete this user?")){
 return
 }
 
+try {
+const response = await fetch(`/api/admin/users/${userId}`, {
+method: "DELETE",
+headers: apiHeaders()
+})
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || "Unable to delete user")
+}
+setStatusMessage("User deleted.")
+await loadUsers()
+} catch(error){
+setStatusMessage(error.message)
+}
+}
+
 async function toggleUserStatus(userId){
 const target = usersCache.find(item => item.id === userId)
 if(!target){
@@ -394,22 +410,6 @@ const errorText = await response.text()
 throw new Error(errorText || `Unable to ${actionLabel} user`)
 }
 setStatusMessage(`User ${nextActiveState ? "activated" : "deactivated"}.`)
-await loadUsers()
-} catch(error){
-setStatusMessage(error.message)
-}
-}
-
-try {
-const response = await fetch(`/api/admin/users/${userId}`, {
-method: "DELETE",
-headers: apiHeaders()
-})
-if(!response.ok){
-const errorText = await response.text()
-throw new Error(errorText || "Unable to delete user")
-}
-setStatusMessage("User deleted.")
 await loadUsers()
 } catch(error){
 setStatusMessage(error.message)

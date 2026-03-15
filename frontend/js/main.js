@@ -1,15 +1,12 @@
 function highlightActivePage(){
-
 const links = document.querySelectorAll(".sidebar a")
-
 links.forEach(link => {
-
 const href = link.getAttribute("href")
-
 if(!href) return
-
 if(window.location.pathname.includes(href.replace("../",""))){
 link.classList.add("active")
+}
+})
 }
 
 function getApiBaseUrl() {
@@ -113,10 +110,6 @@ window.sendChat()
 })
 input.dataset.backendChatBound = "1"
 }
-}
-
-})
-
 }
 const ROLE_ACCESS_RULES = {
 "/frontend/pages/users.html": ["admin"],
