@@ -10,6 +10,10 @@ def _get_client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
+def get_openai_client() -> OpenAI:
+    return _get_client()
+
+
 def chat_completion(prompt, max_tokens=400):
     client = _get_client()
 

@@ -1,23 +1,10 @@
-from openai import OpenAI
-import os
 import base64
 
-from backend.core.ai_client import chat_completion
-
-def analyze_image(description):
-
-    prompt = f"""
-    Identify safety hazards in this scene:
-
-    {description}
-    """
-
-    return chat_completion(prompt)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from backend.core.ai_client import get_openai_client
 
 
 def analyze_image(image_path):
-
+    client = get_openai_client()
     with open(image_path, "rb") as img:
         base64_image = base64.b64encode(img.read()).decode("utf-8")
 

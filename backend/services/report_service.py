@@ -1,20 +1,13 @@
 import uuid
 import os
-from openai import OpenAI
 
 from backend.celery_app import celery
+from backend.core.ai_client import get_openai_client
 from backend.document_export.pdf_generator import generate_pdf_report
 
 # ----------------------------
 # CONFIGURATION
 # ----------------------------
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY is not set in environment variables")
-
-client = OpenAI(api_key=OPENAI_API_KEY)
 
 STORAGE_DIR = "storage/reports"
 os.makedirs(STORAGE_DIR, exist_ok=True)
@@ -71,6 +64,7 @@ Provide a structured response including:
 """
 
     try:
+        client = get_openai_client()
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
@@ -101,6 +95,7 @@ List hazards clearly.
 """
 
     try:
+        client = get_openai_client()
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],

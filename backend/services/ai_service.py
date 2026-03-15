@@ -1,13 +1,9 @@
-from openai import OpenAI
-import os
-from backend.core.ai_client import chat_completion
+from backend.core.ai_client import chat_completion, get_openai_client
 
 
 def ask_ai(prompt: str):
 
     return chat_completion(prompt)
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_safety_report(hazards, safety_rules):
 
@@ -26,6 +22,7 @@ def generate_safety_report(hazards, safety_rules):
     - mitigation steps
     """
 
+    client = get_openai_client()
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
