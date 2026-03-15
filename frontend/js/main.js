@@ -9,6 +9,10 @@ link.classList.add("active")
 })
 }
 
+function isValidStoredToken(token) {
+return !!token && token !== "loggedin" && token.split(".").length === 3
+}
+
 function getApiBaseUrl() {
 return window.location.origin
 }
@@ -18,7 +22,8 @@ return path.startsWith("http") ? path : getApiBaseUrl() + path
 }
 
 function getStoredToken() {
-return localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
+const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
+return isValidStoredToken(token) ? token : null
 }
 
 function clearStoredSession() {

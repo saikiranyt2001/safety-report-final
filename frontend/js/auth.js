@@ -1,5 +1,6 @@
 function getStoredToken(){
-	return localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token");
+	const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token");
+	return token && token !== "loggedin" && token.split(".").length === 3 ? token : null;
 }
 
 function clearStoredSession(){

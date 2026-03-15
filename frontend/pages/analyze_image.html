@@ -348,7 +348,10 @@ function checkAuth(){
 
 const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 
-if(!token){
+if(!token || token === "loggedin" || token.split(".").length !== 3){
+localStorage.removeItem("auth_token")
+localStorage.removeItem("token")
+localStorage.removeItem("access_token")
 window.location.href="login.html"
 return
 }
@@ -444,8 +447,10 @@ formData.append("file", file)
 document.getElementById("resultBox").innerHTML = "Uploading image and queuing background analysis..."
 
 try{
-
-const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
+const token = (typeof getStoredToken === "function" ? getStoredToken() : null)
+if(!token){
+throw new Error("Your session expired. Please log in again.")
+}
 
 const response = await fetch(window.location.origin + "/api/pipeline/analyze-image", {
 method: "POST",
@@ -517,14 +522,13 @@ async function pollTaskResult(taskId, token) {
 
 </script>
 
+<script src="../js/main.js"></script>
+
 <!-- AI CHAT SCRIPT -->
 <script>
 wireBackendChat()
 document.getElementById("analyzeBtn").onclick = analyzeImage
-
 </script>
-
-<script src="../js/main.js"></script>
 
 </body>
 </html>
