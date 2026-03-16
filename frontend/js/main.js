@@ -246,13 +246,13 @@ footer.classList.toggle("expanded")
 function searchFeature(){
 
 const features = {
-"dashboard":"dashboard.html",
 "analytics":"analytics.html",
 "upload":"upload_data.html",
 "analyze":"analyze_image.html",
 "live":"live_detection.html",
 "webcam":"live_detection.html",
 "report":"report_history.html",
+"inspection template":"inspection_templates.html",
 "profile":"profile.html",
 "heatmap":"analytics.html"
 }
@@ -275,14 +275,13 @@ return
 function initSearch(){
 
 const features = [
-{ name:"Dashboard", page:"/frontend/pages/dashboard.html", cat:"Pages" },
 { name:"Upload Data", page:"/frontend/pages/upload.html", cat:"Pages" },
 { name:"Analyze Image", page:"/frontend/pages/analyze_image.html", cat:"Pages" },
 { name:"Live Detection", page:"/frontend/pages/live_detection.html", cat:"Pages" },
 { name:"Generate Report", page:"/frontend/pages/generate_report.html", cat:"Reports" },
+{ name:"Inspection Templates", page:"/frontend/pages/inspection_templates.html", cat:"Pages" },
 { name:"RAG Report", page:"/frontend/pages/rag_report.html", cat:"Reports" },
 { name:"Report History", page:"/frontend/pages/report_history.html", cat:"Reports" },
-{ name:"Download Report", page:"/frontend/pages/download_report.html", cat:"Reports" },
 { name:"Analytics", page:"/frontend/pages/analytics.html", cat:"Pages" },
 { name:"KPI Dashboard", page:"/frontend/pages/kpi_dashboard.html", cat:"Pages" },
 { name:"Recommendations", page:"/frontend/pages/recommendations.html", cat:"Pages" },

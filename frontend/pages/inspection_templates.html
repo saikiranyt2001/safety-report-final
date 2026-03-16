@@ -590,13 +590,44 @@ body {
 // =====================
 // Bootstrap
 // =====================
-const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
-if(!token) window.location.href = "login.html"
+function isLikelyJwt(value){
+  return typeof value === "string" && value.split(".").length === 3
+}
+
+const storedAuthToken = localStorage.getItem("auth_token")
+const storedToken = localStorage.getItem("token")
+const token = isLikelyJwt(storedAuthToken)
+  ? storedAuthToken
+  : (isLikelyJwt(storedToken) ? storedToken : null)
+
+if(token){
+  // Keep both keys aligned to the working JWT for legacy pages.
+  localStorage.setItem("auth_token", token)
+  localStorage.setItem("token", token)
+} else {
+  localStorage.removeItem("auth_token")
+  localStorage.removeItem("token")
+  window.location.href = "login.html"
+}
 
 function apiHeaders(){
   const h = {"Content-Type":"application/json"}
-  if(token && token !== "loggedin") h["Authorization"] = "Bearer " + token
+  if(token) h["Authorization"] = "Bearer " + token
   return h
+}
+
+async function apiFetch(url, options = {}){
+  const res = await fetch(url, options)
+  if(res.status === 401){
+    localStorage.removeItem("auth_token")
+    localStorage.removeItem("token")
+    toast("Session expired. Redirecting to login.", true)
+    setTimeout(() => {
+      window.location.href = "login.html"
+    }, 700)
+    throw new Error("Unauthorized")
+  }
+  return res
 }
 
 function toast(msg, err){
@@ -633,7 +664,7 @@ let allTemplates = []
 
 async function loadTemplates(){
   try {
-    const res = await fetch("/api/inspection-templates", { headers: apiHeaders() })
+    const res = await apiFetch("/api/inspection-templates", { headers: apiHeaders() })
     if(!res.ok) throw new Error()
     allTemplates = await res.json()
   } catch {
@@ -917,7 +948,7 @@ async function loadPresetTemplate(templateDefinition, skipConfirm = false){
   const description = `${templateDefinition.category} | Template ID: ${templateDefinition.template_id}`
 
   try {
-    const createRes = await fetch("/api/inspection-templates", {
+    const createRes = await apiFetch("/api/inspection-templates", {
       method: "POST",
       headers: apiHeaders(),
       body: JSON.stringify({
@@ -929,29 +960,41 @@ async function loadPresetTemplate(templateDefinition, skipConfirm = false){
     })
 
     if(!createRes.ok){
-      throw new Error("Failed to create preset template")
+      const msg = await safeErrorMessage(createRes)
+      throw new Error(`Create failed (${createRes.status}): ${msg}`)
     }
 
     const created = await createRes.json()
     const questions = flattenTemplateQuestions(templateDefinition)
 
     for(const question of questions){
-      const qRes = await fetch(`/api/inspection-templates/${created.id}/questions`, {
+      const qRes = await apiFetch(`/api/inspection-templates/${created.id}/questions`, {
         method: "POST",
         headers: apiHeaders(),
         body: JSON.stringify(question)
       })
       if(!qRes.ok){
-        throw new Error("Failed while adding preset template questions")
+        const msg = await safeErrorMessage(qRes)
+        throw new Error(`Question add failed (${qRes.status}): ${msg}`)
       }
     }
 
     toast(`Loaded ${questions.length} questions for ${templateDefinition.template_name}`)
     await loadTemplates()
     return true
-  } catch (_error){
-    toast("Unable to load preset template. Check permissions (admin/manager).", true)
+  } catch (error){
+    toast(error?.message || "Unable to load preset template", true)
     return false
+  }
+}
+
+async function safeErrorMessage(response){
+  try {
+    const data = await response.json()
+    if(typeof data?.detail === "string") return data.detail
+    return JSON.stringify(data)
+  } catch {
+    return response.statusText || "Unknown error"
   }
 }
 
@@ -1263,7 +1306,9 @@ fetch("../components/sidebar.html")
   .then(html => {
     document.getElementById("sidebar-container").innerHTML = html
 
-    initSearch()
+    if (typeof initSearch === "function") {
+      initSearch()
+    }
 
     const toggleBtn = document.getElementById("menuToggle")
     const sidebar   = document.querySelector(".sidebar")

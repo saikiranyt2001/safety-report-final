@@ -59,7 +59,7 @@ def list_templates(
 @router.post("/inspection-templates", status_code=201)
 def create_template(
     payload: TemplateCreate,
-    user=Depends(require_roles("admin", "manager")),
+    user=Depends(require_roles("admin", "manager", "worker")),
     db: Session = Depends(get_db),
 ):
     template = inspection_service.create_template(
@@ -98,7 +98,7 @@ def get_template(
 def update_template(
     template_id: int,
     payload: TemplateCreate,
-    user=Depends(require_roles("admin", "manager")),
+    user=Depends(require_roles("admin", "manager", "worker")),
     db: Session = Depends(get_db),
 ):
     template = inspection_service.update_template(
@@ -126,7 +126,7 @@ def update_template(
 @router.delete("/inspection-templates/{template_id}")
 def delete_template(
     template_id: int,
-    user=Depends(require_roles("admin", "manager")),
+    user=Depends(require_roles("admin", "manager", "worker")),
     db: Session = Depends(get_db),
 ):
     template = inspection_service.delete_template(db, user.company_id, template_id)
@@ -149,7 +149,7 @@ def delete_template(
 def add_question(
     template_id: int,
     payload: QuestionCreate,
-    user=Depends(require_roles("admin", "manager")),
+    user=Depends(require_roles("admin", "manager", "worker")),
     db: Session = Depends(get_db),
 ):
     template = inspection_service.get_template(db, user.company_id, template_id)
@@ -181,7 +181,7 @@ def add_question(
 @router.delete("/inspection-questions/{question_id}")
 def delete_question(
     question_id: int,
-    user=Depends(require_roles("admin", "manager")),
+    user=Depends(require_roles("admin", "manager", "worker")),
     db: Session = Depends(get_db),
 ):
     question = inspection_service.delete_question(db, user.company_id, question_id)
