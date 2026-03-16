@@ -1,7 +1,7 @@
 import os
 import json
 from io import BytesIO
-from pathlib import Path
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
@@ -9,7 +9,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 from sqlalchemy.orm import Session
 
@@ -19,7 +18,7 @@ from backend.agents.safety_score_agent import calculate_safety_score
 from backend.core.rbac import require_roles
 from backend.core.ai_client import chat_completion
 from backend.services.activity_service import log_activity
-from backend.services.notification_service import notify_report_generated
+from backend.services.notification_service import notify_incident_reported, notify_report_generated
 from backend.tasks.report_task import generate_report_task
 
 router = APIRouter(tags=["Reports"])
@@ -41,15 +40,29 @@ class ReportCreatePayload(BaseModel):
     hazard_type: str | None = None
     risk_level: str | None = None
     description: str | None = None
+    contributing_hazards: str | None = None
+    risk_assessment_basis: str | None = None
+    ppe_info: str | None = None
     risk_score: int | None = None
     severity: str | None = None
     probability: str | None = None
     root_cause: str | None = None
+    control_implementation: str | None = None
+    compliance_references: str | None = None
     immediate_action: str | None = None
     preventive_action: str | None = None
     responsible_person: str | None = None
     deadline: str | None = None
     status: str | None = None
+    reporter_name: str | None = None
+    reporter_signature: str | None = None
+    reporter_date: str | None = None
+    supervisor_name: str | None = None
+    supervisor_signature: str | None = None
+    supervisor_date: str | None = None
+    safety_name: str | None = None
+    safety_signature: str | None = None
+    safety_date: str | None = None
     evidence_url: str | None = None
     layout_style: str | None = None
     layout_reference_url: str | None = None
@@ -61,6 +74,7 @@ class ReportCreatePayload(BaseModel):
     layout_margin_style: str | None = None
     layout_header_style: str | None = None
     layout_preview_note: str | None = None
+    layout_template_style: str | None = None
 
 
 class LayoutPreviewPayload(BaseModel):
@@ -70,6 +84,14 @@ class LayoutPreviewPayload(BaseModel):
     layout_reference_name: str | None = None
     layout_primary_color: str | None = None
     layout_accent_color: str | None = None
+
+
+class RiskAnalysisPayload(BaseModel):
+    hazard_type: str | None = None
+    risk_level: str | None = None
+    description: str | None = None
+    location: str | None = None
+    department: str | None = None
 
 
 # Database Dependency
@@ -173,15 +195,29 @@ FIELD_LABELS = {
     "hazard_type": "Hazard Type",
     "risk_level": "Risk Level",
     "description": "Description",
+    "contributing_hazards": "Contributing Hazards",
+    "risk_assessment_basis": "Risk Assessment Basis",
+    "ppe_info": "PPE Information",
     "risk_score": "Risk Score",
     "severity": "Severity Label",
     "probability": "Probability",
     "root_cause": "Root Cause",
+    "control_implementation": "Control Implementation",
+    "compliance_references": "Compliance References",
     "immediate_action": "Immediate Action",
     "preventive_action": "Preventive Action",
     "responsible_person": "Responsible Person",
     "deadline": "Deadline",
     "status": "Status",
+    "reporter_name": "Reporter Name",
+    "reporter_signature": "Reporter Signature",
+    "reporter_date": "Reporter Date",
+    "supervisor_name": "Supervisor Name",
+    "supervisor_signature": "Supervisor Signature",
+    "supervisor_date": "Supervisor Date",
+    "safety_name": "Safety Name",
+    "safety_signature": "Safety Signature",
+    "safety_date": "Safety Date",
     "evidence_url": "Evidence URL",
     "layout_style": "Layout Style",
     "layout_reference_url": "Layout Reference URL",
@@ -193,6 +229,7 @@ FIELD_LABELS = {
     "layout_margin_style": "Layout Margin Style",
     "layout_header_style": "Layout Header Style",
     "layout_preview_note": "Layout Preview Note",
+    "layout_template_style": "Layout Template Style",
 }
 
 LABEL_TO_FIELD = {label: key for key, label in FIELD_LABELS.items()}
@@ -260,6 +297,7 @@ def _fallback_layout_plan(payload: LayoutPreviewPayload) -> dict:
         "engine": "RULES",
         "margin_style": "wide-frame",
         "header_style": "image-band",
+        "template_style": "incident-grid",
         "preview_note": "Outer frame borrowed from uploaded layout; important text stays in a clean readable panel.",
         "company_name": payload.company_name or "Safety AI Platform",
         "company_address": payload.company_address or "Worksite address pending",
@@ -273,9 +311,10 @@ def _ai_layout_plan(payload: LayoutPreviewPayload) -> dict:
         "You are helping style a safety incident report. "
         "Use the uploaded layout only as inspiration for outer margin treatment and header framing. "
         "Do not restyle the body fields heavily; keep company name, address, and form details readable. "
-        "Return compact JSON only with keys: margin_style, header_style, preview_note. "
+        "Return compact JSON only with keys: margin_style, header_style, template_style, preview_note. "
         "Allowed margin_style values: wide-frame, double-frame, rounded-frame, banded-frame. "
         "Allowed header_style values: image-band, boxed-header, top-ribbon, split-banner. "
+        "Allowed template_style values: incident-grid, compact-grid. "
         f"Template file name: {payload.layout_reference_name or 'unknown'}. "
         f"Primary color: {payload.layout_primary_color or '#364fc7'}. "
         f"Accent color: {payload.layout_accent_color or '#0c8599'}. "
@@ -291,6 +330,7 @@ def _ai_layout_plan(payload: LayoutPreviewPayload) -> dict:
             "engine": "AI",
             "margin_style": parsed.get("margin_style") or "wide-frame",
             "header_style": parsed.get("header_style") or "image-band",
+            "template_style": parsed.get("template_style") or "incident-grid",
             "preview_note": parsed.get("preview_note") or "AI generated a template-aware outer frame.",
             "company_name": payload.company_name or "Safety AI Platform",
             "company_address": payload.company_address or "Worksite address pending",
@@ -299,6 +339,129 @@ def _ai_layout_plan(payload: LayoutPreviewPayload) -> dict:
         }
     except Exception:
         return _fallback_layout_plan(payload)
+
+
+def _enhance_report_fields(payload: ReportCreatePayload) -> dict[str, str]:
+    prompt = (
+        "You improve safety report text while preserving facts. "
+        "Return compact JSON with keys: description, root_cause, immediate_action, preventive_action. "
+        "Keep each field concise, professional, and actionable. "
+        f"Description: {payload.description or '-'}\n"
+        f"Root Cause: {payload.root_cause or '-'}\n"
+        f"Immediate Action: {payload.immediate_action or '-'}\n"
+        f"Preventive Action: {payload.preventive_action or '-'}"
+    )
+    try:
+        raw = chat_completion(prompt, max_tokens=260)
+        parsed = _extract_json_object(raw or "") or {}
+        return {
+            "description": (parsed.get("description") or payload.description or "").strip(),
+            "root_cause": (parsed.get("root_cause") or payload.root_cause or "").strip(),
+            "immediate_action": (parsed.get("immediate_action") or payload.immediate_action or "").strip(),
+            "preventive_action": (parsed.get("preventive_action") or payload.preventive_action or "").strip(),
+        }
+    except Exception:
+        return {
+            "description": (payload.description or "").strip(),
+            "root_cause": (payload.root_cause or "").strip(),
+            "immediate_action": (payload.immediate_action or "").strip(),
+            "preventive_action": (payload.preventive_action or "").strip(),
+        }
+
+
+def _ai_risk_analysis(payload: RiskAnalysisPayload) -> dict[str, str | int]:
+    prompt = (
+        "You are a safety risk analyst. "
+        "Return compact JSON only with keys: score, severity, probability. "
+        "score must be integer 0-100. "
+        "severity must be one of: Minor, Moderate, Major, Catastrophic. "
+        "probability must be one of: Rare, Unlikely, Possible, Likely, Almost Certain. "
+        f"Hazard Type: {payload.hazard_type or '-'}\n"
+        f"Risk Level: {payload.risk_level or '-'}\n"
+        f"Description: {payload.description or '-'}\n"
+        f"Location: {payload.location or '-'}\n"
+        f"Department: {payload.department or '-'}"
+    )
+    try:
+        raw = chat_completion(prompt, max_tokens=140)
+        parsed = _extract_json_object(raw or "") or {}
+        score = int(parsed.get("score", 50))
+        score = max(0, min(100, score))
+        severity = str(parsed.get("severity") or "Moderate").strip()
+        probability = str(parsed.get("probability") or "Possible").strip()
+
+        allowed_severity = {"Minor", "Moderate", "Major", "Catastrophic"}
+        allowed_probability = {"Rare", "Unlikely", "Possible", "Likely", "Almost Certain"}
+        if severity not in allowed_severity:
+            severity = "Moderate"
+        if probability not in allowed_probability:
+            probability = "Possible"
+
+        return {
+            "engine": "AI",
+            "score": score,
+            "severity": severity,
+            "probability": probability,
+        }
+    except Exception:
+        # Conservative fallback if AI is unavailable.
+        base_score = 50
+        level = (payload.risk_level or "").strip().lower()
+        if level == "low":
+            base_score = 35
+        elif level == "medium":
+            base_score = 55
+        elif level == "high":
+            base_score = 75
+        elif level == "critical":
+            base_score = 90
+
+        return {
+            "engine": "RULES",
+            "score": base_score,
+            "severity": "Moderate" if base_score < 70 else "Major",
+            "probability": "Possible" if base_score < 70 else "Likely",
+        }
+
+
+def _validate_report_payload(payload: ReportCreatePayload) -> dict[str, list[str]]:
+    required_pairs = [
+        ("date", "Date"),
+        ("time", "Time"),
+        ("location", "Location"),
+        ("department", "Department"),
+        ("hazard_type", "Hazard Type"),
+        ("risk_level", "Risk Level"),
+        ("description", "Description"),
+        ("immediate_action", "Immediate Action"),
+        ("preventive_action", "Preventive Action"),
+        ("responsible_person", "Responsible Person"),
+        ("deadline", "Deadline"),
+        ("status", "Status"),
+        ("reporter_name", "Reporter Name"),
+        ("reporter_date", "Reporter Date"),
+        ("supervisor_name", "Supervisor Name"),
+        ("supervisor_date", "Supervisor Date"),
+        ("safety_name", "Safety Officer Name"),
+        ("safety_date", "Safety Officer Date"),
+    ]
+
+    missing_fields = [label for key, label in required_pairs if not (getattr(payload, key, None) or "").strip()]
+    warnings: list[str] = []
+
+    if (payload.deadline or "").strip() and (payload.date or "").strip():
+        try:
+            event_date = datetime.strptime(payload.date, "%Y-%m-%d")
+            due_date = datetime.strptime(payload.deadline, "%Y-%m-%d")
+            if due_date < event_date:
+                warnings.append("Deadline is earlier than incident date.")
+        except Exception:
+            warnings.append("Date format appears invalid for date/deadline.")
+
+    return {
+        "missing_fields": missing_fields,
+        "warnings": warnings,
+    }
 
 
 def _style_palette(
@@ -347,20 +510,25 @@ def _draw_wrapped_text(
     max_width: float,
     line_height: float = 14,
 ) -> float:
-    words = (text or "-").split()
-    current = ""
+    paragraphs = (text or "-").splitlines() or ["-"]
     lines: list[str] = []
 
-    for word in words:
-        candidate = f"{current} {word}".strip()
-        if pdf.stringWidth(candidate, "Helvetica", 10) <= max_width:
-            current = candidate
+    for paragraph in paragraphs:
+        words = paragraph.split()
+        if not words:
+            lines.append("")
             continue
+        current = ""
+        for word in words:
+            candidate = f"{current} {word}".strip()
+            if pdf.stringWidth(candidate, "Helvetica", 10) <= max_width:
+                current = candidate
+                continue
+            if current:
+                lines.append(current)
+            current = word
         if current:
             lines.append(current)
-        current = word
-    if current:
-        lines.append(current)
 
     if not lines:
         lines = ["-"]
@@ -371,79 +539,208 @@ def _draw_wrapped_text(
     return y
 
 
-def _draw_reference_background(
-    pdf: canvas.Canvas,
-    reference_path: str,
-    width: float,
-    height: float,
-) -> None:
-    pdf.drawImage(ImageReader(reference_path), 0, 0, width=width, height=height, mask="auto")
-
-
-def _draw_reference_cover(
+def _draw_reference_outer_border(
     pdf: canvas.Canvas,
     width: float,
     height: float,
-    report: Report,
-    fields: dict[str, str],
 ) -> None:
-    pdf.setFillColor(colors.Color(0.05, 0.12, 0.22, alpha=0.58))
-    pdf.roundRect(36, 36, width - 72, 108, 18, fill=1, stroke=0)
+    # Keep only the border vibe from the reference by masking the inner body area.
+    pdf.setFillColor(colors.Color(1, 1, 1, alpha=0.94))
+    pdf.roundRect(34, 30, width - 68, height - 60, 18, fill=1, stroke=0)
+
+
+def _draw_template_section(
+    pdf: canvas.Canvas,
+    title: str,
+    x: float,
+    y: float,
+    width: float,
+    height: float,
+    header_color: colors.Color,
+    body_color: colors.Color,
+    text_color: colors.Color,
+    text: str,
+) -> None:
+    pdf.setFillColor(body_color)
+    pdf.roundRect(x, y - height, width, height, 8, fill=1, stroke=0)
+    pdf.setFillColor(header_color)
+    pdf.roundRect(x, y - 18, width, 18, 8, fill=1, stroke=0)
     pdf.setFillColor(colors.white)
-    pdf.setFont("Helvetica-Bold", 22)
-    pdf.drawString(56, 110, fields.get("report_id") or f"Safety Report #{report.id}")
-    pdf.setFont("Helvetica", 11)
-    pdf.drawString(56, 90, f"Location: {fields.get('location') or '-'}")
-    pdf.drawString(56, 74, f"Risk Level: {_risk_level_from_severity(report.severity)}")
-    pdf.drawString(56, 58, f"Generated: {report.created_at.strftime('%Y-%m-%d %H:%M') if report.created_at else '-'}")
+    pdf.setFont("Helvetica-Bold", 8)
+    pdf.drawString(x + 8, y - 12, title)
+    pdf.setFillColor(text_color)
+    pdf.setFont("Helvetica", 9)
+    _draw_wrapped_text(pdf, text or "-", x + 8, y - 30, width - 16, 10)
 
 
-def _draw_reference_content_page(
+def _draw_label_value(
+    pdf: canvas.Canvas,
+    x: float,
+    y: float,
+    label: str,
+    value: str,
+    label_color: colors.Color,
+    text_color: colors.Color,
+    max_width: float,
+) -> None:
+    def _fit_text_to_width(text: str, width: float) -> str:
+        raw = (text or "-").strip() or "-"
+        if pdf.stringWidth(raw, "Helvetica", 8) <= width:
+            return raw
+        ellipsis = "..."
+        trimmed = raw
+        while trimmed and pdf.stringWidth(trimmed + ellipsis, "Helvetica", 8) > width:
+            trimmed = trimmed[:-1]
+        return (trimmed + ellipsis) if trimmed else ellipsis
+
+    pdf.setFillColor(label_color)
+    pdf.setFont("Helvetica-Bold", 8)
+    pdf.drawString(x, y, label)
+    label_width = pdf.stringWidth(label, "Helvetica-Bold", 8)
+    value_x = x + label_width + 4
+    value_width = max(20, max_width - (value_x - x))
+    pdf.setFillColor(text_color)
+    pdf.setFont("Helvetica", 8)
+    pdf.drawString(value_x, y, _fit_text_to_width(value or "-", value_width))
+
+
+def _draw_reference_template_page(
     pdf: canvas.Canvas,
     width: float,
     height: float,
     report: Report,
     fields: dict[str, str],
     palette: dict[str, colors.Color | tuple[colors.Color, colors.Color]],
-    reference_name: str | None,
+    company_name: str,
+    company_address: str,
 ) -> None:
-    pdf.setFillColor(colors.Color(1, 1, 1, alpha=0.82))
-    pdf.roundRect(34, 28, width - 68, height - 56, 18, fill=1, stroke=0)
+    header_color = palette["header"]
+    accent_color = palette["accent"]
+    text_color = palette["text"]
+    panel_color = colors.Color(1, 1, 1, alpha=0.94)
 
-    pdf.setFillColor(palette["header"])
-    pdf.roundRect(48, height - 92, width - 96, 34, 12, fill=1, stroke=0)
+    # Hazard stripe with tighter spacing to match uploaded template proportion.
+    stripe_y_top = height - 50
+    stripe_y_bottom = 34
+    stripe_step = 16
+    stripe_w = 16
+    stripe_h = 14
+    for i in range(0, int(width), stripe_step):
+        fill = colors.HexColor("#111827") if (i // stripe_step) % 2 == 0 else colors.HexColor("#fbbf24")
+        pdf.setFillColor(fill)
+        pdf.rect(i, stripe_y_top, stripe_w, stripe_h, fill=1, stroke=0)
+        pdf.rect(i, stripe_y_bottom, stripe_w, stripe_h, fill=1, stroke=0)
+
+    pdf.setFillColor(panel_color)
+    panel_x = 44
+    panel_y = 54
+    panel_w = width - 88
+    panel_h = height - 118
+    pdf.roundRect(panel_x, panel_y, panel_w, panel_h, 10, fill=1, stroke=0)
+
     pdf.setFillColor(colors.white)
-    pdf.setFont("Helvetica-Bold", 16)
-    pdf.drawString(62, height - 79, "Report Styled From Uploaded Layout")
-    pdf.setFont("Helvetica", 9)
-    pdf.drawRightString(width - 62, height - 78, reference_name or "Image reference")
+    header_x = 56
+    header_y = height - 108
+    header_w = width - 112
+    header_h = 34
+    pdf.roundRect(header_x, header_y, header_w, header_h, 8, fill=1, stroke=0)
+    pdf.setStrokeColor(colors.Color(0.2, 0.25, 0.34, alpha=0.35))
+    pdf.setLineWidth(0.8)
+    pdf.roundRect(header_x, header_y, header_w, header_h, 8, fill=0, stroke=1)
 
-    pdf.setFillColor(palette["text"])
-    pdf.setFont("Helvetica-Bold", 11)
-    pdf.drawString(58, height - 118, "Incident Summary")
-    pdf.setFont("Helvetica", 10)
-    y = _draw_wrapped_text(pdf, fields.get("description") or "No report details available.", 58, height - 136, width - 116, 12)
+    pdf.setFillColor(colors.HexColor("#111827"))
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(header_x + 10, height - 95, "SAFETY INCIDENT REPORT")
 
-    blocks = [
-        ("Hazard Type", fields.get("hazard_type") or "-"),
-        ("Immediate Action", fields.get("immediate_action") or "-"),
-        ("Preventive Action", fields.get("preventive_action") or "-"),
-        ("Responsible Person", fields.get("responsible_person") or "-"),
-        ("Deadline", fields.get("deadline") or "-"),
-        ("Status", fields.get("status") or "-"),
-    ]
+    # Metadata row aligned in four equal blocks.
+    meta_x = 56
+    meta_y = height - 124
+    meta_h = 16
+    meta_w = width - 112
+    cell_w = meta_w / 4
+    pdf.setFillColor(colors.HexColor("#f8fafc"))
+    pdf.rect(meta_x, meta_y, meta_w, meta_h, fill=1, stroke=0)
+    pdf.setStrokeColor(colors.Color(0.2, 0.25, 0.34, alpha=0.2))
+    pdf.setLineWidth(0.6)
+    pdf.rect(meta_x, meta_y, meta_w, meta_h, fill=0, stroke=1)
+    for idx in range(1, 4):
+        divider_x = meta_x + cell_w * idx
+        pdf.line(divider_x, meta_y, divider_x, meta_y + meta_h)
 
-    y -= 10
-    for label, value in blocks:
-        if y < 90:
-            break
-        pdf.setFillColor(palette["accent"])
-        pdf.setFont("Helvetica-Bold", 10)
-        pdf.drawString(58, y, label)
-        pdf.setFillColor(palette["text"])
-        pdf.setFont("Helvetica", 10)
-        y = _draw_wrapped_text(pdf, value, 160, y, width - 220, 12)
-        y -= 8
+    _draw_label_value(pdf, meta_x + 6, meta_y + 5, "ID:", fields.get("report_id") or f"INC-{report.id:04d}", colors.HexColor("#374151"), text_color, cell_w - 12)
+    _draw_label_value(pdf, meta_x + cell_w + 6, meta_y + 5, "Date:", fields.get("date") or "-", colors.HexColor("#374151"), text_color, cell_w - 12)
+    _draw_label_value(pdf, meta_x + (cell_w * 2) + 6, meta_y + 5, "Time:", fields.get("time") or "-", colors.HexColor("#374151"), text_color, cell_w - 12)
+    _draw_label_value(pdf, meta_x + (cell_w * 3) + 6, meta_y + 5, "Dept:", fields.get("department") or "-", colors.HexColor("#374151"), text_color, cell_w - 12)
+
+    pdf.setFillColor(text_color)
+    pdf.setFont("Helvetica-Bold", 9)
+    pdf.setFillColor(header_color)
+    pdf.drawString(66, height - 134, company_name[:54])
+    pdf.setFillColor(text_color)
+    pdf.setFont("Helvetica", 8)
+    pdf.drawString(66, height - 145, company_address[:86])
+
+    left_x = 62
+    right_x = width / 2 + 6
+    col_w = width / 2 - 74
+    top_y = height - 170
+
+    # Top row mirrors details + incident snapshot split.
+    _draw_template_section(
+        pdf, "1. INCIDENT DETAILS", left_x, top_y, col_w, 126,
+        header_color, colors.Color(1, 1, 1, alpha=0.96), text_color,
+        f"Location: {fields.get('location') or '-'}\nEmployee: {fields.get('employee_name') or '-'}\nRole: {fields.get('role') or '-'}\nHazard: {fields.get('hazard_type') or '-'}\nRisk: {fields.get('risk_level') or '-'}",
+    )
+
+    pdf.setFillColor(colors.Color(1, 1, 1, alpha=0.96))
+    pdf.roundRect(right_x, top_y - 126, col_w, 126, 8, fill=1, stroke=0)
+    pdf.setFillColor(colors.HexColor("#1f2937"))
+    pdf.roundRect(right_x, top_y - 18, col_w, 18, 8, fill=1, stroke=0)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 8)
+    pdf.drawString(right_x + 8, top_y - 12, "2. INCIDENT SNAPSHOT")
+    pdf.setFillColor(colors.HexColor("#f1f5f9"))
+    pdf.roundRect(right_x + 8, top_y - 118, col_w - 16, 94, 4, fill=1, stroke=0)
+    pdf.setFillColor(colors.HexColor("#64748b"))
+    pdf.setFont("Helvetica", 8)
+    pdf.drawCentredString(right_x + (col_w / 2), top_y - 74, "Field Area")
+
+    _draw_template_section(
+        pdf, "3. DESCRIPTION OF INCIDENT", left_x, top_y - 140, col_w, 114,
+        colors.HexColor("#1f2937"), colors.Color(1, 1, 1, alpha=0.97), text_color,
+        fields.get("description") or "-",
+    )
+    _draw_template_section(
+        pdf, "4. ROOT CAUSE", right_x, top_y - 140, col_w, 114,
+        colors.HexColor("#1f2937"), colors.Color(1, 1, 1, alpha=0.97), text_color,
+        fields.get("root_cause") or "-",
+    )
+
+    _draw_template_section(
+        pdf, "5. IMMEDIATE ACTION", left_x, top_y - 266, col_w, 88,
+        accent_color, colors.Color(1, 1, 1, alpha=0.97), text_color,
+        fields.get("immediate_action") or "-",
+    )
+    _draw_template_section(
+        pdf, "6. CORRECTIVE ACTION", right_x, top_y - 266, col_w, 88,
+        accent_color, colors.Color(1, 1, 1, alpha=0.97), text_color,
+        fields.get("preventive_action") or "-",
+    )
+
+    _draw_template_section(
+        pdf, "7. RESPONSIBLE / DEADLINE", left_x, top_y - 368, col_w, 74,
+        header_color, colors.Color(1, 1, 1, alpha=0.97), text_color,
+        f"Owner: {fields.get('responsible_person') or '-'}\nDeadline: {fields.get('deadline') or '-'}\nStatus: {fields.get('status') or '-'}",
+    )
+    _draw_template_section(
+        pdf, "8. APPROVAL", right_x, top_y - 368, col_w, 96,
+        header_color, colors.Color(1, 1, 1, alpha=0.97), text_color,
+        "\n".join([
+            f"Reporter: {(fields.get('reporter_name') or fields.get('employee_name') or '-')} ({fields.get('reporter_date') or fields.get('date') or '-'})",
+            f"Supervisor: {(fields.get('supervisor_name') or fields.get('responsible_person') or '-')} ({fields.get('supervisor_date') or fields.get('deadline') or '-'})",
+            f"Safety Officer: {(fields.get('safety_name') or company_name or '-')} ({fields.get('safety_date') or fields.get('date') or '-'})",
+        ]),
+    )
 
 
 def _build_report_pdf(report: Report) -> BytesIO:
@@ -456,38 +753,26 @@ def _build_report_pdf(report: Report) -> BytesIO:
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
-    y = height - 50
     reference_path = _resolve_local_storage_path(fields.get("layout_reference_url"))
-    reference_suffix = Path(reference_path).suffix.lower() if reference_path else ""
     company_name = fields.get("company_name") or "Safety AI Platform"
     company_address = fields.get("company_address") or "Worksite address pending"
     margin_style = fields.get("layout_margin_style") or "wide-frame"
     header_style = fields.get("layout_header_style") or "image-band"
 
     pdf.setTitle(f"report_{report.id}")
-    if reference_path and reference_suffix in {".png", ".jpg", ".jpeg"}:
-        _draw_reference_background(pdf, reference_path, width, height)
-        _draw_reference_cover(pdf, width, height, report, fields)
-        pdf.showPage()
-        _draw_reference_background(pdf, reference_path, width, height)
-        _draw_reference_content_page(
+    has_reference_image = bool(reference_path)
+    if has_reference_image:
+        _draw_reference_outer_border(pdf, width, height)
+        _draw_reference_template_page(
             pdf,
             width,
             height,
             report,
             fields,
             palette,
-            fields.get("layout_reference_name"),
+            company_name,
+            company_address,
         )
-        pdf.setFillColor(palette["header"])
-        pdf.setFont("Helvetica-Bold", 12)
-        pdf.drawString(58, height - 108, company_name)
-        pdf.setFont("Helvetica", 9)
-        pdf.drawString(58, height - 122, company_address[:95])
-        if fields.get("layout_reference_name") or fields.get("layout_reference_url"):
-            pdf.setFillColor(palette["text"])
-            pdf.setFont("Helvetica", 9)
-            pdf.drawString(44, 20, f"Reference asset: {fields.get('layout_reference_name') or fields.get('layout_reference_url')}")
         pdf.save()
         buffer.seek(0)
         return buffer
@@ -581,15 +866,6 @@ def _build_report_pdf(report: Report) -> BytesIO:
             text_y = _draw_wrapped_text(pdf, paragraph, 58, text_y, width - 120, 12)
         box_top -= 108
 
-    if fields.get("layout_reference_name") or fields.get("layout_reference_url"):
-        pdf.setFillColor(palette["accent"])
-        pdf.setFont("Helvetica-Bold", 10)
-        pdf.drawString(44, 66, "Layout Reference")
-        pdf.setFillColor(palette["text"])
-        pdf.setFont("Helvetica", 9)
-        reference_text = fields.get("layout_reference_name") or fields.get("layout_reference_url") or "-"
-        _draw_wrapped_text(pdf, reference_text, 44, 52, width - 88, 11)
-
     pdf.save()
     buffer.seek(0)
     return buffer
@@ -662,6 +938,14 @@ async def create_report_record(
         company_id=report.company_id,
     )
 
+    notify_incident_reported(
+        db,
+        company_id=report.company_id,
+        incident_id=report.id,
+        incident_type=payload.hazard_type or "General Incident",
+        severity=payload.risk_level or _risk_level_from_severity(report.severity),
+    )
+
     return {
         "id": report.id,
         "message": "Report saved",
@@ -674,6 +958,28 @@ async def generate_layout_preview(payload: LayoutPreviewPayload):
     plan["layout_reference_url"] = payload.layout_reference_url
     plan["layout_reference_name"] = payload.layout_reference_name
     return plan
+
+
+@router.post("/reports/ai-risk-analysis")
+async def generate_ai_risk_analysis(payload: RiskAnalysisPayload):
+    return _ai_risk_analysis(payload)
+
+
+@router.post("/reports/enhance-validate")
+async def enhance_and_validate_report(payload: ReportCreatePayload):
+    enhanced = _enhance_report_fields(payload)
+
+    # Validate using enhanced text for required text fields.
+    payload.description = enhanced.get("description") or payload.description
+    payload.root_cause = enhanced.get("root_cause") or payload.root_cause
+    payload.immediate_action = enhanced.get("immediate_action") or payload.immediate_action
+    payload.preventive_action = enhanced.get("preventive_action") or payload.preventive_action
+
+    validation = _validate_report_payload(payload)
+    return {
+        "enhanced_fields": enhanced,
+        "validation": validation,
+    }
 
 
 @router.get("/reports")

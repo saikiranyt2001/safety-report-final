@@ -12,6 +12,8 @@
 
 <style>
 :root {
+  --bg-1: #f1f7ff;
+  --bg-2: #e4f4ef;
   --primary: #0d6efd;
   --panel: #f8fafc;
   --panel-strong: #fff;
@@ -19,9 +21,33 @@
   --muted: #64748b;
   --warn: #d9480f;
   --success: #2f9e44;
+  --text: #102a43;
+  --content-panel: rgba(255, 255, 255, 0.82);
+  --shell-border: rgba(16, 42, 67, 0.08);
+  --shell-shadow: 0 18px 45px rgba(11, 114, 133, 0.12);
 }
 
-body { font-family: 'Space Grotesk', sans-serif; }
+body {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 10% 10%, rgba(47, 158, 68, 0.18), transparent 30%),
+    radial-gradient(circle at 90% 15%, rgba(11, 114, 133, 0.17), transparent 28%),
+    linear-gradient(135deg, var(--bg-1), var(--bg-2));
+  min-height: 100vh;
+}
+
+.main-content {
+  max-width: 1080px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border: 1px solid var(--shell-border);
+  border-radius: 24px;
+  background: var(--content-panel);
+  backdrop-filter: blur(4px);
+  box-shadow: var(--shell-shadow);
+}
 
 /* ---- view switching ---- */
 .view { display: none; }
@@ -368,19 +394,17 @@ body { font-family: 'Space Grotesk', sans-serif; }
 @media (max-width: 640px) {
   .templates-grid { grid-template-columns: 1fr; }
   .stat-strip { grid-template-columns: repeat(2, 1fr); }
+
+  .main-content {
+    margin: 1rem;
+    padding: 1.2rem;
+    border-radius: 18px;
+  }
 }
 </style>
 </head>
 
 <body>
-
-<div class="navbar">
-  <div class="logo">AI Safety Platform</div>
-  <div class="nav-right">
-    <span id="navUsername">Manager</span>
-    <button onclick="logout()">Logout</button>
-  </div>
-</div>
 
 <div id="sidebar-container"></div>
 
@@ -415,7 +439,10 @@ body { font-family: 'Space Grotesk', sans-serif; }
     </div>
 
     <div class="toolbar">
-      <input class="search-input" type="text" id="templateSearch" placeholder="Search templates…" oninput="filterTemplates()">
+      <div class="toolbar-left">
+        <input class="search-input" type="text" id="templateSearch" placeholder="Search templates…" oninput="filterTemplates()">
+        <button class="btn btn-outline" onclick="loadIndustrySafetyTemplate()">Load Industry Safety Template</button>
+      </div>
       <span id="noTemplatesHint" style="font-size:.85rem;color:var(--muted);display:none">No templates yet — create your first one.</span>
     </div>
 
@@ -557,9 +584,6 @@ body { font-family: 'Space Grotesk', sans-serif; }
 const token = localStorage.getItem("auth_token") || localStorage.getItem("token")
 if(!token) window.location.href = "login.html"
 
-const username = localStorage.getItem("username") || "Manager"
-document.getElementById("navUsername").textContent = username
-
 function apiHeaders(){
   const h = {"Content-Type":"application/json"}
   if(token && token !== "loggedin") h["Authorization"] = "Bearer " + token
@@ -659,6 +683,139 @@ function filterTemplates(){
     t.name.toLowerCase().includes(term) ||
     (t.description || "").toLowerCase().includes(term)
   ))
+}
+
+const INDUSTRY_TEMPLATE_DEFINITION = {
+  template_id: "industrial_safety_master_001",
+  template_name: "Industrial Safety Inspection",
+  category: "Oil & Gas / Heavy Industry",
+  sections: [
+    {
+      section_name: "Housekeeping",
+      questions: [
+        { id: "H1", question: "Floors clean and free of spills?", risk: "medium" },
+        { id: "H2", question: "Walkways and aisles unobstructed?", risk: "high" },
+        { id: "H3", question: "Waste disposed properly?", risk: "medium" },
+        { id: "H4", question: "Spill kits available?", risk: "high" },
+        { id: "H5", question: "Work areas organized?", risk: "low" }
+      ]
+    },
+    {
+      section_name: "Personal Protective Equipment",
+      questions: [
+        { id: "P1", question: "Workers wearing helmets?", risk: "high" },
+        { id: "P2", question: "Safety gloves used where required?", risk: "medium" },
+        { id: "P3", question: "Eye protection used?", risk: "high" },
+        { id: "P4", question: "Hearing protection used in noisy areas?", risk: "medium" },
+        { id: "P5", question: "Safety shoes worn?", risk: "high" }
+      ]
+    },
+    {
+      section_name: "Fire Safety",
+      questions: [
+        { id: "F1", question: "Fire extinguishers available?", risk: "high" },
+        { id: "F2", question: "Fire extinguishers inspected recently?", risk: "high" },
+        { id: "F3", question: "Fire alarm system functional?", risk: "high" },
+        { id: "F4", question: "Flammable materials stored properly?", risk: "high" },
+        { id: "F5", question: "Emergency exits clearly marked?", risk: "high" }
+      ]
+    },
+    {
+      section_name: "Electrical Safety",
+      questions: [
+        { id: "E1", question: "Electrical panels accessible?", risk: "high" },
+        { id: "E2", question: "No exposed wiring?", risk: "high" },
+        { id: "E3", question: "Proper grounding present?", risk: "high" },
+        { id: "E4", question: "Extension cords in good condition?", risk: "medium" },
+        { id: "E5", question: "Lockout-tagout procedures followed?", risk: "high" }
+      ]
+    },
+    {
+      section_name: "Machinery Safety",
+      questions: [
+        { id: "M1", question: "Machine guards installed?", risk: "high" },
+        { id: "M2", question: "Emergency stop buttons functional?", risk: "high" },
+        { id: "M3", question: "Operators trained for equipment?", risk: "high" },
+        { id: "M4", question: "Machines maintained regularly?", risk: "medium" },
+        { id: "M5", question: "No abnormal machine noise?", risk: "medium" }
+      ]
+    },
+    {
+      section_name: "Chemical Safety",
+      questions: [
+        { id: "C1", question: "Chemicals labeled properly?", risk: "high" },
+        { id: "C2", question: "MSDS sheets available?", risk: "high" },
+        { id: "C3", question: "Chemical storage ventilated?", risk: "medium" },
+        { id: "C4", question: "Spill response procedures available?", risk: "high" }
+      ]
+    },
+    {
+      section_name: "Emergency Preparedness",
+      questions: [
+        { id: "EM1", question: "Emergency evacuation plan available?", risk: "high" },
+        { id: "EM2", question: "First aid kits available?", risk: "medium" },
+        { id: "EM3", question: "Emergency drills conducted?", risk: "medium" },
+        { id: "EM4", question: "Emergency contact numbers posted?", risk: "low" }
+      ]
+    }
+  ]
+}
+
+function flattenIndustryQuestions(templateDefinition){
+  const flat = []
+  for(const section of templateDefinition.sections){
+    for(const item of section.questions){
+      flat.push(`[${section.section_name}] (${String(item.risk || "medium").toUpperCase()}) ${item.id} - ${item.question}`)
+    }
+  }
+  return flat
+}
+
+async function loadIndustrySafetyTemplate(){
+  const existing = allTemplates.find(t => (t.name || "").toLowerCase() === INDUSTRY_TEMPLATE_DEFINITION.template_name.toLowerCase())
+  if(existing){
+    toast("Industry template already exists")
+    return
+  }
+
+  const shouldCreate = confirm("Load the Industry Safety Inspection template with all sections and questions?")
+  if(!shouldCreate) return
+
+  const description = `${INDUSTRY_TEMPLATE_DEFINITION.category} | Template ID: ${INDUSTRY_TEMPLATE_DEFINITION.template_id}`
+
+  try {
+    const createRes = await fetch("/api/inspection-templates", {
+      method: "POST",
+      headers: apiHeaders(),
+      body: JSON.stringify({
+        name: INDUSTRY_TEMPLATE_DEFINITION.template_name,
+        description
+      })
+    })
+
+    if(!createRes.ok){
+      throw new Error("Failed to create industry template")
+    }
+
+    const created = await createRes.json()
+    const questions = flattenIndustryQuestions(INDUSTRY_TEMPLATE_DEFINITION)
+
+    for(const question of questions){
+      const qRes = await fetch(`/api/inspection-templates/${created.id}/questions`, {
+        method: "POST",
+        headers: apiHeaders(),
+        body: JSON.stringify({ question })
+      })
+      if(!qRes.ok){
+        throw new Error("Failed while adding industry template questions")
+      }
+    }
+
+    toast(`Loaded ${questions.length} industry safety questions`)
+    await loadTemplates()
+  } catch (_error){
+    toast("Unable to load industry template. Check permissions (admin/manager).", true)
+  }
 }
 
 async function deleteTemplate(id){

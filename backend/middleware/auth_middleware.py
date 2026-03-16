@@ -59,6 +59,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if path == "/api/reports/layout-preview" and request.method == "POST":
             return await call_next(request)
 
+        if path == "/api/reports/enhance-validate" and request.method == "POST":
+            return await call_next(request)
+
+        if path == "/api/reports/ai-risk-analysis" and request.method == "POST":
+            return await call_next(request)
+
         # Allow report history lookup for the local/demo frontend flow
         if path == "/api/reports" and request.method == "GET":
             return await call_next(request)

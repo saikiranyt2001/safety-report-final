@@ -402,6 +402,15 @@ background-size: cover;
 background-position: center;
 }
 
+.layout-generated-inner.reference-template {
+max-width: 760px;
+margin: 0 auto;
+}
+
+.layout-generated-inner.reference-template.portrait-template {
+max-width: 560px;
+}
+
 .layout-generated-inner.wide-frame {
 --layout-frame-padding: 34px;
 }
@@ -434,14 +443,44 @@ background: rgba(255,255,255,0.9);
 overflow: hidden;
 }
 
+.layout-generated-inner.reference-template .layout-generated-shell {
+position: relative;
+border-radius: 14px;
+background: #ffffff;
+}
+
+.layout-generated-inner.reference-template .layout-generated-shell::before {
+content: "";
+position: absolute;
+inset: 0;
+background: none;
+opacity: 0;
+pointer-events: none;
+}
+
+.layout-generated-inner.reference-template .layout-generated-shell > * {
+position: relative;
+z-index: 1;
+}
+
+.layout-generated-inner.reference-template.portrait-template .layout-generated-shell {
+min-height: 720px;
+display: flex;
+flex-direction: column;
+}
+
 .layout-generated-header {
 padding: 1.1rem 1.2rem;
+background: linear-gradient(120deg, var(--layout-preview-primary, #0b7285), var(--layout-preview-accent, #2f9e44));
+color: #fff;
+}
+
+.layout-generated-header.image-band {
 background:
-linear-gradient(135deg, rgba(16,42,67,0.7), rgba(16,42,67,0.22)),
+linear-gradient(135deg, rgba(16,42,67,0.72), rgba(16,42,67,0.24)),
 var(--layout-generated-image, none);
 background-size: cover;
 background-position: center;
-color: #fff;
 }
 
 .layout-generated-header.boxed-header {
@@ -475,44 +514,151 @@ font-size: 0.82rem;
 color: var(--muted);
 }
 
-.layout-generated-body {
+.layout-template-canvas {
 padding: 0 1.2rem 1.2rem;
+}
+
+.layout-template-sheet {
+border: 1px solid rgba(16,42,67,0.18);
+border-radius: 10px;
+background: rgba(255,255,255,0.95);
+overflow: hidden;
+}
+
+.layout-template-stripe {
+height: 14px;
+background: repeating-linear-gradient(
+135deg,
+#111827 0 10px,
+#fbbf24 10px 20px
+);
+}
+
+.layout-template-header {
+padding: 0.5rem 0.7rem;
 display: grid;
-grid-template-columns: 1.1fr 0.9fr;
-gap: 0.9rem;
+grid-template-columns: 1fr auto;
+gap: 0.6rem;
+border-bottom: 1px solid rgba(16,42,67,0.12);
 }
 
-.layout-generated-card {
-border: 1px solid rgba(16,42,67,0.1);
-border-radius: 14px;
-background: rgba(255,255,255,0.86);
-padding: 0.95rem;
-}
-
-.layout-generated-card h3 {
-margin: 0 0 0.6rem;
-font-size: 0.85rem;
+.layout-template-title {
+font-size: 0.95rem;
+font-weight: 800;
+color: #111827;
 text-transform: uppercase;
-letter-spacing: 0.05em;
-color: var(--layout-preview-primary, #0b7285);
 }
 
-.layout-generated-row {
+.layout-template-meta {
 display: grid;
-grid-template-columns: 120px 1fr;
-gap: 0.5rem;
-font-size: 0.87rem;
-margin-bottom: 0.42rem;
+grid-template-columns: repeat(4, minmax(0, 1fr));
+gap: 0;
+padding: 0;
+border-bottom: 1px solid rgba(16,42,67,0.12);
+font-size: 0.68rem;
+background: #f8fafc;
 }
 
-.layout-generated-row strong {
-color: #17324d;
+.layout-template-meta > div {
+padding: 0.34rem 0.42rem;
+border-right: 1px solid rgba(16,42,67,0.12);
+}
+
+.layout-template-meta > div:last-child {
+border-right: 0;
+}
+
+.layout-template-meta b {
+color: #374151;
+}
+
+.layout-template-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 0.38rem;
+padding: 0.45rem;
+}
+
+.layout-template-section {
+border: 1px solid rgba(16,42,67,0.12);
+border-radius: 6px;
+background: rgba(255,255,255,0.94);
+overflow: hidden;
+}
+
+.layout-template-section-title {
+font-size: 0.7rem;
+font-weight: 700;
+color: #ffffff;
+padding: 0.22rem 0.4rem;
+background: #1f2937;
+text-transform: uppercase;
+letter-spacing: 0.02em;
+}
+
+.layout-template-section-body {
+padding: 0.32rem 0.4rem;
+font-size: 0.68rem;
+color: #1f2937;
+line-height: 1.4;
+}
+
+.layout-template-kv {
+display: grid;
+grid-template-columns: 78px 1fr;
+gap: 0.3rem;
+margin-bottom: 0.2rem;
+}
+
+.layout-template-kv b {
+color: #111827;
+}
+
+.layout-template-wide {
+grid-column: 1 / -1;
+}
+
+.layout-template-sign {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 0.5rem;
+}
+
+.layout-template-row {
+display: grid;
+grid-template-columns: 1fr 0.95fr;
+gap: 0.38rem;
+grid-column: 1 / -1;
+}
+
+.layout-template-row .layout-template-section {
+height: 156px;
+}
+
+.layout-template-image-panel {
+height: 100%;
+border: 1px solid rgba(16,42,67,0.12);
+border-radius: 6px;
+background:
+linear-gradient(135deg, rgba(241,245,249,0.95), rgba(226,232,240,0.9));
+}
+
+.layout-template-tall {
+min-height: 106px;
+}
+
+.layout-template-short {
+min-height: 76px;
 }
 
 .layout-generated-foot {
 padding: 0.9rem 1.2rem 1.2rem;
 font-size: 0.8rem;
 color: var(--muted);
+}
+
+.layout-generated-inner.reference-template.portrait-template .layout-generated-foot {
+margin-top: auto;
 }
 .btn-secondary {
 border: 1.5px solid rgba(16,42,67,0.18);
@@ -628,15 +774,32 @@ color: var(--report-primary, var(--primary));
 margin: 1.1rem 0 0.5rem;
 }
 .out-row {
-display: flex;
-gap: 0.5rem;
-flex-wrap: wrap;
+display: grid;
+grid-template-columns: 170px minmax(0, 1fr);
+column-gap: 0.5rem;
+align-items: start;
 margin-bottom: 0.35rem;
 font-size: 0.91rem;
 }
-.out-key { font-weight: 600; min-width: 160px; color: #234; }
-.out-value { color: var(--muted); }
+.out-row-stack {
+display: block;
+}
+.out-key { font-weight: 600; color: #234; }
+.out-value {
+color: var(--muted);
+word-break: break-word;
+}
+.out-row-stack .out-key {
+display: block;
+margin-bottom: 0.15rem;
+}
 .out-divider { border: none; border-top: 1px solid rgba(16,42,67,0.08); margin: 0.8rem 0; }
+.out-ai-template {
+margin-top: 0.9rem;
+}
+.report-output.ai-template-active .out-classic {
+display: none;
+}
 .approval-out-grid {
 display: grid;
 grid-template-columns: repeat(3, 1fr);
@@ -776,24 +939,7 @@ box-shadow: 0 12px 24px rgba(11, 114, 133, 0.25);
 <div id="generatedCompanyAddress" class="layout-generated-address">Worksite address pending</div>
 </div>
 <div id="generatedLayoutNote" class="layout-generated-note">Outer frame borrowed from uploaded layout; report details stay readable.</div>
-<div class="layout-generated-body">
-<div class="layout-generated-card">
-<h3>Incident Details</h3>
-<div class="layout-generated-row"><strong>Report</strong><span id="generatedPreviewReportId">INC-preview</span></div>
-<div class="layout-generated-row"><strong>Location</strong><span id="generatedPreviewLocation">Location preview</span></div>
-<div class="layout-generated-row"><strong>Department</strong><span id="generatedPreviewDepartment">Department preview</span></div>
-<div class="layout-generated-row"><strong>Hazard</strong><span id="generatedPreviewHazard">Hazard preview</span></div>
-<div class="layout-generated-row"><strong>Risk</strong><span id="generatedPreviewRisk">Risk preview</span></div>
-<div class="layout-generated-row"><strong>Summary</strong><span id="generatedPreviewDescription">Your entered report summary will stay in this clean panel.</span></div>
-</div>
-<div class="layout-generated-card">
-<h3>Controls And Ownership</h3>
-<div class="layout-generated-row"><strong>Immediate</strong><span id="generatedPreviewImmediate">Immediate action preview</span></div>
-<div class="layout-generated-row"><strong>Preventive</strong><span id="generatedPreviewPreventive">Preventive action preview</span></div>
-<div class="layout-generated-row"><strong>Owner</strong><span id="generatedPreviewOwner">Responsible person</span></div>
-<div class="layout-generated-row"><strong>Deadline</strong><span id="generatedPreviewDeadline">Deadline preview</span></div>
-</div>
-</div>
+<div id="generatedTemplateCanvas" class="layout-template-canvas"></div>
 <div class="layout-generated-foot">Generated layout preview. This step copies the outer framing and header treatment, while keeping company text and form details readable.</div>
 </div>
 </div>
@@ -889,6 +1035,24 @@ box-shadow: 0 12px 24px rgba(11, 114, 133, 0.25);
 placeholder="Describe the hazard, conditions leading to the incident, and any injuries..."></textarea>
 </div>
 <div class="field-full">
+<label class="field-label field-required">Contributing Hazard Details</label>
+<textarea id="f_contributingHazards" class="field-textarea" rows="2"
+placeholder="List ignition sources, flammable/chemical contributors, environmental factors, or process deviations."></textarea>
+<p style="font-size:0.8rem;color:var(--muted);margin:0.35rem 0 0;">Tip: Include source of ignition/energy, materials involved, and unsafe condition sequence.</p>
+</div>
+<div class="field-full">
+<label class="field-label field-required">Risk Assessment Basis</label>
+<textarea id="f_riskAssessmentBasis" class="field-textarea" rows="2"
+placeholder="State how risk was assessed (likelihood x severity matrix, exposure time, controls in place, evidence used)."></textarea>
+<p style="font-size:0.8rem;color:var(--muted);margin:0.35rem 0 0;">Tip: Document method used (matrix/JSA), evidence reviewed, and why final level was selected.</p>
+</div>
+<div class="field-full">
+<label class="field-label field-required">PPE In Use / PPE Gaps</label>
+<textarea id="f_ppeInfo" class="field-textarea" rows="2"
+placeholder="Specify PPE worn, PPE required, and any non-compliance observed."></textarea>
+<p style="font-size:0.8rem;color:var(--muted);margin:0.35rem 0 0;">Tip: Record required PPE, actual PPE observed, and immediate corrective action for any gap.</p>
+</div>
+<div class="field-full">
 <label class="field-label">Upload Evidence</label>
 <input id="f_evidence" type="file" accept="image/*,video/*,.pdf"
 class="field-input" style="padding:0.42rem 0.72rem;">
@@ -970,9 +1134,28 @@ Run AI Analysis
 </div>
 </div>
 
-<!-- SECTION 6: CORRECTIVE ACTIONS -->
+<!-- SECTION 6: INVESTIGATION & COMPLIANCE -->
 <div class="form-section">
-<h2 class="section-heading"><span>6</span>&nbsp; Corrective Actions</h2>
+<h2 class="section-heading"><span>6</span>&nbsp; Investigation &amp; Compliance</h2>
+<div class="field-grid">
+<div class="field-full">
+<label class="field-label field-required">Control Implementation Detail</label>
+<textarea id="f_controlImplementation" class="field-textarea" rows="3"
+placeholder="Define exactly how controls will be executed: inspections, owners, frequency, verification method, and records."></textarea>
+<p style="font-size:0.8rem;color:var(--muted);margin:0.35rem 0 0;">Tip: Include who executes, how often, how compliance is verified, and where records are kept.</p>
+</div>
+<div class="field-full">
+<label class="field-label field-required">Compliance References</label>
+<textarea id="f_complianceRefs" class="field-textarea" rows="2"
+placeholder="Reference standards/procedures (e.g., OSHA fire safety, LOTO, permit-to-work, internal SOP IDs)."></textarea>
+<p style="font-size:0.8rem;color:var(--muted);margin:0.35rem 0 0;">Tip: Cite applicable OSHA clauses, lockout/tagout procedure IDs, and site SOP numbers.</p>
+</div>
+</div>
+</div>
+
+<!-- SECTION 7: CORRECTIVE ACTIONS -->
+<div class="form-section">
+<h2 class="section-heading"><span>7</span>&nbsp; Corrective Actions</h2>
 <div class="field-grid">
 <div class="field-full">
 <label class="field-label field-required">Immediate Action Taken</label>
@@ -987,9 +1170,9 @@ placeholder="Describe long-term measures to prevent recurrence (training, proces
 </div>
 </div>
 
-<!-- SECTION 7: ASSIGNMENT -->
+<!-- SECTION 8: ASSIGNMENT -->
 <div class="form-section">
-<h2 class="section-heading"><span>7</span>&nbsp; Assignment</h2>
+<h2 class="section-heading"><span>8</span>&nbsp; Assignment</h2>
 <div class="field-grid">
 <div>
 <label class="field-label field-required">Responsible Person</label>
@@ -1012,9 +1195,9 @@ placeholder="Describe long-term measures to prevent recurrence (training, proces
 </div>
 </div>
 
-<!-- SECTION 8: APPROVAL -->
+<!-- SECTION 9: APPROVAL -->
 <div class="form-section">
-<h2 class="section-heading"><span>8</span>&nbsp; Approval</h2>
+<h2 class="section-heading"><span>9</span>&nbsp; Approval</h2>
 <div class="approval-grid">
 <div class="approval-card">
 <div class="approval-role">Reporter</div>
@@ -1060,10 +1243,14 @@ placeholder="Describe long-term measures to prevent recurrence (training, proces
 <h2 class="output-title">Incident Report -- <span id="out_reportId"></span></h2>
 <div id="out_companyName" style="font-size:0.92rem;font-weight:700;color:inherit;margin-top:0.2rem;"></div>
 <div id="out_companyAddress" style="font-size:0.8rem;color:inherit;opacity:0.9;"></div>
-<div id="out_templateBadge" class="template-badge hidden">Reference Layout Applied</div>
+<div id="out_templateBadge" class="template-badge hidden">AI Template Applied</div>
 </div>
 <button class="print-btn" onclick="window.print()">Print / PDF</button>
 </div>
+
+<div id="outAiTemplate" class="out-ai-template hidden"></div>
+
+<div id="outClassicSections" class="out-classic">
 
 <div class="out-section-title">Incident Information</div>
 <div class="out-row"><span class="out-key">Layout Template</span><span class="out-value" id="out_layout"></span></div>
@@ -1080,8 +1267,11 @@ placeholder="Describe long-term measures to prevent recurrence (training, proces
 
 <div class="out-section-title">Hazard Details</div>
 <div class="out-row"><span class="out-key">Hazard Type</span><span class="out-value" id="out_hazardType"></span></div>
-<div class="out-row"><span class="out-key">Risk Level</span><span id="out_riskBadge"></span></div>
-<div class="out-row" style="flex-direction:column;gap:0.2rem;"><span class="out-key">Description</span><span class="out-value" id="out_description" style="white-space:pre-wrap;"></span></div>
+<div class="out-row"><span class="out-key">Risk Level</span><span class="out-value" id="out_riskBadge"></span></div>
+<div class="out-row out-row-stack"><span class="out-key">Description</span><span class="out-value" id="out_description" style="white-space:pre-wrap;"></span></div>
+<div class="out-row out-row-stack"><span class="out-key">Contributing Hazards</span><span class="out-value" id="out_contributingHazards" style="white-space:pre-wrap;"></span></div>
+<div class="out-row out-row-stack"><span class="out-key">Risk Assessment Basis</span><span class="out-value" id="out_riskAssessmentBasis" style="white-space:pre-wrap;"></span></div>
+<div class="out-row out-row-stack"><span class="out-key">PPE In Use / Gaps</span><span class="out-value" id="out_ppeInfo" style="white-space:pre-wrap;"></span></div>
 <hr class="out-divider">
 
 <div class="out-section-title">AI Risk Analysis</div>
@@ -1091,12 +1281,17 @@ placeholder="Describe long-term measures to prevent recurrence (training, proces
 <hr class="out-divider">
 
 <div class="out-section-title">Root Cause</div>
-<div class="out-value" id="out_rootCause" style="font-size:0.91rem;"></div>
+<div class="out-row out-row-stack"><span class="out-key">Selected Causes</span><span class="out-value" id="out_rootCause" style="font-size:0.91rem;"></span></div>
+<hr class="out-divider">
+
+<div class="out-section-title">Investigation &amp; Compliance</div>
+<div class="out-row out-row-stack"><span class="out-key">Control Implementation</span><span class="out-value" id="out_controlImplementation" style="white-space:pre-wrap;"></span></div>
+<div class="out-row out-row-stack"><span class="out-key">Compliance References</span><span class="out-value" id="out_complianceRefs" style="white-space:pre-wrap;"></span></div>
 <hr class="out-divider">
 
 <div class="out-section-title">Corrective Actions</div>
-<div class="out-row" style="flex-direction:column;gap:0.2rem;"><span class="out-key">Immediate Action</span><span class="out-value" id="out_immediateAction" style="white-space:pre-wrap;"></span></div>
-<div class="out-row" style="flex-direction:column;gap:0.2rem;"><span class="out-key">Preventive Action</span><span class="out-value" id="out_preventiveAction" style="white-space:pre-wrap;"></span></div>
+<div class="out-row out-row-stack"><span class="out-key">Immediate Action</span><span class="out-value" id="out_immediateAction" style="white-space:pre-wrap;"></span></div>
+<div class="out-row out-row-stack"><span class="out-key">Preventive Action</span><span class="out-value" id="out_preventiveAction" style="white-space:pre-wrap;"></span></div>
 <hr class="out-divider">
 
 <div class="out-section-title">Assignment</div>
@@ -1109,24 +1304,25 @@ placeholder="Describe long-term measures to prevent recurrence (training, proces
 <div class="approval-out-grid">
 <div class="approval-out-card">
 <div class="approval-out-role">Reporter</div>
-<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Name</span><span class="out-value" id="out_reporterName"></span></div>
-<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Signature</span><span class="out-value" id="out_reporterSig"></span></div>
-<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Date</span><span class="out-value" id="out_reporterDate"></span></div>
+<div class="out-row out-row-stack"><span class="out-key" style="font-size:0.82rem;">Name</span><span class="out-value" id="out_reporterName"></span></div>
+<div class="out-row out-row-stack"><span class="out-key" style="font-size:0.82rem;">Signature</span><span class="out-value" id="out_reporterSig"></span></div>
+<div class="out-row out-row-stack"><span class="out-key" style="font-size:0.82rem;">Date</span><span class="out-value" id="out_reporterDate"></span></div>
 <div class="signature-line"></div>
 </div>
 <div class="approval-out-card">
 <div class="approval-out-role">Supervisor</div>
-<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Name</span><span class="out-value" id="out_supervisorName"></span></div>
-<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Signature</span><span class="out-value" id="out_supervisorSig"></span></div>
-<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Date</span><span class="out-value" id="out_supervisorDate"></span></div>
+<div class="out-row out-row-stack"><span class="out-key" style="font-size:0.82rem;">Name</span><span class="out-value" id="out_supervisorName"></span></div>
+<div class="out-row out-row-stack"><span class="out-key" style="font-size:0.82rem;">Signature</span><span class="out-value" id="out_supervisorSig"></span></div>
+<div class="out-row out-row-stack"><span class="out-key" style="font-size:0.82rem;">Date</span><span class="out-value" id="out_supervisorDate"></span></div>
 <div class="signature-line"></div>
 </div>
 <div class="approval-out-card">
 <div class="approval-out-role">Safety Officer</div>
-<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Name</span><span class="out-value" id="out_safetyName"></span></div>
-<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Signature</span><span class="out-value" id="out_safetySig"></span></div>
-<div class="out-row" style="flex-direction:column;gap:0.15rem;"><span class="out-key" style="font-size:0.82rem;">Date</span><span class="out-value" id="out_safetyDate"></span></div>
+<div class="out-row out-row-stack"><span class="out-key" style="font-size:0.82rem;">Name</span><span class="out-value" id="out_safetyName"></span></div>
+<div class="out-row out-row-stack"><span class="out-key" style="font-size:0.82rem;">Signature</span><span class="out-value" id="out_safetySig"></span></div>
+<div class="out-row out-row-stack"><span class="out-key" style="font-size:0.82rem;">Date</span><span class="out-value" id="out_safetyDate"></span></div>
 <div class="signature-line"></div>
+</div>
 </div>
 </div>
 </div>
@@ -1196,7 +1392,7 @@ return
 }
 checkAuth();
 
-let generatedLayoutPlan = null
+let generatedLayoutPlan = null;
 
 /* Auto Report ID and today date */
 (function () {
@@ -1285,34 +1481,60 @@ const HAZARD_SCORES = {
 }
 const LEVEL_MULT = { Low: 0.6, Medium: 1.0, High: 1.35, Critical: 1.7 }
 
-function runAiAnalysis() {
+async function runAiAnalysis() {
 const hazard = document.getElementById("f_hazardType").value
 const level  = document.getElementById("f_riskLevel").value
 if (!hazard || !level) { alert("Please select Hazard Type and Risk Level first."); return }
-const base  = HAZARD_SCORES[hazard] || { score: 50, severity: "Moderate", prob: "Possible" }
-const score = Math.min(100, Math.round(base.score * (LEVEL_MULT[level] || 1.0)))
-document.getElementById("aiScore").textContent       = score
-document.getElementById("aiSeverity").textContent    = base.severity
-document.getElementById("aiProbability").textContent = base.prob
-document.getElementById("f_aiScore").value      = score
-document.getElementById("f_aiSeverity").value   = base.severity
-document.getElementById("f_aiProbability").value = base.prob
 
-let reports = JSON.parse(localStorage.getItem("reports") || "[]")
-
-reports.push({
-report_id: document.getElementById("f_reportId").value,
-date: document.getElementById("f_date").value,
-time: document.getElementById("f_time").value,
+const payload = {
+hazard_type: hazard,
+risk_level: level,
+description: document.getElementById("f_description").value,
 location: document.getElementById("f_location").value,
-department: document.getElementById("f_department").value,
-employee: document.getElementById("f_empName").value,
-hazard: document.getElementById("f_hazardType").value,
-risk: document.getElementById("f_riskLevel").value,
-status: document.getElementById("f_status").value
+department: document.getElementById("f_department").value
+}
+
+try {
+const token = (typeof getStoredToken === "function" ? getStoredToken() : null)
+const headers = { "Content-Type": "application/json" }
+if (token) {
+headers["Authorization"] = "Bearer " + token
+}
+
+const response = await fetch(buildApiUrl("/api/reports/ai-risk-analysis"), {
+method: "POST",
+headers,
+body: JSON.stringify(payload)
 })
 
-localStorage.setItem("reports", JSON.stringify(reports))
+if (!response.ok) {
+throw new Error("AI risk analysis endpoint unavailable")
+}
+
+const result = await response.json()
+const score = Number(result.score ?? 50)
+const severity = result.severity || "Moderate"
+const probability = result.probability || "Possible"
+
+document.getElementById("aiScore").textContent = String(score)
+document.getElementById("aiSeverity").textContent = severity
+document.getElementById("aiProbability").textContent = probability
+document.getElementById("f_aiScore").value = String(score)
+document.getElementById("f_aiSeverity").value = severity
+document.getElementById("f_aiProbability").value = probability
+document.getElementById("layoutStatus").textContent = `AI risk analysis completed using ${result.engine || "AI"}.`
+} catch (_error) {
+// Fallback to existing deterministic scoring if AI service is unavailable.
+const base = HAZARD_SCORES[hazard] || { score: 50, severity: "Moderate", prob: "Possible" }
+const score = Math.min(100, Math.round(base.score * (LEVEL_MULT[level] || 1.0)))
+document.getElementById("aiScore").textContent = String(score)
+document.getElementById("aiSeverity").textContent = base.severity
+document.getElementById("aiProbability").textContent = base.prob
+document.getElementById("f_aiScore").value = String(score)
+document.getElementById("f_aiSeverity").value = base.severity
+document.getElementById("f_aiProbability").value = base.prob
+document.getElementById("layoutStatus").textContent = "AI risk analysis unavailable. Used rules fallback."
+}
 
 }
 
@@ -1328,11 +1550,22 @@ const REQUIRED = [
 { id: "f_hazardType",      label: "Hazard Type" },
 { id: "f_riskLevel",       label: "Risk Level" },
 { id: "f_description",     label: "Description" },
+{ id: "f_contributingHazards", label: "Contributing Hazard Details" },
+{ id: "f_riskAssessmentBasis", label: "Risk Assessment Basis" },
+{ id: "f_ppeInfo",         label: "PPE Information" },
+{ id: "f_controlImplementation", label: "Control Implementation Detail" },
+{ id: "f_complianceRefs",  label: "Compliance References" },
 { id: "f_immediateAction", label: "Immediate Action" },
 { id: "f_preventiveAction",label: "Preventive Action" },
 { id: "f_responsible",     label: "Responsible Person" },
 { id: "f_deadline",        label: "Deadline" },
-{ id: "f_status",          label: "Status" }
+{ id: "f_status",          label: "Status" },
+{ id: "f_reporterName",    label: "Reporter Name" },
+{ id: "f_reporterDate",    label: "Reporter Date" },
+{ id: "f_supervisorName",  label: "Supervisor Name" },
+{ id: "f_supervisorDate",  label: "Supervisor Date" },
+{ id: "f_safetyName",      label: "Safety Officer Name" },
+{ id: "f_safetyDate",      label: "Safety Officer Date" }
 ]
 function validate() {
 for (const f of REQUIRED) {
@@ -1355,6 +1588,148 @@ return "#" + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toStri
 function getPreviewFieldValue(id, fallback) {
 const value = document.getElementById(id)?.value?.trim()
 return value || fallback
+}
+
+function escapeHtml(value) {
+return String(value || "")
+.replace(/&/g, "&amp;")
+.replace(/</g, "&lt;")
+.replace(/>/g, "&gt;")
+.replace(/\"/g, "&quot;")
+.replace(/'/g, "&#39;")
+}
+
+function buildAiTemplateMarkup(data) {
+const reportId = data.report_id || "INC-preview"
+const date = data.date || "Date preview"
+const time = data.time || "Time preview"
+const location = data.location || "Location preview"
+const department = data.department || "Department preview"
+const empName = data.employee_name || "Employee preview"
+const role = data.role || "Role preview"
+const hazard = data.hazard_type || "Hazard preview"
+const risk = data.risk_level || "Risk preview"
+const description = data.description || "Incident summary preview"
+const contributingHazards = data.contributing_hazards || "Contributing hazard details preview"
+const riskAssessmentBasis = data.risk_assessment_basis || "Risk assessment basis preview"
+const ppeInfo = data.ppe_info || "PPE details preview"
+const rootCause = data.root_cause || "Root cause preview"
+const controlImplementation = data.control_implementation || "Control implementation detail preview"
+const complianceRefs = data.compliance_references || "Compliance references preview"
+const immediate = data.immediate_action || "Immediate action preview"
+const preventive = data.preventive_action || "Preventive action preview"
+const owner = data.responsible_person || "Responsible person"
+const deadline = data.deadline || "Deadline preview"
+
+return `
+<div class="layout-template-sheet">
+	<div class="layout-template-stripe"></div>
+	<div class="layout-template-header">
+		<div class="layout-template-title">Safety Incident Report</div>
+		<div style="font-size:0.68rem;color:#374151;">Template Composed By AI</div>
+	</div>
+	<div class="layout-template-meta">
+		<div><b>Report ID:</b> ${escapeHtml(reportId)}</div>
+		<div><b>Date:</b> ${escapeHtml(date)}</div>
+		<div><b>Time:</b> ${escapeHtml(time)}</div>
+		<div><b>Department:</b> ${escapeHtml(department)}</div>
+	</div>
+	<div class="layout-template-grid">
+		<div class="layout-template-row">
+			<section class="layout-template-section">
+				<div class="layout-template-section-title">1. Incident Details</div>
+				<div class="layout-template-section-body">
+					<div class="layout-template-kv"><b>Location</b><span>${escapeHtml(location)}</span></div>
+					<div class="layout-template-kv"><b>Employee</b><span>${escapeHtml(empName)}</span></div>
+					<div class="layout-template-kv"><b>Role</b><span>${escapeHtml(role)}</span></div>
+					<div class="layout-template-kv"><b>Hazard</b><span>${escapeHtml(hazard)}</span></div>
+					<div class="layout-template-kv"><b>Risk</b><span>${escapeHtml(risk)}</span></div>
+				</div>
+			</section>
+			<section class="layout-template-section">
+				<div class="layout-template-section-title">2. Incident Snapshot</div>
+				<div class="layout-template-section-body" style="padding:0.3rem; height: calc(100% - 22px);">
+					<div class="layout-template-image-panel" style="display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.68rem;">Field Area</div>
+				</div>
+			</section>
+		</div>
+		<section class="layout-template-section layout-template-wide">
+			<div class="layout-template-section-title">3. Description Of Incident</div>
+			<div class="layout-template-section-body layout-template-tall">
+				<b>Description:</b> ${escapeHtml(description)}<br>
+				<b>Contributing Hazards:</b> ${escapeHtml(contributingHazards)}<br>
+				<b>PPE:</b> ${escapeHtml(ppeInfo)}
+			</div>
+		</section>
+		<section class="layout-template-section">
+			<div class="layout-template-section-title">4. Root Cause</div>
+			<div class="layout-template-section-body layout-template-tall">${escapeHtml(rootCause)}</div>
+		</section>
+		<section class="layout-template-section">
+			<div class="layout-template-section-title">5. Risk Assessment Basis</div>
+			<div class="layout-template-section-body layout-template-tall">${escapeHtml(riskAssessmentBasis)}</div>
+		</section>
+		<section class="layout-template-section layout-template-wide">
+			<div class="layout-template-section-title">6. Compliance And Controls</div>
+			<div class="layout-template-section-body layout-template-sign">
+				<div><b>Controls:</b><br>${escapeHtml(controlImplementation)}<br><b>Immediate:</b><br>${escapeHtml(immediate)}</div>
+				<div><b>References:</b><br>${escapeHtml(complianceRefs)}<br><b>Owner / Deadline:</b><br>${escapeHtml(owner)} | ${escapeHtml(deadline)}</div>
+			</div>
+		</section>
+		<section class="layout-template-section layout-template-wide">
+			<div class="layout-template-section-title">7. Supervisor Review</div>
+			<div class="layout-template-section-body layout-template-short">Status review and sign-off block will be included in exported report.</div>
+		</section>
+	</div>
+	<div class="layout-template-stripe"></div>
+</div>`
+}
+
+function renderGeneratedTemplateCanvas() {
+const canvas = document.getElementById("generatedTemplateCanvas")
+if (!canvas) return
+
+const previewData = {
+report_id: getPreviewFieldValue("f_reportId", "INC-preview"),
+date: getPreviewFieldValue("f_date", "Date preview"),
+time: getPreviewFieldValue("f_time", "Time preview"),
+location: getPreviewFieldValue("f_location", "Location preview"),
+department: getPreviewFieldValue("f_department", "Department preview"),
+employee_name: getPreviewFieldValue("f_empName", "Employee preview"),
+role: getPreviewFieldValue("f_role", "Role preview"),
+hazard_type: getPreviewFieldValue("f_hazardType", "Hazard preview"),
+risk_level: getPreviewFieldValue("f_riskLevel", "Risk preview"),
+description: getPreviewFieldValue("f_description", "Incident summary preview"),
+contributing_hazards: getPreviewFieldValue("f_contributingHazards", "Contributing hazard details preview"),
+risk_assessment_basis: getPreviewFieldValue("f_riskAssessmentBasis", "Risk assessment basis preview"),
+ppe_info: getPreviewFieldValue("f_ppeInfo", "PPE details preview"),
+root_cause: Array.from(document.querySelectorAll("input[name='rootCause']:checked")).map(cb => cb.value).join(", ") || "Root cause preview",
+control_implementation: getPreviewFieldValue("f_controlImplementation", "Control implementation detail preview"),
+compliance_references: getPreviewFieldValue("f_complianceRefs", "Compliance references preview"),
+immediate_action: getPreviewFieldValue("f_immediateAction", "Immediate action preview"),
+preventive_action: getPreviewFieldValue("f_preventiveAction", "Preventive action preview"),
+responsible_person: getPreviewFieldValue("f_responsible", "Responsible person"),
+deadline: getPreviewFieldValue("f_deadline", "Deadline preview")
+}
+
+canvas.innerHTML = buildAiTemplateMarkup(previewData)
+}
+
+function renderOutputAiTemplate(data) {
+const reportOutput = document.getElementById("reportOutput")
+const aiTemplate = document.getElementById("outAiTemplate")
+if (!reportOutput || !aiTemplate) return
+
+if ((data.layout_style || "") !== "reference") {
+reportOutput.classList.remove("ai-template-active")
+aiTemplate.classList.add("hidden")
+aiTemplate.innerHTML = ""
+return
+}
+
+aiTemplate.innerHTML = buildAiTemplateMarkup(data)
+aiTemplate.classList.remove("hidden")
+reportOutput.classList.add("ai-template-active")
 }
 
 async function extractLayoutPalette(file) {
@@ -1411,7 +1786,8 @@ return null
 
 return {
 primary: rgbToHex(totalR / count, totalG / count, totalB / count),
-accent: accent.color
+accent: accent.color,
+orientation: image.height >= image.width ? "portrait" : "landscape"
 }
 } catch (_error) {
 return null
@@ -1423,7 +1799,9 @@ URL.revokeObjectURL(objectUrl)
 function applyReportOutputLayout(data) {
 const reportOutput = document.getElementById("reportOutput")
 const templateBadge = document.getElementById("out_templateBadge")
+const aiTemplate = document.getElementById("outAiTemplate")
 reportOutput.classList.remove("reference-layout")
+reportOutput.classList.remove("ai-template-active")
 reportOutput.style.removeProperty("--report-layout-image")
 reportOutput.style.removeProperty("--report-header-image")
 reportOutput.style.removeProperty("--report-primary")
@@ -1432,6 +1810,10 @@ reportOutput.style.removeProperty("--report-card-bg")
 reportOutput.style.removeProperty("--report-output-bg")
 reportOutput.style.removeProperty("--report-divider")
 templateBadge.classList.add("hidden")
+if (aiTemplate) {
+aiTemplate.classList.add("hidden")
+aiTemplate.innerHTML = ""
+}
 
 const layoutStyle = data.layout_style || "classic"
 const themeMap = {
@@ -1454,13 +1836,10 @@ reportOutput.style.setProperty("--report-output-bg", theme.bg)
 reportOutput.style.setProperty("--report-divider", theme.divider)
 
 if (layoutStyle === "reference" && data.layout_reference_url) {
-reportOutput.classList.add("reference-layout")
-reportOutput.style.setProperty("--report-layout-image", `url('${data.layout_reference_url}')`)
-reportOutput.style.setProperty("--report-header-image", `url('${data.layout_reference_url}')`)
 templateBadge.classList.remove("hidden")
 templateBadge.textContent = data.layout_reference_name
-? `Reference Layout Applied: ${data.layout_reference_name}`
-: "Reference Layout Applied"
+? `AI Template Applied: ${data.layout_reference_name}`
+: "AI Template Applied"
 }
 }
 
@@ -1471,25 +1850,21 @@ const header = document.getElementById("generatedLayoutHeader")
 const status = document.getElementById("layoutStatus")
 
 preview.classList.add("visible")
-inner.className = `layout-generated-inner ${plan.margin_style || "wide-frame"}`
-header.className = `layout-generated-header ${plan.header_style || "image-band"}`
+const orientationClass = plan.reference_orientation === "portrait" ? "portrait-template" : ""
+const referenceClass = layoutReferenceUrl ? `reference-template ${orientationClass}`.trim() : ""
+const resolvedHeaderStyle = layoutReferenceUrl && (plan.header_style || "image-band") === "image-band"
+? "boxed-header"
+: (plan.header_style || "image-band")
+inner.className = `layout-generated-inner ${plan.margin_style || "wide-frame"} ${referenceClass}`.trim()
+header.className = `layout-generated-header ${resolvedHeaderStyle}`
 inner.style.setProperty("--layout-preview-primary", plan.primary_color || "#364fc7")
 inner.style.setProperty("--layout-preview-accent", plan.accent_color || "#0c8599")
-inner.style.setProperty("--layout-generated-image", layoutReferenceUrl ? `url('${layoutReferenceUrl}')` : "none")
+inner.style.setProperty("--layout-generated-image", "none")
 
 document.getElementById("generatedCompanyName").textContent = plan.company_name || "Safety AI Platform"
 document.getElementById("generatedCompanyAddress").textContent = plan.company_address || "Worksite address pending"
 document.getElementById("generatedLayoutNote").textContent = plan.preview_note || "AI layout preview ready."
-document.getElementById("generatedPreviewReportId").textContent = getPreviewFieldValue("f_reportId", "INC-preview")
-document.getElementById("generatedPreviewLocation").textContent = getPreviewFieldValue("f_location", "Location preview")
-document.getElementById("generatedPreviewDepartment").textContent = getPreviewFieldValue("f_department", "Department preview")
-document.getElementById("generatedPreviewHazard").textContent = getPreviewFieldValue("f_hazardType", "Hazard preview")
-document.getElementById("generatedPreviewRisk").textContent = getPreviewFieldValue("f_riskLevel", "Risk preview")
-document.getElementById("generatedPreviewDescription").textContent = getPreviewFieldValue("f_description", "Your entered report summary will stay in this clean panel.")
-document.getElementById("generatedPreviewImmediate").textContent = getPreviewFieldValue("f_immediateAction", "Immediate action preview")
-document.getElementById("generatedPreviewPreventive").textContent = getPreviewFieldValue("f_preventiveAction", "Preventive action preview")
-document.getElementById("generatedPreviewOwner").textContent = getPreviewFieldValue("f_responsible", "Responsible person")
-document.getElementById("generatedPreviewDeadline").textContent = getPreviewFieldValue("f_deadline", "Deadline preview")
+renderGeneratedTemplateCanvas()
 status.textContent = `Layout preview generated using ${plan.engine || "RULES"}.`
 }
 
@@ -1499,7 +1874,6 @@ if (!layoutReferenceFile) {
 alert("Upload a layout reference first.")
 return
 }
-
 const status = document.getElementById("layoutStatus")
 status.textContent = "Generating layout preview..."
 
@@ -1534,6 +1908,7 @@ throw new Error("Unable to generate layout preview")
 generatedLayoutPlan = await response.json()
 generatedLayoutPlan.layout_reference_url = layoutReferenceUrl
 generatedLayoutPlan.layout_reference_name = layoutReferenceFile.name
+generatedLayoutPlan.reference_orientation = palette?.orientation || "portrait"
 applyGeneratedLayoutPreview(generatedLayoutPlan, layoutReferenceUrl)
 } catch (error) {
 console.error(error)
@@ -1562,6 +1937,32 @@ body: JSON.stringify(data)
 if (!response.ok) {
 const errorText = await response.text()
 throw new Error(errorText || "Failed to save report")
+}
+
+return await response.json()
+}
+
+async function enhanceAndValidateReport(data) {
+const token = (typeof getStoredToken === "function" ? getStoredToken() : null)
+const headers = { "Content-Type": "application/json" }
+if (token) {
+headers["Authorization"] = "Bearer " + token
+}
+
+const response = await fetch(buildApiUrl("/api/reports/enhance-validate"), {
+method: "POST",
+headers,
+body: JSON.stringify(data)
+})
+
+if (!response.ok) {
+let detail = ""
+try {
+detail = await response.text()
+} catch (_error) {
+detail = ""
+}
+throw new Error(detail || `AI enhancement failed with status ${response.status}`)
 }
 
 return await response.json()
@@ -1609,15 +2010,29 @@ role: document.getElementById("f_role").value,
 hazard_type: document.getElementById("f_hazardType").value,
 risk_level: document.getElementById("f_riskLevel").value,
 description: document.getElementById("f_description").value,
+contributing_hazards: document.getElementById("f_contributingHazards").value,
+risk_assessment_basis: document.getElementById("f_riskAssessmentBasis").value,
+ppe_info: document.getElementById("f_ppeInfo").value,
 risk_score: Number(document.getElementById("f_aiScore").value || 0),
 severity: document.getElementById("f_aiSeverity").value,
 probability: document.getElementById("f_aiProbability").value,
 root_cause: Array.from(document.querySelectorAll("input[name='rootCause']:checked")).map(cb => cb.value).join(", "),
+control_implementation: document.getElementById("f_controlImplementation").value,
+compliance_references: document.getElementById("f_complianceRefs").value,
 immediate_action: document.getElementById("f_immediateAction").value,
 preventive_action: document.getElementById("f_preventiveAction").value,
 responsible_person: document.getElementById("f_responsible").value,
 deadline: document.getElementById("f_deadline").value,
 status: document.getElementById("f_status").value,
+reporter_name: document.getElementById("f_reporterName").value,
+reporter_signature: document.getElementById("f_reporterSig").value,
+reporter_date: document.getElementById("f_reporterDate").value,
+supervisor_name: document.getElementById("f_supervisorName").value,
+supervisor_signature: document.getElementById("f_supervisorSig").value,
+supervisor_date: document.getElementById("f_supervisorDate").value,
+safety_name: document.getElementById("f_safetyName").value,
+safety_signature: document.getElementById("f_safetySig").value,
+safety_date: document.getElementById("f_safetyDate").value,
 evidence_url: evidenceUrl,
 layout_style: layoutStyle,
 layout_reference_url: layoutReferenceUrl,
@@ -1628,7 +2043,35 @@ company_name: getPreviewFieldValue("f_companyName", "Safety AI Platform"),
 company_address: getPreviewFieldValue("f_companyAddress", "Worksite address pending"),
 layout_margin_style: generatedLayoutPlan?.margin_style || null,
 layout_header_style: generatedLayoutPlan?.header_style || null,
-layout_preview_note: generatedLayoutPlan?.preview_note || null
+layout_preview_note: generatedLayoutPlan?.preview_note || null,
+layout_template_style: generatedLayoutPlan?.template_style || "incident-grid"
+}
+
+try {
+const enhancement = await enhanceAndValidateReport(reportData)
+const missingFields = enhancement?.validation?.missing_fields || []
+if (missingFields.length) {
+alert(`Please complete required fields before submit: ${missingFields.join(", ")}`)
+return
+}
+
+const enhanced = enhancement?.enhanced_fields || {}
+if (enhanced.description) reportData.description = enhanced.description
+if (enhanced.root_cause) reportData.root_cause = enhanced.root_cause
+if (enhanced.immediate_action) reportData.immediate_action = enhanced.immediate_action
+if (enhanced.preventive_action) reportData.preventive_action = enhanced.preventive_action
+
+document.getElementById("f_description").value = reportData.description
+document.getElementById("f_immediateAction").value = reportData.immediate_action
+document.getElementById("f_preventiveAction").value = reportData.preventive_action
+
+const warnings = enhancement?.validation?.warnings || []
+if (warnings.length) {
+document.getElementById("layoutStatus").textContent = `AI validation notes: ${warnings.join(" | ")}`
+}
+} catch (enhancementError) {
+console.warn("AI enhancement unavailable, continuing with form values.", enhancementError)
+document.getElementById("layoutStatus").textContent = "AI enhancement unavailable. Saved using your entered form values."
 }
 
 const result = await saveReportToBackend(reportData)
@@ -1682,7 +2125,7 @@ setText("out_reportId", data.report_id || `RPT-${dbId}`)
 setText("out_companyName", data.company_name)
 setText("out_companyAddress", data.company_address)
 setText("out_layout", data.layout_style === "reference" && data.layout_reference_name
-? `Reference Layout (${data.layout_reference_name})`
+? `AI Template (${data.layout_reference_name})`
 : (data.layout_style || "classic").replace(/^\w/, c => c.toUpperCase()))
 setText("out_datetime", `${data.date || "-"} ${data.time || ""}`.trim())
 setText("out_location", data.location)
@@ -1692,29 +2135,35 @@ setText("out_empId", data.employee_id)
 setText("out_role", data.role)
 setText("out_hazardType", data.hazard_type)
 setText("out_description", data.description)
+setText("out_contributingHazards", data.contributing_hazards)
+setText("out_riskAssessmentBasis", data.risk_assessment_basis)
+setText("out_ppeInfo", data.ppe_info)
 setText("out_aiScore", data.risk_score ? String(data.risk_score) : "-")
 setText("out_aiSeverity", data.severity)
 setText("out_aiProbability", data.probability)
 setText("out_rootCause", data.root_cause)
+setText("out_controlImplementation", data.control_implementation)
+setText("out_complianceRefs", data.compliance_references)
 setText("out_immediateAction", data.immediate_action)
 setText("out_preventiveAction", data.preventive_action)
 setText("out_responsible", data.responsible_person)
 setText("out_deadline", data.deadline)
 setText("out_status", data.status)
-setText("out_reporterName", document.getElementById("f_reporterName").value)
-setText("out_reporterSig", document.getElementById("f_reporterSig").value)
-setText("out_reporterDate", document.getElementById("f_reporterDate").value)
-setText("out_supervisorName", document.getElementById("f_supervisorName").value)
-setText("out_supervisorSig", document.getElementById("f_supervisorSig").value)
-setText("out_supervisorDate", document.getElementById("f_supervisorDate").value)
-setText("out_safetyName", document.getElementById("f_safetyName").value)
-setText("out_safetySig", document.getElementById("f_safetySig").value)
-setText("out_safetyDate", document.getElementById("f_safetyDate").value)
+setText("out_reporterName", data.reporter_name)
+setText("out_reporterSig", data.reporter_signature)
+setText("out_reporterDate", data.reporter_date)
+setText("out_supervisorName", data.supervisor_name)
+setText("out_supervisorSig", data.supervisor_signature)
+setText("out_supervisorDate", data.supervisor_date)
+setText("out_safetyName", data.safety_name)
+setText("out_safetySig", data.safety_signature)
+setText("out_safetyDate", data.safety_date)
 
 const riskBadge = document.getElementById("out_riskBadge")
 const riskLevel = data.risk_level || "Medium"
 riskBadge.className = "risk-pill " + (RISK_MAP[riskLevel]?.cls || "risk-medium")
 riskBadge.textContent = riskLevel
+renderOutputAiTemplate(data)
 document.getElementById("reportOutput").classList.remove("hidden")
 }
 

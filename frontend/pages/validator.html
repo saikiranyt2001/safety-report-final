@@ -97,6 +97,25 @@ body {
 	color: var(--muted);
 }
 
+.template-guide {
+	margin: 0 0 0.85rem;
+	padding: 0.75rem 0.85rem;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: #f8fbfd;
+	font-size: 0.86rem;
+	color: var(--muted);
+}
+
+.template-guide ul {
+	margin: 0.4rem 0 0;
+	padding-left: 1rem;
+}
+
+.template-guide li {
+	margin: 0.2rem 0;
+}
+
 #reportText {
 	width: 100%;
 	min-height: 180px;
@@ -131,6 +150,19 @@ body {
 	border-radius: 12px;
 	background: #fff;
 	color: var(--primary);
+	padding: 0.72rem 1rem;
+	margin-top: 0.9rem;
+	margin-left: 0.7rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.template-btn {
+	border: 1px solid rgba(47, 158, 68, 0.35);
+	border-radius: 12px;
+	background: linear-gradient(180deg, #f2fff6, #e8f8ee);
+	color: #1f6f3f;
 	padding: 0.72rem 1rem;
 	margin-top: 0.9rem;
 	margin-left: 0.7rem;
@@ -214,9 +246,19 @@ body {
 
 <div class="validator-card">
 
+<div class="template-guide">
+<strong>Professional Template Checklist:</strong>
+<ul>
+<li>Hazard details, contributing factors, and PPE status</li>
+<li>Risk assessment basis (method + rationale)</li>
+<li>Root causes, control implementation detail, and compliance references</li>
+<li>Owner, deadline, and status for closure tracking</li>
+</ul>
+</div>
+
 <textarea
 id="reportText"
-placeholder="Paste safety report here..."
+placeholder="Paste safety report here, or use Insert Professional Template and fill each section..."
 rows="8">
 </textarea>
 
@@ -228,6 +270,10 @@ Validate Report
 
 <button class="secondary-btn" type="button" onclick="pasteReportFromClipboard()">
 Paste From Clipboard
+</button>
+
+<button class="template-btn" type="button" onclick="insertProfessionalTemplate()">
+Insert Professional Template
 </button>
 
 <div class="result" id="resultBox">
@@ -342,6 +388,57 @@ async function pasteReportFromClipboard(){
 if(!navigator.clipboard || !navigator.clipboard.readText){
 alert("Clipboard access is not available in this browser. Use Ctrl+V in the report box.")
 return
+}
+
+function insertProfessionalTemplate(){
+const template = [
+"1. INCIDENT INFORMATION",
+"Report ID:",
+"Date:",
+"Time:",
+"Location:",
+"Department:",
+"",
+"2. PERSON INVOLVED",
+"Employee Name:",
+"Employee ID:",
+"Role:",
+"",
+"3. HAZARD DETAILS",
+"Hazard Type:",
+"Risk Level:",
+"Description:",
+"Contributing Hazard Details:",
+"PPE In Use / PPE Gaps:",
+"",
+"4. RISK ASSESSMENT BASIS",
+"Method Used (Matrix/JSA/etc.):",
+"Assessment Rationale:",
+"",
+"5. ROOT CAUSE ANALYSIS",
+"Selected Causes:",
+"",
+"6. INVESTIGATION & COMPLIANCE",
+"Control Implementation Detail:",
+"Compliance References (OSHA/LOTO/SOP):",
+"",
+"7. CORRECTIVE ACTIONS",
+"Immediate Action:",
+"Preventive Action:",
+"",
+"8. ASSIGNMENT",
+"Responsible Person:",
+"Deadline:",
+"Status:",
+"",
+"9. APPROVAL",
+"Reporter Name / Date:",
+"Supervisor Name / Date:",
+"Safety Officer Name / Date:"
+].join("\n")
+
+reportTextArea.value = template
+reportTextArea.focus()
 }
 
 try {

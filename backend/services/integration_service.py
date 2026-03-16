@@ -198,19 +198,23 @@ def dispatch_event(
     active = [ep for ep in endpoints if _is_active(ep.is_active)]
     results: list[dict] = []
 
-    # Optional default org-wide webhooks from env.
-    if settings.DEFAULT_SLACK_WEBHOOK_URL:
+    # Optional default org-wide webhooks from env. Some deployments may not
+    # define these settings keys, so access them defensively.
+    default_slack_webhook = getattr(settings, "DEFAULT_SLACK_WEBHOOK_URL", None)
+    default_teams_webhook = getattr(settings, "DEFAULT_TEAMS_WEBHOOK_URL", None)
+
+    if default_slack_webhook:
         results.append(
             _post_webhook(
-                settings.DEFAULT_SLACK_WEBHOOK_URL,
+                default_slack_webhook,
                 {"text": f"{title}\n\n{body}"},
                 provider="slack-default",
             )
         )
-    if settings.DEFAULT_TEAMS_WEBHOOK_URL:
+    if default_teams_webhook:
         results.append(
             _post_webhook(
-                settings.DEFAULT_TEAMS_WEBHOOK_URL,
+                default_teams_webhook,
                 {"text": f"{title}\n\n{body}"},
                 provider="teams-default",
             )
