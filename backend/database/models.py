@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Float
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Float, JSON
 from sqlalchemy.orm import relationship
 from datetime import UTC, datetime
 from .database import Base
@@ -191,6 +191,8 @@ class InspectionTemplate(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     description = Column(String)
+    category = Column(String, nullable=True)
+    json_schema = Column(JSON, nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), index=True, nullable=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=utc_now)
@@ -214,6 +216,10 @@ class InspectionQuestion(Base):
     id = Column(Integer, primary_key=True, index=True)
     template_id = Column(Integer, ForeignKey("inspection_templates.id"), index=True, nullable=False)
     question = Column(String, nullable=False)
+    question_code = Column(String, nullable=True)
+    section_name = Column(String, nullable=True)
+    risk_level = Column(String, nullable=True)
+    question_type = Column(String, nullable=True)
     order = Column(Integer, default=0)
 
     template = relationship("InspectionTemplate", back_populates="questions")

@@ -441,7 +441,16 @@ body {
     <div class="toolbar">
       <div class="toolbar-left">
         <input class="search-input" type="text" id="templateSearch" placeholder="Search templates…" oninput="filterTemplates()">
-        <button class="btn btn-outline" onclick="loadIndustrySafetyTemplate()">Load Industry Safety Template</button>
+        <select class="form-input" id="presetTemplateSelect" style="min-width:260px;max-width:320px;padding:8px 12px;height:38px">
+          <option value="industrial_safety_master_001">Industry Safety Inspection</option>
+          <option value="workplace_safety_001">General Workplace Safety Inspection</option>
+          <option value="construction_safety_001">Construction Site Safety Inspection</option>
+          <option value="fire_safety_001">Fire Safety Inspection</option>
+          <option value="machinery_safety_001">Machinery Safety Inspection</option>
+          <option value="warehouse_safety_001">Warehouse Safety Inspection</option>
+        </select>
+        <button class="btn btn-outline" onclick="loadSelectedPresetTemplate()">Load Selected Template</button>
+        <button class="btn btn-outline" onclick="loadAllPresetTemplates()">Load All Starter Templates</button>
       </div>
       <span id="noTemplatesHint" style="font-size:.85rem;color:var(--muted);display:none">No templates yet — create your first one.</span>
     </div>
@@ -685,136 +694,292 @@ function filterTemplates(){
   ))
 }
 
-const INDUSTRY_TEMPLATE_DEFINITION = {
-  template_id: "industrial_safety_master_001",
-  template_name: "Industrial Safety Inspection",
-  category: "Oil & Gas / Heavy Industry",
-  sections: [
-    {
-      section_name: "Housekeeping",
-      questions: [
-        { id: "H1", question: "Floors clean and free of spills?", risk: "medium" },
-        { id: "H2", question: "Walkways and aisles unobstructed?", risk: "high" },
-        { id: "H3", question: "Waste disposed properly?", risk: "medium" },
-        { id: "H4", question: "Spill kits available?", risk: "high" },
-        { id: "H5", question: "Work areas organized?", risk: "low" }
-      ]
-    },
-    {
-      section_name: "Personal Protective Equipment",
-      questions: [
-        { id: "P1", question: "Workers wearing helmets?", risk: "high" },
-        { id: "P2", question: "Safety gloves used where required?", risk: "medium" },
-        { id: "P3", question: "Eye protection used?", risk: "high" },
-        { id: "P4", question: "Hearing protection used in noisy areas?", risk: "medium" },
-        { id: "P5", question: "Safety shoes worn?", risk: "high" }
-      ]
-    },
-    {
-      section_name: "Fire Safety",
-      questions: [
-        { id: "F1", question: "Fire extinguishers available?", risk: "high" },
-        { id: "F2", question: "Fire extinguishers inspected recently?", risk: "high" },
-        { id: "F3", question: "Fire alarm system functional?", risk: "high" },
-        { id: "F4", question: "Flammable materials stored properly?", risk: "high" },
-        { id: "F5", question: "Emergency exits clearly marked?", risk: "high" }
-      ]
-    },
-    {
-      section_name: "Electrical Safety",
-      questions: [
-        { id: "E1", question: "Electrical panels accessible?", risk: "high" },
-        { id: "E2", question: "No exposed wiring?", risk: "high" },
-        { id: "E3", question: "Proper grounding present?", risk: "high" },
-        { id: "E4", question: "Extension cords in good condition?", risk: "medium" },
-        { id: "E5", question: "Lockout-tagout procedures followed?", risk: "high" }
-      ]
-    },
-    {
-      section_name: "Machinery Safety",
-      questions: [
-        { id: "M1", question: "Machine guards installed?", risk: "high" },
-        { id: "M2", question: "Emergency stop buttons functional?", risk: "high" },
-        { id: "M3", question: "Operators trained for equipment?", risk: "high" },
-        { id: "M4", question: "Machines maintained regularly?", risk: "medium" },
-        { id: "M5", question: "No abnormal machine noise?", risk: "medium" }
-      ]
-    },
-    {
-      section_name: "Chemical Safety",
-      questions: [
-        { id: "C1", question: "Chemicals labeled properly?", risk: "high" },
-        { id: "C2", question: "MSDS sheets available?", risk: "high" },
-        { id: "C3", question: "Chemical storage ventilated?", risk: "medium" },
-        { id: "C4", question: "Spill response procedures available?", risk: "high" }
-      ]
-    },
-    {
-      section_name: "Emergency Preparedness",
-      questions: [
-        { id: "EM1", question: "Emergency evacuation plan available?", risk: "high" },
-        { id: "EM2", question: "First aid kits available?", risk: "medium" },
-        { id: "EM3", question: "Emergency drills conducted?", risk: "medium" },
-        { id: "EM4", question: "Emergency contact numbers posted?", risk: "low" }
-      ]
-    }
-  ]
-}
+const PRESET_TEMPLATES = [
+  {
+    template_id: "industrial_safety_master_001",
+    template_name: "Industrial Safety Inspection",
+    category: "Oil & Gas / Heavy Industry",
+    sections: [
+      {
+        section_name: "Housekeeping",
+        questions: [
+          { id: "H1", question: "Floors clean and free of spills?", risk: "medium" },
+          { id: "H2", question: "Walkways and aisles unobstructed?", risk: "high" },
+          { id: "H3", question: "Waste disposed properly?", risk: "medium" },
+          { id: "H4", question: "Spill kits available?", risk: "high" },
+          { id: "H5", question: "Work areas organized?", risk: "low" }
+        ]
+      },
+      {
+        section_name: "Personal Protective Equipment",
+        questions: [
+          { id: "P1", question: "Workers wearing helmets?", risk: "high" },
+          { id: "P2", question: "Safety gloves used where required?", risk: "medium" },
+          { id: "P3", question: "Eye protection used?", risk: "high" },
+          { id: "P4", question: "Hearing protection used in noisy areas?", risk: "medium" },
+          { id: "P5", question: "Safety shoes worn?", risk: "high" }
+        ]
+      },
+      {
+        section_name: "Fire Safety",
+        questions: [
+          { id: "F1", question: "Fire extinguishers available?", risk: "high" },
+          { id: "F2", question: "Fire extinguishers inspected recently?", risk: "high" },
+          { id: "F3", question: "Fire alarm system functional?", risk: "high" },
+          { id: "F4", question: "Flammable materials stored properly?", risk: "high" },
+          { id: "F5", question: "Emergency exits clearly marked?", risk: "high" }
+        ]
+      },
+      {
+        section_name: "Electrical Safety",
+        questions: [
+          { id: "E1", question: "Electrical panels accessible?", risk: "high" },
+          { id: "E2", question: "No exposed wiring?", risk: "high" },
+          { id: "E3", question: "Proper grounding present?", risk: "high" },
+          { id: "E4", question: "Extension cords in good condition?", risk: "medium" },
+          { id: "E5", question: "Lockout-tagout procedures followed?", risk: "high" }
+        ]
+      },
+      {
+        section_name: "Machinery Safety",
+        questions: [
+          { id: "M1", question: "Machine guards installed?", risk: "high" },
+          { id: "M2", question: "Emergency stop buttons functional?", risk: "high" },
+          { id: "M3", question: "Operators trained for equipment?", risk: "high" },
+          { id: "M4", question: "Machines maintained regularly?", risk: "medium" },
+          { id: "M5", question: "No abnormal machine noise?", risk: "medium" }
+        ]
+      },
+      {
+        section_name: "Chemical Safety",
+        questions: [
+          { id: "C1", question: "Chemicals labeled properly?", risk: "high" },
+          { id: "C2", question: "MSDS sheets available?", risk: "high" },
+          { id: "C3", question: "Chemical storage ventilated?", risk: "medium" },
+          { id: "C4", question: "Spill response procedures available?", risk: "high" }
+        ]
+      },
+      {
+        section_name: "Emergency Preparedness",
+        questions: [
+          { id: "EM1", question: "Emergency evacuation plan available?", risk: "high" },
+          { id: "EM2", question: "First aid kits available?", risk: "medium" },
+          { id: "EM3", question: "Emergency drills conducted?", risk: "medium" },
+          { id: "EM4", question: "Emergency contact numbers posted?", risk: "low" }
+        ]
+      }
+    ]
+  },
+  {
+    template_id: "workplace_safety_001",
+    template_name: "General Workplace Safety Inspection",
+    category: "Workplace Safety",
+    sections: [
+      {
+        section_name: "Housekeeping",
+        questions: [
+          { id: "H1", question: "Are floors clean and free from spills?", risk: "medium" },
+          { id: "H2", question: "Are walkways and emergency exits clear?", risk: "high" },
+          { id: "H3", question: "Is waste disposed properly?", risk: "low" }
+        ]
+      },
+      {
+        section_name: "Electrical Safety",
+        questions: [
+          { id: "E1", question: "Are electrical panels accessible?", risk: "high" },
+          { id: "E2", question: "Are cables properly insulated?", risk: "high" }
+        ]
+      },
+      {
+        section_name: "Emergency Preparedness",
+        questions: [
+          { id: "EM1", question: "Are fire exits clearly marked?", risk: "high" },
+          { id: "EM2", question: "Are first aid kits available?", risk: "medium" }
+        ]
+      }
+    ]
+  },
+  {
+    template_id: "construction_safety_001",
+    template_name: "Construction Site Safety Inspection",
+    category: "Construction",
+    sections: [
+      {
+        section_name: "Scaffolding Safety",
+        questions: [
+          { id: "S1", question: "Is scaffolding installed correctly?", risk: "high" },
+          { id: "S2", question: "Are guardrails present?", risk: "high" }
+        ]
+      },
+      {
+        section_name: "Fall Protection",
+        questions: [
+          { id: "F1", question: "Are safety harnesses used when working at height?", risk: "high" },
+          { id: "F2", question: "Are safety nets installed where required?", risk: "medium" }
+        ]
+      }
+    ]
+  },
+  {
+    template_id: "fire_safety_001",
+    template_name: "Fire Safety Inspection",
+    category: "Fire Safety",
+    sections: [
+      {
+        section_name: "Fire Equipment",
+        questions: [
+          { id: "F1", question: "Are fire extinguishers available?", risk: "high" },
+          { id: "F2", question: "Are fire alarms functioning?", risk: "high" }
+        ]
+      },
+      {
+        section_name: "Emergency Exits",
+        questions: [
+          { id: "E1", question: "Are emergency exits clearly marked?", risk: "high" },
+          { id: "E2", question: "Are escape routes free of obstacles?", risk: "high" }
+        ]
+      }
+    ]
+  },
+  {
+    template_id: "machinery_safety_001",
+    template_name: "Machinery Safety Inspection",
+    category: "Equipment Safety",
+    sections: [
+      {
+        section_name: "Machine Guards",
+        questions: [
+          { id: "M1", question: "Are machine guards installed?", risk: "high" },
+          { id: "M2", question: "Are moving parts properly covered?", risk: "high" }
+        ]
+      }
+    ]
+  },
+  {
+    template_id: "warehouse_safety_001",
+    template_name: "Warehouse Safety Inspection",
+    category: "Warehouse",
+    sections: [
+      {
+        section_name: "Storage Safety",
+        questions: [
+          { id: "W1", question: "Are racks properly loaded?", risk: "high" },
+          { id: "W2", question: "Are materials stacked safely?", risk: "medium" }
+        ]
+      },
+      {
+        section_name: "Forklift Safety",
+        questions: [
+          { id: "F1", question: "Are forklift operators trained?", risk: "high" }
+        ]
+      }
+    ]
+  }
+]
 
-function flattenIndustryQuestions(templateDefinition){
+function flattenTemplateQuestions(templateDefinition){
   const flat = []
   for(const section of templateDefinition.sections){
     for(const item of section.questions){
-      flat.push(`[${section.section_name}] (${String(item.risk || "medium").toUpperCase()}) ${item.id} - ${item.question}`)
+      flat.push({
+        question: item.question,
+        question_code: item.id,
+        section_name: section.section_name,
+        risk_level: String(item.risk || "medium").toLowerCase(),
+        question_type: item.type || "yes_no"
+      })
     }
   }
   return flat
 }
 
-async function loadIndustrySafetyTemplate(){
-  const existing = allTemplates.find(t => (t.name || "").toLowerCase() === INDUSTRY_TEMPLATE_DEFINITION.template_name.toLowerCase())
-  if(existing){
-    toast("Industry template already exists")
-    return
+function getPresetTemplateById(templateId){
+  return PRESET_TEMPLATES.find(t => t.template_id === templateId) || null
+}
+
+async function loadPresetTemplate(templateDefinition, skipConfirm = false){
+  if(!templateDefinition){
+    toast("Invalid preset template", true)
+    return false
   }
 
-  const shouldCreate = confirm("Load the Industry Safety Inspection template with all sections and questions?")
-  if(!shouldCreate) return
+  const existing = allTemplates.find(t => (t.name || "").toLowerCase() === templateDefinition.template_name.toLowerCase())
+  if(existing){
+    toast(`${templateDefinition.template_name} already exists`)
+    return false
+  }
 
-  const description = `${INDUSTRY_TEMPLATE_DEFINITION.category} | Template ID: ${INDUSTRY_TEMPLATE_DEFINITION.template_id}`
+  if(!skipConfirm){
+    const shouldCreate = confirm(`Load \"${templateDefinition.template_name}\" with all sections and questions?`)
+    if(!shouldCreate) return false
+  }
+
+  const description = `${templateDefinition.category} | Template ID: ${templateDefinition.template_id}`
 
   try {
     const createRes = await fetch("/api/inspection-templates", {
       method: "POST",
       headers: apiHeaders(),
       body: JSON.stringify({
-        name: INDUSTRY_TEMPLATE_DEFINITION.template_name,
-        description
+        name: templateDefinition.template_name,
+        description,
+        category: templateDefinition.category,
+        json_schema: templateDefinition
       })
     })
 
     if(!createRes.ok){
-      throw new Error("Failed to create industry template")
+      throw new Error("Failed to create preset template")
     }
 
     const created = await createRes.json()
-    const questions = flattenIndustryQuestions(INDUSTRY_TEMPLATE_DEFINITION)
+    const questions = flattenTemplateQuestions(templateDefinition)
 
     for(const question of questions){
       const qRes = await fetch(`/api/inspection-templates/${created.id}/questions`, {
         method: "POST",
         headers: apiHeaders(),
-        body: JSON.stringify({ question })
+        body: JSON.stringify(question)
       })
       if(!qRes.ok){
-        throw new Error("Failed while adding industry template questions")
+        throw new Error("Failed while adding preset template questions")
       }
     }
 
-    toast(`Loaded ${questions.length} industry safety questions`)
+    toast(`Loaded ${questions.length} questions for ${templateDefinition.template_name}`)
     await loadTemplates()
+    return true
   } catch (_error){
-    toast("Unable to load industry template. Check permissions (admin/manager).", true)
+    toast("Unable to load preset template. Check permissions (admin/manager).", true)
+    return false
+  }
+}
+
+async function loadIndustrySafetyTemplate(){
+  const industry = getPresetTemplateById("industrial_safety_master_001")
+  await loadPresetTemplate(industry)
+}
+
+async function loadSelectedPresetTemplate(){
+  const selectedId = document.getElementById("presetTemplateSelect").value
+  const selectedTemplate = getPresetTemplateById(selectedId)
+  await loadPresetTemplate(selectedTemplate)
+}
+
+async function loadAllPresetTemplates(){
+  const shouldCreate = confirm("Load all starter templates that are not already present?")
+  if(!shouldCreate) return
+
+  let createdCount = 0
+  for(const templateDefinition of PRESET_TEMPLATES){
+    const created = await loadPresetTemplate(templateDefinition, true)
+    if(created) createdCount += 1
+  }
+
+  if(createdCount > 0){
+    toast(`Loaded ${createdCount} preset template(s)`)
+  } else {
+    toast("No new preset templates were added")
   }
 }
 

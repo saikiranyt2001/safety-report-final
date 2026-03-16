@@ -12,12 +12,16 @@ def create_template(
     company_id: int | None,
     name: str,
     description: str,
+    category: str | None = None,
+    json_schema: dict | None = None,
     created_by_id: int | None = None,
 ):
     template = InspectionTemplate(
         company_id=company_id,
         name=name,
         description=description,
+        category=category,
+        json_schema=json_schema,
         created_by_id=created_by_id,
     )
     db.add(template)
@@ -43,12 +47,22 @@ def get_template(db: Session, company_id: int | None, template_id: int):
     )
 
 
-def update_template(db: Session, company_id: int | None, template_id: int, name: str, description: str):
+def update_template(
+    db: Session,
+    company_id: int | None,
+    template_id: int,
+    name: str,
+    description: str,
+    category: str | None = None,
+    json_schema: dict | None = None,
+):
     template = get_template(db, company_id, template_id)
     if not template:
         return None
     template.name = name
     template.description = description
+    template.category = category
+    template.json_schema = json_schema
     db.commit()
     db.refresh(template)
     return template
@@ -66,7 +80,16 @@ def delete_template(db: Session, company_id: int | None, template_id: int):
 # Questions
 # -------------------------
 
-def add_question(db: Session, company_id: int | None, template_id: int, question_text: str):
+def add_question(
+    db: Session,
+    company_id: int | None,
+    template_id: int,
+    question_text: str,
+    question_code: str | None = None,
+    section_name: str | None = None,
+    risk_level: str | None = None,
+    question_type: str | None = None,
+):
     template = get_template(db, company_id, template_id)
     if not template:
         return None
@@ -78,6 +101,10 @@ def add_question(db: Session, company_id: int | None, template_id: int, question
     question = InspectionQuestion(
         template_id=template_id,
         question=question_text,
+        question_code=question_code,
+        section_name=section_name,
+        risk_level=risk_level,
+        question_type=question_type,
         order=count,
     )
     db.add(question)
@@ -140,11 +167,21 @@ def _template_to_dict(template: InspectionTemplate) -> dict:
         "id": template.id,
         "name": template.name,
         "description": template.description or "",
+        "category": template.category,
+        "json_schema": template.json_schema,
         "created_by": template.created_by.username if template.created_by else "system",
         "created_at": template.created_at.isoformat() if template.created_at else None,
         "question_count": len(template.questions),
         "questions": [
-            {"id": q.id, "question": q.question, "order": q.order}
+            {
+                "id": q.id,
+                "question": q.question,
+                "question_code": q.question_code,
+                "section_name": q.section_name,
+                "risk_level": q.risk_level,
+                "question_type": q.question_type,
+                "order": q.order,
+            }
             for q in template.questions
         ],
     }

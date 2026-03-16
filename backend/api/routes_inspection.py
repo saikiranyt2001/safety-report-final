@@ -23,10 +23,16 @@ def get_db():
 class TemplateCreate(BaseModel):
     name: str
     description: str = ""
+    category: str = ""
+    json_schema: dict | None = None
 
 
 class QuestionCreate(BaseModel):
     question: str
+    question_code: str = ""
+    section_name: str = ""
+    risk_level: str = ""
+    question_type: str = "yes_no"
 
 
 class ResponseItem(BaseModel):
@@ -61,6 +67,8 @@ def create_template(
         company_id=user.company_id,
         name=payload.name,
         description=payload.description,
+        category=payload.category.strip() or None,
+        json_schema=payload.json_schema,
         created_by_id=user.user_id,
     )
     log_activity(
@@ -99,6 +107,8 @@ def update_template(
         template_id,
         payload.name,
         payload.description,
+        payload.category.strip() or None,
+        payload.json_schema,
     )
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
@@ -145,10 +155,27 @@ def add_question(
     template = inspection_service.get_template(db, user.company_id, template_id)
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
-    question = inspection_service.add_question(db, user.company_id, template_id, payload.question)
+    question = inspection_service.add_question(
+        db,
+        user.company_id,
+        template_id,
+        payload.question,
+        payload.question_code.strip() or None,
+        payload.section_name.strip() or None,
+        payload.risk_level.strip() or None,
+        payload.question_type.strip() or None,
+    )
     if not question:
         raise HTTPException(status_code=404, detail="Template not found")
-    return {"id": question.id, "question": question.question, "order": question.order}
+    return {
+        "id": question.id,
+        "question": question.question,
+        "question_code": question.question_code,
+        "section_name": question.section_name,
+        "risk_level": question.risk_level,
+        "question_type": question.question_type,
+        "order": question.order,
+    }
 
 
 @router.delete("/inspection-questions/{question_id}")
