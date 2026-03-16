@@ -21,7 +21,6 @@ from backend.database.models import (
     EquipmentInspection,
     HazardTask,
     Incident,
-    InspectionResponse,
     Project,
     Report,
 )

@@ -1,11 +1,10 @@
 import json
 import re
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from backend.core.ai_client import chat_completion
-from backend.core.rbac import require_roles
 from backend.services import compliance_service
 
 router = APIRouter(tags=["AI Tools"])
