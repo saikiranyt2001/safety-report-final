@@ -1,12 +1,7 @@
-const analyticsToken = localStorage.getItem("auth_token") || localStorage.getItem("token")
-
-if (!analyticsToken) {
-	window.location.href = "login.html"
-}
-
 function analyticsHeaders() {
 	const headers = { "Content-Type": "application/json" }
-	if (analyticsToken && analyticsToken !== "loggedin") {
+	const analyticsToken = typeof getStoredToken === "function" ? getStoredToken() : null
+	if (analyticsToken) {
 		headers.Authorization = `Bearer ${analyticsToken}`
 	}
 	return headers

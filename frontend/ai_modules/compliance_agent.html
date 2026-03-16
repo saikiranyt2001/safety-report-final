@@ -127,6 +127,19 @@ body.compliance-page {
 	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.24);
 }
 
+.secondary-btn {
+	border: 1px solid rgba(11, 114, 133, 0.2);
+	border-radius: 12px;
+	background: #fff;
+	color: var(--primary);
+	padding: 0.72rem 1rem;
+	margin-top: 0.9rem;
+	margin-left: 0.7rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	cursor: pointer;
+}
+
 .result {
 	margin-top: 1rem;
 	border: 1px solid rgba(16, 42, 67, 0.1);
@@ -214,6 +227,10 @@ placeholder="Paste safety report or compliance details..."></textarea>
 Check Compliance
 </button>
 
+<button class="secondary-btn" type="button" onclick="pasteComplianceFromClipboard()">
+Paste From Clipboard
+</button>
+
 <div class="result" id="resultBox">
 Compliance result will appear here.
 </div>
@@ -260,9 +277,6 @@ fetch("../components/sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML = data
 
-/* Initialize search */
-initSearch()
-
 /* Sidebar Toggle */
 
 const toggleBtn = document.getElementById("menuToggle")
@@ -305,14 +319,43 @@ document.getElementById("footer").innerHTML = data
 <script src="../js/main.js"></script>
 
 
-<!-- AI CHAT SCRIPT -->
-<script>
-wireBackendChat()
-</script>
-
-
 <!-- COMPLIANCE LOGIC -->
 <script>
+
+const complianceTextArea = document.getElementById("reportText")
+
+complianceTextArea.addEventListener("paste", function(event){
+const pastedText = event.clipboardData ? event.clipboardData.getData("text") : ""
+if(!pastedText){
+return
+}
+
+event.preventDefault()
+const start = this.selectionStart
+const end = this.selectionEnd
+const currentValue = this.value
+this.value = currentValue.slice(0, start) + pastedText + currentValue.slice(end)
+this.selectionStart = this.selectionEnd = start + pastedText.length
+})
+
+async function pasteComplianceFromClipboard(){
+if(!navigator.clipboard || !navigator.clipboard.readText){
+alert("Clipboard access is not available in this browser. Use Ctrl+V in the report box.")
+return
+}
+
+try {
+const text = await navigator.clipboard.readText()
+if(!text.trim()){
+alert("Clipboard is empty.")
+return
+}
+complianceTextArea.value = text
+complianceTextArea.focus()
+} catch (_error) {
+alert("Clipboard access was blocked. Click in the report box and press Ctrl+V.")
+}
+}
 
 function checkCompliance(){
 
@@ -326,8 +369,7 @@ return
 fetch("/api/compliance/analyze-text", {
 method: "POST",
 headers: {
-"Content-Type": "application/json",
-"Authorization": "Bearer " + (getStoredToken() || "")
+"Content-Type": "application/json"
 },
 body: JSON.stringify({ text: input })
 })
@@ -354,6 +396,11 @@ document.getElementById("resultBox").innerHTML = `<p>${error.message}</p>`
 
 }
 
+</script>
+
+<script>
+initSearch()
+wireBackendChat()
 </script>
 
 </body>

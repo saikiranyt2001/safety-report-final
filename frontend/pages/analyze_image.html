@@ -444,33 +444,20 @@ return
 const formData = new FormData()
 formData.append("file", file)
 
-document.getElementById("resultBox").innerHTML = "Uploading image and queuing background analysis..."
+document.getElementById("resultBox").innerHTML = "Uploading image and analyzing hazards..."
 
 try{
-const token = (typeof getStoredToken === "function" ? getStoredToken() : null)
-if(!token){
-throw new Error("Your session expired. Please log in again.")
-}
-
-const response = await fetch(window.location.origin + "/api/pipeline/analyze-image", {
+const response = await fetch(window.location.origin + "/api/analyze-image", {
 method: "POST",
-headers: {
-"Authorization": "Bearer " + token
-},
 body: formData
 })
 
 if(!response.ok){
 const errorText = await response.text()
-throw new Error(errorText || "Could not queue image analysis")
+throw new Error(errorText || "Could not analyze image")
 }
 
-const taskInfo = await response.json()
-
-document.getElementById("resultBox").innerHTML =
-`<b>Task queued:</b> ${taskInfo.task_id}<br>Waiting for worker result...`
-
-const result = await pollTaskResult(taskInfo.task_id, token)
+const result = await response.json()
 
 drawDetections(result.detections || [])
 
@@ -484,40 +471,6 @@ document.getElementById("resultBox").innerHTML = `AI analysis failed: ${error.me
 
 }
 
-}
-
-async function pollTaskResult(taskId, token) {
-	const maxAttempts = 30
-
-	for (let attempt = 0; attempt < maxAttempts; attempt++) {
-		const response = await fetch(`${window.location.origin}/api/pipeline/task-status/${taskId}`, {
-			headers: {
-				"Authorization": "Bearer " + token
-			}
-		})
-
-		if (!response.ok) {
-			const errorText = await response.text()
-			throw new Error(errorText || "Could not read task status")
-		}
-
-		const data = await response.json()
-
-		if (data.status === "SUCCESS") {
-			return data.result
-		}
-
-		if (data.status === "FAILURE") {
-			throw new Error(data.error || "Background analysis failed")
-		}
-
-		document.getElementById("resultBox").innerHTML =
-		`<b>Task queued:</b> ${taskId}<br>Worker status: ${data.status}`
-
-		await new Promise(resolve => setTimeout(resolve, 2000))
-	}
-
-	throw new Error("Timed out waiting for background analysis")
 }
 
 </script>

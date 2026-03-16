@@ -258,6 +258,262 @@ box-shadow: 0 12px 24px rgba(11, 114, 133, 0.24);
 transition: opacity 0.18s, transform 0.12s;
 }
 .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+.layout-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 0.9rem;
+}
+
+.layout-option {
+position: relative;
+border: 1.5px solid rgba(16, 42, 67, 0.12);
+border-radius: 16px;
+padding: 1rem;
+background: linear-gradient(180deg, #ffffff, #f6fafd);
+cursor: pointer;
+transition: border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+}
+
+.layout-option:hover {
+border-color: rgba(11, 114, 133, 0.24);
+box-shadow: 0 10px 24px rgba(11, 114, 133, 0.08);
+transform: translateY(-1px);
+}
+
+.layout-option.selected {
+border-color: var(--primary);
+box-shadow: 0 0 0 3px rgba(11, 114, 133, 0.08);
+}
+
+.layout-option input {
+position: absolute;
+opacity: 0;
+pointer-events: none;
+}
+
+.layout-option-title {
+font-size: 1rem;
+font-weight: 700;
+color: var(--text);
+margin-bottom: 0.35rem;
+}
+
+.layout-option-copy {
+font-size: 0.83rem;
+line-height: 1.5;
+color: var(--muted);
+}
+
+.layout-preview-strip {
+display: flex;
+gap: 0.35rem;
+margin-top: 0.75rem;
+}
+
+.layout-preview-strip span {
+display: block;
+height: 8px;
+flex: 1;
+border-radius: 999px;
+}
+
+.layout-upload-box {
+margin-top: 1rem;
+padding: 1rem;
+border: 1px dashed rgba(11, 114, 133, 0.26);
+border-radius: 14px;
+background: linear-gradient(180deg, #f8fbfd, #edf8f2);
+}
+
+.layout-helper {
+font-size: 0.8rem;
+color: var(--muted);
+margin-top: 0.35rem;
+}
+
+.layout-actions {
+display: flex;
+gap: 0.75rem;
+flex-wrap: wrap;
+margin-top: 0.9rem;
+align-items: center;
+}
+
+.layout-status {
+font-size: 0.82rem;
+color: var(--muted);
+}
+
+.layout-reference-preview {
+display: none;
+margin-top: 0.9rem;
+padding: 0.9rem;
+border-radius: 14px;
+background: rgba(255,255,255,0.72);
+border: 1px solid rgba(11,114,133,0.14);
+}
+
+.layout-reference-preview.visible {
+display: block;
+}
+
+.layout-reference-preview img {
+display: block;
+width: 100%;
+max-height: 220px;
+object-fit: contain;
+border-radius: 12px;
+border: 1px solid rgba(16,42,67,0.1);
+background: #fff;
+}
+
+.layout-reference-preview img.hidden {
+display: none;
+}
+
+.layout-reference-caption {
+font-size: 0.8rem;
+color: var(--muted);
+margin-top: 0.55rem;
+}
+
+.layout-generated-preview {
+display: none;
+margin-top: 1rem;
+border: 1px solid rgba(16,42,67,0.1);
+border-radius: 18px;
+background: #fff;
+overflow: hidden;
+box-shadow: 0 12px 28px rgba(16,42,67,0.08);
+}
+
+.layout-generated-preview.visible {
+display: block;
+}
+
+.layout-generated-inner {
+position: relative;
+padding: var(--layout-frame-padding, 30px);
+background:
+linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.9)),
+var(--layout-generated-image, none);
+background-size: cover;
+background-position: center;
+}
+
+.layout-generated-inner.wide-frame {
+--layout-frame-padding: 34px;
+}
+
+.layout-generated-inner.double-frame {
+--layout-frame-padding: 28px;
+border: 2px solid var(--layout-preview-accent, #2f9e44);
+box-shadow: inset 0 0 0 12px rgba(255,255,255,0.72);
+}
+
+.layout-generated-inner.rounded-frame {
+--layout-frame-padding: 28px;
+border-radius: 26px;
+}
+
+.layout-generated-inner.banded-frame {
+--layout-frame-padding: 28px;
+background:
+linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.9)),
+linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0) 16%),
+var(--layout-generated-image, none);
+background-size: cover;
+background-position: center;
+}
+
+.layout-generated-shell {
+border: 1px solid rgba(16,42,67,0.12);
+border-radius: 18px;
+background: rgba(255,255,255,0.9);
+overflow: hidden;
+}
+
+.layout-generated-header {
+padding: 1.1rem 1.2rem;
+background:
+linear-gradient(135deg, rgba(16,42,67,0.7), rgba(16,42,67,0.22)),
+var(--layout-generated-image, none);
+background-size: cover;
+background-position: center;
+color: #fff;
+}
+
+.layout-generated-header.boxed-header {
+margin: 16px;
+border-radius: 16px;
+}
+
+.layout-generated-header.top-ribbon {
+background: linear-gradient(120deg, var(--layout-preview-primary, #0b7285), var(--layout-preview-accent, #2f9e44));
+}
+
+.layout-generated-header.split-banner {
+background:
+linear-gradient(180deg, var(--layout-preview-primary, #0b7285) 0 60%, var(--layout-preview-accent, #2f9e44) 60% 100%);
+}
+
+.layout-generated-company {
+font-size: 1.25rem;
+font-weight: 700;
+}
+
+.layout-generated-address {
+font-size: 0.86rem;
+opacity: 0.94;
+margin-top: 0.25rem;
+}
+
+.layout-generated-note {
+padding: 0 1.2rem 0.9rem;
+font-size: 0.82rem;
+color: var(--muted);
+}
+
+.layout-generated-body {
+padding: 0 1.2rem 1.2rem;
+display: grid;
+grid-template-columns: 1.1fr 0.9fr;
+gap: 0.9rem;
+}
+
+.layout-generated-card {
+border: 1px solid rgba(16,42,67,0.1);
+border-radius: 14px;
+background: rgba(255,255,255,0.86);
+padding: 0.95rem;
+}
+
+.layout-generated-card h3 {
+margin: 0 0 0.6rem;
+font-size: 0.85rem;
+text-transform: uppercase;
+letter-spacing: 0.05em;
+color: var(--layout-preview-primary, #0b7285);
+}
+
+.layout-generated-row {
+display: grid;
+grid-template-columns: 120px 1fr;
+gap: 0.5rem;
+font-size: 0.87rem;
+margin-bottom: 0.42rem;
+}
+
+.layout-generated-row strong {
+color: #17324d;
+}
+
+.layout-generated-foot {
+padding: 0.9rem 1.2rem 1.2rem;
+font-size: 0.8rem;
+color: var(--muted);
+}
 .btn-secondary {
 border: 1.5px solid rgba(16,42,67,0.18);
 border-radius: 12px;
@@ -277,9 +533,71 @@ transition: background 0.15s;
 border: 1.5px solid rgba(11,114,133,0.18);
 border-radius: 18px;
 padding: 1.8rem;
-background: var(--panel-strong);
+background: var(--report-output-bg, var(--panel-strong));
 box-shadow: 0 8px 28px rgba(11,114,133,0.09);
 margin-top: 2rem;
+position: relative;
+overflow: hidden;
+}
+.report-output.reference-layout::before {
+content: "";
+position: absolute;
+inset: 0;
+background-image: var(--report-layout-image);
+background-size: cover;
+background-position: center;
+opacity: 0.52;
+pointer-events: none;
+}
+.report-output.reference-layout::after {
+content: "";
+position: absolute;
+inset: 0;
+background:
+linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.88));
+pointer-events: none;
+}
+.report-output.reference-layout {
+border-color: var(--report-primary, #364fc7);
+box-shadow: 0 18px 40px rgba(16,42,67,0.18);
+}
+.report-output.reference-layout .output-header {
+padding: 1rem 1.1rem;
+border-radius: 16px;
+border-bottom: 0;
+background-image:
+linear-gradient(135deg, rgba(16,42,67,0.76), rgba(16,42,67,0.28)),
+var(--report-header-image);
+background-size: cover;
+background-position: center;
+color: #fff;
+box-shadow: 0 14px 32px rgba(16,42,67,0.14);
+}
+.report-output.reference-layout .output-title,
+.report-output.reference-layout .out-key,
+.report-output.reference-layout .out-section-title,
+.report-output.reference-layout .approval-out-role {
+color: #102a43;
+}
+.report-output.reference-layout .output-title {
+color: #ffffff;
+}
+.report-output.reference-layout .template-badge {
+display: inline-flex;
+align-items: center;
+gap: 0.35rem;
+margin-top: 0.5rem;
+padding: 0.28rem 0.65rem;
+font-size: 0.76rem;
+font-weight: 700;
+border-radius: 999px;
+background: rgba(255,255,255,0.2);
+color: #ffffff;
+border: 1px solid rgba(255,255,255,0.25);
+}
+.report-output > * {
+position: relative;
+z-index: 1;
 }
 .output-header {
 display: flex;
@@ -287,13 +605,13 @@ align-items: center;
 justify-content: space-between;
 margin-bottom: 1.4rem;
 padding-bottom: 0.9rem;
-border-bottom: 1px solid rgba(16,42,67,0.1);
+border-bottom: 1px solid var(--report-divider, rgba(16,42,67,0.1));
 }
 .output-title { margin: 0; font-size: 1.2rem; font-weight: 700; }
 .print-btn {
 border: 0;
 border-radius: 10px;
-background: linear-gradient(120deg, #0b7285, #2f9e44);
+background: linear-gradient(120deg, var(--report-primary, #0b7285), var(--report-accent, #2f9e44));
 color: #fff;
 padding: 0.46rem 1rem;
 font-family: "Space Grotesk", sans-serif;
@@ -306,7 +624,7 @@ font-size: 0.82rem;
 font-weight: 700;
 text-transform: uppercase;
 letter-spacing: 0.06em;
-color: var(--primary);
+color: var(--report-primary, var(--primary));
 margin: 1.1rem 0 0.5rem;
 }
 .out-row {
@@ -329,14 +647,14 @@ margin-top: 0.8rem;
 border: 1px solid rgba(16,42,67,0.1);
 border-radius: 12px;
 padding: 0.9rem;
-background: #f6fafd;
+background: var(--report-card-bg, #f6fafd);
 }
 .approval-out-role {
 font-size: 0.72rem;
 font-weight: 700;
 text-transform: uppercase;
 letter-spacing: 0.06em;
-color: var(--primary);
+color: var(--report-primary, var(--primary));
 margin-bottom: 0.35rem;
 }
 .signature-line {
@@ -389,6 +707,99 @@ box-shadow: 0 12px 24px rgba(11, 114, 133, 0.25);
 </div>
 
 <p class="required-note"><span style="color:var(--warn)">*</span> Marked fields are required.</p>
+
+<!-- SECTION 0: LAYOUT -->
+<div class="form-section">
+<h2 class="section-heading">
+<span>0</span>&nbsp; Report Layout
+<span class="tag">Template</span>
+</h2>
+<div class="layout-grid">
+<label class="layout-option selected" data-layout="classic">
+<input type="radio" name="layoutStyle" value="classic" checked>
+<div class="layout-option-title">Classic Safety</div>
+<div class="layout-option-copy">Balanced incident-report layout with clean sections for operations teams.</div>
+<div class="layout-preview-strip">
+<span style="background:#0b7285;"></span>
+<span style="background:#2f9e44;"></span>
+<span style="background:#d9f2ff;"></span>
+</div>
+</label>
+<label class="layout-option" data-layout="executive">
+<input type="radio" name="layoutStyle" value="executive">
+<div class="layout-option-title">Executive Brief</div>
+<div class="layout-option-copy">Board-ready summary treatment with stronger headline and premium palette.</div>
+<div class="layout-preview-strip">
+<span style="background:#102a43;"></span>
+<span style="background:#c77d00;"></span>
+<span style="background:#fff0c2;"></span>
+</div>
+</label>
+<label class="layout-option" data-layout="audit">
+<input type="radio" name="layoutStyle" value="audit">
+<div class="layout-option-title">Audit Pack</div>
+<div class="layout-option-copy">More formal compliance-oriented styling for inspections and review packs.</div>
+<div class="layout-preview-strip">
+<span style="background:#5f3dc4;"></span>
+<span style="background:#d9480f;"></span>
+<span style="background:#f1e9ff;"></span>
+</div>
+</label>
+</div>
+<div class="layout-upload-box">
+<div class="field-grid">
+<div>
+<label class="field-label">Company Name</label>
+<input id="f_companyName" class="field-input" placeholder="e.g. Sai Works Safety Division">
+</div>
+<div class="field-full">
+<label class="field-label">Company Address</label>
+<input id="f_companyAddress" class="field-input" placeholder="e.g. Print Block Campus, Hyderabad, Telangana">
+</div>
+</div>
+<label class="field-label">Upload Layout Reference</label>
+<input id="f_layoutReference" type="file" accept="image/*,.pdf" class="field-input" style="padding:0.42rem 0.72rem;">
+<p id="layoutReferenceName" class="layout-helper">No reference uploaded. For the closest layout match, upload a JPG or PNG template screenshot. PDF files are saved as references, but image templates drive the visual styling directly.</p>
+<div id="layoutReferencePreview" class="layout-reference-preview">
+<img id="layoutReferencePreviewImage" alt="Layout reference preview">
+<div id="layoutReferencePreviewCaption" class="layout-reference-caption">Uploaded template preview.</div>
+</div>
+<div class="layout-actions">
+<button type="button" class="btn-secondary" onclick="generateLayoutPreview()">Generate Layout</button>
+<span id="layoutStatus" class="layout-status">Upload a layout and generate a preview before saving the report.</span>
+</div>
+<div id="generatedLayoutPreview" class="layout-generated-preview">
+<div id="generatedLayoutInner" class="layout-generated-inner wide-frame">
+<div class="layout-generated-shell">
+<div id="generatedLayoutHeader" class="layout-generated-header">
+<div id="generatedCompanyName" class="layout-generated-company">Safety AI Platform</div>
+<div id="generatedCompanyAddress" class="layout-generated-address">Worksite address pending</div>
+</div>
+<div id="generatedLayoutNote" class="layout-generated-note">Outer frame borrowed from uploaded layout; report details stay readable.</div>
+<div class="layout-generated-body">
+<div class="layout-generated-card">
+<h3>Incident Details</h3>
+<div class="layout-generated-row"><strong>Report</strong><span id="generatedPreviewReportId">INC-preview</span></div>
+<div class="layout-generated-row"><strong>Location</strong><span id="generatedPreviewLocation">Location preview</span></div>
+<div class="layout-generated-row"><strong>Department</strong><span id="generatedPreviewDepartment">Department preview</span></div>
+<div class="layout-generated-row"><strong>Hazard</strong><span id="generatedPreviewHazard">Hazard preview</span></div>
+<div class="layout-generated-row"><strong>Risk</strong><span id="generatedPreviewRisk">Risk preview</span></div>
+<div class="layout-generated-row"><strong>Summary</strong><span id="generatedPreviewDescription">Your entered report summary will stay in this clean panel.</span></div>
+</div>
+<div class="layout-generated-card">
+<h3>Controls And Ownership</h3>
+<div class="layout-generated-row"><strong>Immediate</strong><span id="generatedPreviewImmediate">Immediate action preview</span></div>
+<div class="layout-generated-row"><strong>Preventive</strong><span id="generatedPreviewPreventive">Preventive action preview</span></div>
+<div class="layout-generated-row"><strong>Owner</strong><span id="generatedPreviewOwner">Responsible person</span></div>
+<div class="layout-generated-row"><strong>Deadline</strong><span id="generatedPreviewDeadline">Deadline preview</span></div>
+</div>
+</div>
+<div class="layout-generated-foot">Generated layout preview. This step copies the outer framing and header treatment, while keeping company text and form details readable.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 
 <!-- SECTION 1: INCIDENT INFORMATION -->
 <div class="form-section">
@@ -645,11 +1056,17 @@ placeholder="Describe long-term measures to prevent recurrence (training, proces
 <!-- REPORT OUTPUT -->
 <div id="reportOutput" class="report-output hidden">
 <div class="output-header">
+<div>
 <h2 class="output-title">Incident Report -- <span id="out_reportId"></span></h2>
+<div id="out_companyName" style="font-size:0.92rem;font-weight:700;color:inherit;margin-top:0.2rem;"></div>
+<div id="out_companyAddress" style="font-size:0.8rem;color:inherit;opacity:0.9;"></div>
+<div id="out_templateBadge" class="template-badge hidden">Reference Layout Applied</div>
+</div>
 <button class="print-btn" onclick="window.print()">Print / PDF</button>
 </div>
 
 <div class="out-section-title">Incident Information</div>
+<div class="out-row"><span class="out-key">Layout Template</span><span class="out-value" id="out_layout"></span></div>
 <div class="out-row"><span class="out-key">Date &amp; Time</span><span class="out-value" id="out_datetime"></span></div>
 <div class="out-row"><span class="out-key">Location</span><span class="out-value" id="out_location"></span></div>
 <div class="out-row"><span class="out-key">Department</span><span class="out-value" id="out_department"></span></div>
@@ -768,13 +1185,18 @@ function checkAuth(){
 
 const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 
-if(!token){
+if(!token || token === "loggedin" || token.split(".").length !== 3){
+localStorage.removeItem("auth_token")
+localStorage.removeItem("token")
+localStorage.removeItem("access_token")
 window.location.href="login.html"
 return
 }
 
 }
 checkAuth();
+
+let generatedLayoutPlan = null
 
 /* Auto Report ID and today date */
 (function () {
@@ -792,6 +1214,43 @@ document.getElementById("f_safetyDate").value      = now.toISOString().slice(0, 
 /* Evidence file name */
 document.getElementById("f_evidence").addEventListener("change", function () {
 document.getElementById("evidenceFileName").textContent = this.files[0] ? this.files[0].name : "No file selected."
+})
+
+document.getElementById("f_layoutReference").addEventListener("change", function () {
+const previewWrap = document.getElementById("layoutReferencePreview")
+const previewImage = document.getElementById("layoutReferencePreviewImage")
+const previewCaption = document.getElementById("layoutReferencePreviewCaption")
+document.getElementById("layoutReferenceName").textContent = this.files[0]
+? `${this.files[0].name} selected as layout reference.`
+: "No reference uploaded. For the closest layout match, upload a JPG or PNG template screenshot. PDF files are saved as references, but image templates drive the visual styling directly."
+
+if (!this.files[0]) {
+previewWrap.classList.remove("visible")
+previewImage.removeAttribute("src")
+previewImage.classList.add("hidden")
+previewCaption.textContent = "Uploaded template preview."
+return
+}
+
+if (this.files[0].type.startsWith("image/")) {
+previewImage.src = URL.createObjectURL(this.files[0])
+previewImage.classList.remove("hidden")
+previewCaption.textContent = "This uploaded image will drive the generated report styling."
+previewWrap.classList.add("visible")
+} else {
+previewImage.removeAttribute("src")
+previewImage.classList.add("hidden")
+previewCaption.textContent = "PDF reference saved. Image templates provide the strongest visual match."
+previewWrap.classList.add("visible")
+}
+})
+
+document.querySelectorAll(".layout-option").forEach(option => {
+option.addEventListener("click", function () {
+document.querySelectorAll(".layout-option").forEach(card => card.classList.remove("selected"))
+this.classList.add("selected")
+this.querySelector("input").checked = true
+})
 })
 
 /* Risk level badge */
@@ -889,15 +1348,214 @@ document.getElementById("validationMsg").style.display = "none"
 return true
 }
 
-async function saveReportToBackend(data) {
-const token = localStorage.getItem("token") || localStorage.getItem("auth_token")
+function rgbToHex(r, g, b) {
+return "#" + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("")
+}
 
-const response = await fetch(window.location.origin + "/api/reports", {
+function getPreviewFieldValue(id, fallback) {
+const value = document.getElementById(id)?.value?.trim()
+return value || fallback
+}
+
+async function extractLayoutPalette(file) {
+if (!file || !file.type.startsWith("image/")) {
+return null
+}
+
+const objectUrl = URL.createObjectURL(file)
+try {
+const image = await new Promise((resolve, reject) => {
+const img = new Image()
+img.onload = () => resolve(img)
+img.onerror = reject
+img.src = objectUrl
+})
+
+const canvas = document.createElement("canvas")
+const context = canvas.getContext("2d", { willReadFrequently: true })
+canvas.width = 72
+canvas.height = 72
+context.drawImage(image, 0, 0, canvas.width, canvas.height)
+const { data } = context.getImageData(0, 0, canvas.width, canvas.height)
+
+let totalR = 0, totalG = 0, totalB = 0, count = 0
+let accent = { score: -1, color: "#2f9e44" }
+
+for (let i = 0; i < data.length; i += 16) {
+const r = data[i]
+const g = data[i + 1]
+const b = data[i + 2]
+const alpha = data[i + 3]
+if (alpha < 80) continue
+
+const max = Math.max(r, g, b)
+const min = Math.min(r, g, b)
+const brightness = (r + g + b) / 3
+const saturation = max === 0 ? 0 : (max - min) / max
+if (brightness > 242 || brightness < 20) continue
+
+totalR += r
+totalG += g
+totalB += b
+count += 1
+
+const score = saturation * 0.75 + (brightness / 255) * 0.25
+if (score > accent.score && saturation > 0.18) {
+accent = { score, color: rgbToHex(r, g, b) }
+}
+}
+
+if (!count) {
+return null
+}
+
+return {
+primary: rgbToHex(totalR / count, totalG / count, totalB / count),
+accent: accent.color
+}
+} catch (_error) {
+return null
+} finally {
+URL.revokeObjectURL(objectUrl)
+}
+}
+
+function applyReportOutputLayout(data) {
+const reportOutput = document.getElementById("reportOutput")
+const templateBadge = document.getElementById("out_templateBadge")
+reportOutput.classList.remove("reference-layout")
+reportOutput.style.removeProperty("--report-layout-image")
+reportOutput.style.removeProperty("--report-header-image")
+reportOutput.style.removeProperty("--report-primary")
+reportOutput.style.removeProperty("--report-accent")
+reportOutput.style.removeProperty("--report-card-bg")
+reportOutput.style.removeProperty("--report-output-bg")
+reportOutput.style.removeProperty("--report-divider")
+templateBadge.classList.add("hidden")
+
+const layoutStyle = data.layout_style || "classic"
+const themeMap = {
+classic: { primary: "#0b7285", accent: "#2f9e44", card: "#f6fafd", bg: "#ffffff", divider: "rgba(16,42,67,0.10)" },
+executive: { primary: "#102a43", accent: "#c77d00", card: "#fff7df", bg: "#fffdfa", divider: "rgba(16,42,67,0.12)" },
+audit: { primary: "#5f3dc4", accent: "#d9480f", card: "#f6f0ff", bg: "#fffefe", divider: "rgba(95,61,196,0.18)" },
+reference: {
+primary: data.layout_primary_color || "#364fc7",
+accent: data.layout_accent_color || "#0c8599",
+card: "rgba(255,255,255,0.78)",
+bg: "rgba(255,255,255,0.92)",
+divider: "rgba(16,42,67,0.16)"
+}
+}
+const theme = themeMap[layoutStyle] || themeMap.classic
+reportOutput.style.setProperty("--report-primary", theme.primary)
+reportOutput.style.setProperty("--report-accent", theme.accent)
+reportOutput.style.setProperty("--report-card-bg", theme.card)
+reportOutput.style.setProperty("--report-output-bg", theme.bg)
+reportOutput.style.setProperty("--report-divider", theme.divider)
+
+if (layoutStyle === "reference" && data.layout_reference_url) {
+reportOutput.classList.add("reference-layout")
+reportOutput.style.setProperty("--report-layout-image", `url('${data.layout_reference_url}')`)
+reportOutput.style.setProperty("--report-header-image", `url('${data.layout_reference_url}')`)
+templateBadge.classList.remove("hidden")
+templateBadge.textContent = data.layout_reference_name
+? `Reference Layout Applied: ${data.layout_reference_name}`
+: "Reference Layout Applied"
+}
+}
+
+function applyGeneratedLayoutPreview(plan, layoutReferenceUrl) {
+const preview = document.getElementById("generatedLayoutPreview")
+const inner = document.getElementById("generatedLayoutInner")
+const header = document.getElementById("generatedLayoutHeader")
+const status = document.getElementById("layoutStatus")
+
+preview.classList.add("visible")
+inner.className = `layout-generated-inner ${plan.margin_style || "wide-frame"}`
+header.className = `layout-generated-header ${plan.header_style || "image-band"}`
+inner.style.setProperty("--layout-preview-primary", plan.primary_color || "#364fc7")
+inner.style.setProperty("--layout-preview-accent", plan.accent_color || "#0c8599")
+inner.style.setProperty("--layout-generated-image", layoutReferenceUrl ? `url('${layoutReferenceUrl}')` : "none")
+
+document.getElementById("generatedCompanyName").textContent = plan.company_name || "Safety AI Platform"
+document.getElementById("generatedCompanyAddress").textContent = plan.company_address || "Worksite address pending"
+document.getElementById("generatedLayoutNote").textContent = plan.preview_note || "AI layout preview ready."
+document.getElementById("generatedPreviewReportId").textContent = getPreviewFieldValue("f_reportId", "INC-preview")
+document.getElementById("generatedPreviewLocation").textContent = getPreviewFieldValue("f_location", "Location preview")
+document.getElementById("generatedPreviewDepartment").textContent = getPreviewFieldValue("f_department", "Department preview")
+document.getElementById("generatedPreviewHazard").textContent = getPreviewFieldValue("f_hazardType", "Hazard preview")
+document.getElementById("generatedPreviewRisk").textContent = getPreviewFieldValue("f_riskLevel", "Risk preview")
+document.getElementById("generatedPreviewDescription").textContent = getPreviewFieldValue("f_description", "Your entered report summary will stay in this clean panel.")
+document.getElementById("generatedPreviewImmediate").textContent = getPreviewFieldValue("f_immediateAction", "Immediate action preview")
+document.getElementById("generatedPreviewPreventive").textContent = getPreviewFieldValue("f_preventiveAction", "Preventive action preview")
+document.getElementById("generatedPreviewOwner").textContent = getPreviewFieldValue("f_responsible", "Responsible person")
+document.getElementById("generatedPreviewDeadline").textContent = getPreviewFieldValue("f_deadline", "Deadline preview")
+status.textContent = `Layout preview generated using ${plan.engine || "RULES"}.`
+}
+
+async function generateLayoutPreview() {
+const layoutReferenceFile = document.getElementById("f_layoutReference").files[0]
+if (!layoutReferenceFile) {
+alert("Upload a layout reference first.")
+return
+}
+
+const status = document.getElementById("layoutStatus")
+status.textContent = "Generating layout preview..."
+
+try {
+let layoutReferenceUrl = document.getElementById("f_layoutReference").dataset.uploadedUrl || ""
+if (!layoutReferenceUrl) {
+const uploaded = await uploadEvidence(layoutReferenceFile)
+layoutReferenceUrl = uploaded.url
+document.getElementById("f_layoutReference").dataset.uploadedUrl = layoutReferenceUrl
+}
+
+const palette = await extractLayoutPalette(layoutReferenceFile)
+const payload = {
+company_name: getPreviewFieldValue("f_companyName", "Safety AI Platform"),
+company_address: getPreviewFieldValue("f_companyAddress", "Worksite address pending"),
+layout_reference_url: layoutReferenceUrl,
+layout_reference_name: layoutReferenceFile.name,
+layout_primary_color: palette?.primary || null,
+layout_accent_color: palette?.accent || null
+}
+
+const response = await fetch(buildApiUrl("/api/reports/layout-preview"), {
 method: "POST",
-headers: {
-"Content-Type": "application/json",
-"Authorization": "Bearer " + token
-},
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify(payload)
+})
+
+if (!response.ok) {
+throw new Error("Unable to generate layout preview")
+}
+
+generatedLayoutPlan = await response.json()
+generatedLayoutPlan.layout_reference_url = layoutReferenceUrl
+generatedLayoutPlan.layout_reference_name = layoutReferenceFile.name
+applyGeneratedLayoutPreview(generatedLayoutPlan, layoutReferenceUrl)
+} catch (error) {
+console.error(error)
+status.textContent = "Layout preview generation failed."
+alert(error.message || "Error generating layout preview")
+}
+}
+
+async function saveReportToBackend(data) {
+const token = (typeof getStoredToken === "function" ? getStoredToken() : null)
+
+const headers = {
+"Content-Type": "application/json"
+}
+
+if (token) {
+headers["Authorization"] = "Bearer " + token
+}
+
+const response = await fetch(buildApiUrl("/api/reports"), {
+method: "POST",
+headers,
 body: JSON.stringify(data)
 })
 
@@ -914,13 +1572,29 @@ async function generateReport() {
 
 if (!validate()) return
 
+try {
 const file = document.getElementById("f_evidence").files[0]
-
+const layoutReferenceFile = document.getElementById("f_layoutReference").files[0]
 let evidenceUrl = null
+let layoutReferenceUrl = null
+let layoutReferenceName = null
+let layoutPalette = null
+let layoutStyle = document.querySelector("input[name='layoutStyle']:checked")?.value || "classic"
 
 if(file){
 const uploadResult = await uploadEvidence(file)
 evidenceUrl = uploadResult.url
+}
+
+if(layoutReferenceFile){
+const uploadResult = document.getElementById("f_layoutReference").dataset.uploadedUrl
+? { url: document.getElementById("f_layoutReference").dataset.uploadedUrl }
+: await uploadEvidence(layoutReferenceFile)
+layoutReferenceUrl = uploadResult.url
+document.getElementById("f_layoutReference").dataset.uploadedUrl = layoutReferenceUrl
+layoutReferenceName = layoutReferenceFile.name
+layoutPalette = await extractLayoutPalette(layoutReferenceFile)
+layoutStyle = "reference"
 }
 
 const reportData = {
@@ -944,11 +1618,21 @@ preventive_action: document.getElementById("f_preventiveAction").value,
 responsible_person: document.getElementById("f_responsible").value,
 deadline: document.getElementById("f_deadline").value,
 status: document.getElementById("f_status").value,
-evidence_url: evidenceUrl
+evidence_url: evidenceUrl,
+layout_style: layoutStyle,
+layout_reference_url: layoutReferenceUrl,
+layout_reference_name: layoutReferenceName,
+layout_primary_color: generatedLayoutPlan?.primary_color || layoutPalette?.primary || null,
+layout_accent_color: generatedLayoutPlan?.accent_color || layoutPalette?.accent || null,
+company_name: getPreviewFieldValue("f_companyName", "Safety AI Platform"),
+company_address: getPreviewFieldValue("f_companyAddress", "Worksite address pending"),
+layout_margin_style: generatedLayoutPlan?.margin_style || null,
+layout_header_style: generatedLayoutPlan?.header_style || null,
+layout_preview_note: generatedLayoutPlan?.preview_note || null
 }
 
-try {
 const result = await saveReportToBackend(reportData)
+populateOutput(reportData, result.id)
 alert(`Report saved successfully with ID ${result.id}`)
 } catch (error) {
 console.error(error)
@@ -966,8 +1650,21 @@ document.getElementById("aiScore").textContent = "--"
 document.getElementById("aiSeverity").textContent = "--"
 document.getElementById("aiProbability").textContent = "--"
 document.getElementById("evidenceFileName").textContent = "No file selected."
+document.getElementById("layoutReferenceName").textContent = "No reference uploaded. For the closest layout match, upload a JPG or PNG template screenshot. PDF files are saved as references, but image templates drive the visual styling directly."
+document.getElementById("layoutStatus").textContent = "Upload a layout and generate a preview before saving the report."
+document.getElementById("generatedLayoutPreview").classList.remove("visible")
+document.getElementById("f_layoutReference").dataset.uploadedUrl = ""
+generatedLayoutPlan = null
+document.getElementById("layoutReferencePreview").classList.remove("visible")
+document.getElementById("layoutReferencePreviewImage").removeAttribute("src")
+document.getElementById("layoutReferencePreviewImage").classList.add("hidden")
+document.getElementById("layoutReferencePreviewCaption").textContent = "Uploaded template preview."
 document.getElementById("reportOutput").classList.add("hidden")
+applyReportOutputLayout({ layout_style: "classic" })
 document.getElementById("validationMsg").style.display = "none"
+document.querySelectorAll(".layout-option").forEach(card => card.classList.remove("selected"))
+document.querySelector('.layout-option[data-layout="classic"]').classList.add("selected")
+document.querySelector('input[name="layoutStyle"][value="classic"]').checked = true
 const pad = n => String(n).padStart(2, "0")
 const now = new Date()
 document.getElementById("f_reportId").value = "INC-" + now.getFullYear() + "-" + pad(now.getMonth()+1) + pad(now.getDate()) + "-" + Math.floor(1000 + Math.random() * 9000)
@@ -975,12 +1672,59 @@ document.getElementById("f_date").value = now.toISOString().slice(0, 10)
 document.getElementById("f_time").value = pad(now.getHours()) + ":" + pad(now.getMinutes())
 }
 
-</script>
+function setText(id, value) {
+document.getElementById(id).textContent = value || "-"
+}
 
-<script>
-wireBackendChat()
+function populateOutput(data, dbId) {
+applyReportOutputLayout(data)
+setText("out_reportId", data.report_id || `RPT-${dbId}`)
+setText("out_companyName", data.company_name)
+setText("out_companyAddress", data.company_address)
+setText("out_layout", data.layout_style === "reference" && data.layout_reference_name
+? `Reference Layout (${data.layout_reference_name})`
+: (data.layout_style || "classic").replace(/^\w/, c => c.toUpperCase()))
+setText("out_datetime", `${data.date || "-"} ${data.time || ""}`.trim())
+setText("out_location", data.location)
+setText("out_department", data.department)
+setText("out_empName", data.employee_name)
+setText("out_empId", data.employee_id)
+setText("out_role", data.role)
+setText("out_hazardType", data.hazard_type)
+setText("out_description", data.description)
+setText("out_aiScore", data.risk_score ? String(data.risk_score) : "-")
+setText("out_aiSeverity", data.severity)
+setText("out_aiProbability", data.probability)
+setText("out_rootCause", data.root_cause)
+setText("out_immediateAction", data.immediate_action)
+setText("out_preventiveAction", data.preventive_action)
+setText("out_responsible", data.responsible_person)
+setText("out_deadline", data.deadline)
+setText("out_status", data.status)
+setText("out_reporterName", document.getElementById("f_reporterName").value)
+setText("out_reporterSig", document.getElementById("f_reporterSig").value)
+setText("out_reporterDate", document.getElementById("f_reporterDate").value)
+setText("out_supervisorName", document.getElementById("f_supervisorName").value)
+setText("out_supervisorSig", document.getElementById("f_supervisorSig").value)
+setText("out_supervisorDate", document.getElementById("f_supervisorDate").value)
+setText("out_safetyName", document.getElementById("f_safetyName").value)
+setText("out_safetySig", document.getElementById("f_safetySig").value)
+setText("out_safetyDate", document.getElementById("f_safetyDate").value)
+
+const riskBadge = document.getElementById("out_riskBadge")
+const riskLevel = data.risk_level || "Medium"
+riskBadge.className = "risk-pill " + (RISK_MAP[riskLevel]?.cls || "risk-medium")
+riskBadge.textContent = riskLevel
+document.getElementById("reportOutput").classList.remove("hidden")
+}
+
 </script>
 
 <script src="../js/main.js"></script>
+<script>
+if (typeof wireBackendChat === "function") {
+wireBackendChat()
+}
+</script>
 </body>
 </html>

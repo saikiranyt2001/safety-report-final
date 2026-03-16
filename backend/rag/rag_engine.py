@@ -1,4 +1,5 @@
 import os
+import re
 
 from backend.rag.regulation_loader import RegulationLoader
 from backend.core.ai_client import chat_completion
@@ -28,7 +29,7 @@ class RAGEngine:
 
     def _query_terms(self, query: str) -> list[str]:
         query_lower = query.lower().strip()
-        terms = [term for term in query_lower.replace("?", "").split() if len(term) > 2]
+        terms = [term for term in re.findall(r"[a-z0-9]+", query_lower) if len(term) > 3]
 
         # Safety synonyms to improve retrieval hits for real user prompts.
         if "scaffold" in query_lower or "scaffolding" in query_lower:
@@ -39,6 +40,23 @@ class RAGEngine:
             terms.extend(["regulation", "fall", "protection", "ppe"])
 
         return list(dict.fromkeys(terms))
+
+    def _smalltalk_response(self, query: str) -> str | None:
+        query_lower = query.lower().strip()
+        compact = re.sub(r"[^a-z0-9\s]", "", query_lower)
+
+        greetings = {"hi", "hello", "hey", "good morning", "good afternoon", "good evening"}
+        wellbeing = {"how are you", "how are you doing", "whats up", "what is up", "how is it going"}
+        thanks = {"thanks", "thank you", "thx"}
+
+        if compact in greetings:
+            return "Hello. I can help with workplace hazards, PPE, fire risk, inspections, and safety regulations."
+        if compact in wellbeing:
+            return "I'm here and ready to help. Ask me about hazards in the image, fire risk, PPE, or safety rules."
+        if compact in thanks:
+            return "You're welcome. Ask if you want a hazard summary or recommended control measures."
+
+        return None
 
     def retrieve(self, query: str):
         """Retrieve matching regulations from local JSON knowledge base."""
@@ -53,8 +71,9 @@ class RAGEngine:
                     str(regulation.get("reference", "")),
                 ]
             ).lower()
+            haystack_terms = set(re.findall(r"[a-z0-9]+", haystack))
 
-            if any(term in haystack for term in terms):
+            if any(term in haystack_terms for term in terms):
                 matches.append(regulation)
 
         # Keep response concise and relevant.
@@ -63,6 +82,9 @@ class RAGEngine:
     def answer_query(self, query: str) -> str:
         """Return a concise safety-advisor style response."""
         query_lower = query.lower()
+        smalltalk = self._smalltalk_response(query)
+        if smalltalk:
+            return smalltalk
 
         if "fall" in query_lower and ("osha" in query_lower or "protection" in query_lower):
             return (

@@ -124,6 +124,18 @@ body {
 	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.24);
 }
 
+.rag-secondary-btn {
+	border: 1px solid rgba(11, 114, 133, 0.2);
+	border-radius: 12px;
+	background: #fff;
+	color: var(--primary);
+	padding: 0.72rem 1rem;
+	margin-left: 0.7rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	cursor: pointer;
+}
+
 .rag-result {
 	margin-top: 1rem;
 }
@@ -220,6 +232,14 @@ class="rag-btn"
 Generate AI Report
 </button>
 
+<button
+type="button"
+onclick="pasteContextFromClipboard()"
+class="rag-secondary-btn"
+>
+Paste From Clipboard
+</button>
+
 </div>
 
 
@@ -277,9 +297,6 @@ fetch("../components/sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML = data
 
-/* Initialize search */
-initSearch()
-
 /* Sidebar Toggle */
 
 const toggleBtn = document.getElementById("menuToggle")
@@ -321,6 +338,41 @@ document.getElementById("footer").innerHTML = data
 <!-- RAG REPORT -->
 <script>
 
+const ragContextArea = document.getElementById("context")
+
+ragContextArea.addEventListener("paste", function(event){
+const pastedText = event.clipboardData ? event.clipboardData.getData("text") : ""
+if(!pastedText){
+return
+}
+
+event.preventDefault()
+const start = this.selectionStart
+const end = this.selectionEnd
+const currentValue = this.value
+this.value = currentValue.slice(0, start) + pastedText + currentValue.slice(end)
+this.selectionStart = this.selectionEnd = start + pastedText.length
+})
+
+async function pasteContextFromClipboard(){
+if(!navigator.clipboard || !navigator.clipboard.readText){
+alert("Clipboard access is not available in this browser. Use Ctrl+V in the context box.")
+return
+}
+
+try {
+const text = await navigator.clipboard.readText()
+if(!text.trim()){
+alert("Clipboard is empty.")
+return
+}
+ragContextArea.value = text
+ragContextArea.focus()
+} catch (_error) {
+alert("Clipboard access was blocked. Click in the context box and press Ctrl+V.")
+}
+}
+
 async function generateRAGReport(){
 
 const context = document.getElementById("context").value;
@@ -330,35 +382,40 @@ alert("Please provide context");
 return;
 }
 
+try {
 const response = await fetch(
 window.location.origin + "/api/rag-report",
 {
 method:"POST",
 headers:{
-"Content-Type":"application/json",
-"Authorization":"Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("token") || "")
+"Content-Type":"application/json"
 },
 body: JSON.stringify({context:context})
 }
 );
 
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || "Failed to generate RAG report")
+}
+
 const data = await response.json();
 
-document.getElementById("ragOutput").innerText = data.report;
+document.getElementById("ragOutput").innerText = data.report || "No report generated.";
 document.getElementById("result").classList.remove("hidden");
+} catch (error) {
+document.getElementById("ragOutput").innerText = error.message || "Unable to generate report.";
+document.getElementById("result").classList.remove("hidden");
+}
 
 }
 
 </script>
-
-
-<!-- AI CHAT SCRIPT -->
+<script src="../js/main.js"></script>
 <script>
+initSearch()
 wireBackendChat()
 </script>
-
-
-<script src="../js/main.js"></script>
 
 </body>
 </html>

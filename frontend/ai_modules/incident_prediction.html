@@ -106,6 +106,16 @@ body.incident-page {
 	color: #234;
 }
 
+.form-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.9rem;
+}
+
+.field-full {
+	grid-column: 1 / -1;
+}
+
 .incident-card select,
 .incident-card input {
 	width: 100%;
@@ -121,10 +131,15 @@ body.incident-page {
 	display: none;
 }
 
-#workers,
-#violations,
-#environment {
-	margin-bottom: 0.85rem;
+.incident-card textarea {
+	width: 100%;
+	padding: 0.72rem 0.78rem;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: #f8fbfd;
+	font-family: "Space Grotesk", sans-serif;
+	font-size: 0.95rem;
+	resize: vertical;
 }
 
 .detect-btn {
@@ -159,6 +174,18 @@ body.incident-page {
 	font-weight: 700;
 }
 
+.result-badge {
+	display: inline-block;
+	margin-top: 0.35rem;
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	background: #eefbff;
+	border: 1px solid rgba(11, 114, 133, 0.18);
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: var(--primary);
+}
+
 .chat-toggle-btn {
 	border: 0;
 	border-radius: 999px;
@@ -191,6 +218,10 @@ body.incident-page {
 		align-items: flex-start;
 		flex-direction: column;
 	}
+
+	.form-grid {
+		grid-template-columns: 1fr;
+	}
 }
 </style>
 
@@ -215,28 +246,64 @@ body.incident-page {
 
 <div class="incident-card">
 
-<p>AI predicts potential workplace incidents based on conditions.</p>
+<p>Estimate near-term incident risk using operational conditions from the current shift.</p>
 
+<div class="form-grid">
+<div class="field-full">
 <label>Work Environment</label>
-
 <select id="environment">
 <option>Construction Site</option>
 <option>Factory Floor</option>
 <option>Warehouse</option>
 <option>Office</option>
 </select>
+</div>
 
-<br><br>
+<div>
+<label>Workers on Shift</label>
+<input type="number" id="workers" min="0" placeholder="Enter number of workers">
+</div>
 
-<label>Number of Workers</label>
-<input type="number" id="workers" placeholder="Enter number of workers">
-
-<br><br>
-
+<div>
 <label>Safety Violations Reported</label>
-<input type="number" id="violations" placeholder="Enter violations">
+<input type="number" id="violations" min="0" placeholder="Enter violations">
+</div>
 
-<br><br>
+<div>
+<label>Shift Duration (Hours)</label>
+<input type="number" id="shiftHours" min="1" max="24" placeholder="e.g. 8">
+</div>
+
+<div>
+<label>Fatigue Level</label>
+<select id="fatigueLevel">
+<option value="low">Low</option>
+<option value="medium" selected>Medium</option>
+<option value="high">High</option>
+</select>
+</div>
+
+<div>
+<label>PPE Compliance (%)</label>
+<input type="number" id="ppeCompliance" min="0" max="100" placeholder="e.g. 85">
+</div>
+
+<div>
+<label>Weather / Site Condition</label>
+<select id="weather">
+<option value="indoor">Indoor / Controlled</option>
+<option value="hot">High Heat</option>
+<option value="rain">Rain / Wet Surface</option>
+<option value="wind">High Wind</option>
+<option value="storm">Storm / Poor Visibility</option>
+</select>
+</div>
+
+<div class="field-full">
+<label>Highest Risk Task</label>
+<input type="text" id="highRiskTask" placeholder="e.g. electrical panel maintenance, welding, forklift loading">
+</div>
+</div>
 
 <button class="detect-btn" onclick="predictIncident()">
 Predict Risk
@@ -288,9 +355,6 @@ fetch("../components/sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML = data
 
-/* Initialize search */
-initSearch()
-
 /* Sidebar Toggle */
 
 const toggleBtn = document.getElementById("menuToggle")
@@ -335,28 +399,41 @@ document.getElementById("footer").innerHTML = data
 
 <!-- INCIDENT PREDICTION -->
 <script>
+initSearch()
 wireBackendChat()
 
 function predictIncident(){
 
 let workers = document.getElementById("workers").value
 let violations = document.getElementById("violations").value
+let shiftHours = document.getElementById("shiftHours").value
+let ppeCompliance = document.getElementById("ppeCompliance").value
+let highRiskTask = document.getElementById("highRiskTask").value.trim()
 
-if(workers === "" || violations === ""){
-alert("Please fill all fields")
+if(workers === "" || violations === "" || shiftHours === "" || ppeCompliance === "" || highRiskTask === ""){
+alert("Please fill all required fields")
+return
+}
+
+if(Number(workers) < 0 || Number(violations) < 0 || Number(shiftHours) < 1 || Number(ppeCompliance) < 0 || Number(ppeCompliance) > 100){
+alert("Please enter valid non-negative values. PPE compliance must be between 0 and 100.")
 return
 }
 
 fetch("/api/incident-prediction", {
 method: "POST",
 headers: {
-"Content-Type": "application/json",
-"Authorization": "Bearer " + (getStoredToken() || "")
+"Content-Type": "application/json"
 },
 body: JSON.stringify({
 environment: document.getElementById("environment").value,
 workers: Number(workers),
-violations: Number(violations)
+violations: Number(violations),
+shift_hours: Number(shiftHours),
+fatigue_level: document.getElementById("fatigueLevel").value,
+ppe_compliance: Number(ppeCompliance),
+high_risk_task: highRiskTask,
+weather: document.getElementById("weather").value
 })
 })
 .then(async res => {
@@ -372,6 +449,8 @@ document.getElementById("resultBox").innerHTML =
 <h3>AI Prediction Result</h3>
 <p><b>Risk Level:</b> <span class="risk-high">${data.risk_level}</span></p>
 <p><b>Risk Score:</b> ${data.risk_score}/100</p>
+<p><b>Prediction Summary:</b> ${data.summary || "No summary available."}</p>
+<p><span class="result-badge">Engine: ${(data.engine || "rules").toUpperCase()}</span></p>
 <p><b>Recommended Actions:</b></p>
 <ul>
 ${(data.recommended_actions || []).map(item => `<li>${item}</li>`).join("")}

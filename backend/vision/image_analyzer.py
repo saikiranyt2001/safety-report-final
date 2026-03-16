@@ -25,15 +25,71 @@ class ImageAnalyzer:
             "person", "truck", "bus", "car", "motorcycle", "bicycle", "forklift"
         }
         medium_labels = {"ladder", "knife", "scissors", "fire hydrant"}
+        critical_labels = {"fire", "smoke", "flame"}
 
         normalized = label.lower().strip()
 
+        if normalized in critical_labels:
+            return "critical"
         if normalized in high_labels:
             return "high"
         if normalized in medium_labels:
             return "medium"
 
         return "low"
+
+    @staticmethod
+    def _build_bbox(x: int, y: int, w: int, h: int, width: int, height: int) -> dict:
+        return {
+            "x": round(x / width, 4),
+            "y": round(y / height, 4),
+            "w": round(w / width, 4),
+            "h": round(h / height, 4),
+        }
+
+    @classmethod
+    def _detect_fire_or_smoke(cls, image, width: int, height: int) -> list:
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        # Flame-like colors: reds, oranges, yellows
+        lower_fire = cv2.inRange(hsv, (0, 90, 120), (35, 255, 255))
+        # Smoke-like areas: low saturation, medium-to-high value
+        lower_smoke = cv2.inRange(hsv, (0, 0, 50), (180, 70, 210))
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
+        fire_mask = cv2.morphologyEx(lower_fire, cv2.MORPH_CLOSE, kernel)
+        smoke_mask = cv2.morphologyEx(lower_smoke, cv2.MORPH_CLOSE, kernel)
+
+        total_pixels = float(width * height)
+        detections = []
+
+        for label, mask, min_ratio, max_items in (
+            ("fire", fire_mask, 0.03, 2),
+            ("smoke", smoke_mask, 0.08, 1),
+        ):
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
+            added = 0
+            for contour in contours:
+                area = cv2.contourArea(contour)
+                if area / total_pixels < min_ratio:
+                    continue
+
+                x, y, w, h = cv2.boundingRect(contour)
+                confidence = min(0.99, round(area / total_pixels * 3, 4))
+                detections.append({
+                    "label": label,
+                    "issue": f"Detected possible {label}",
+                    "confidence": confidence,
+                    "bbox": cls._build_bbox(x, y, w, h, width, height),
+                    "severity": cls._severity_for_label(label),
+                })
+                added += 1
+                if added >= max_items:
+                    break
+
+        return detections
 
     @staticmethod
     def _risk_level_from_detections(detections: list) -> str:
@@ -103,6 +159,12 @@ class ImageAnalyzer:
                         "bbox": bbox,
                         "severity": self._severity_for_label(label),
                     })
+
+        heuristic_detections = self._detect_fire_or_smoke(image, width, height)
+        existing_labels = {item["label"] for item in detections}
+        for item in heuristic_detections:
+            if item["label"] not in existing_labels:
+                detections.append(item)
 
         hazards = [
             f"{item['label']} ({item['confidence']})"

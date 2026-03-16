@@ -39,7 +39,6 @@ async def chat(
 @router.post("/ai-chat")
 async def ai_chat(
     data: ChatPayload,
-    _user=Depends(require_roles("admin", "manager", "worker")),
 ):
     message = (data.prompt or data.message or "").strip()
     rag = RAGEngine()
@@ -49,7 +48,6 @@ async def ai_chat(
 @router.post("/rag-report")
 async def rag_report(
     data: RagPayload,
-    _user=Depends(require_roles("admin", "manager", "worker")),
 ):
     rag = RAGEngine()
     report = rag.answer_query(data.context.strip())

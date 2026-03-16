@@ -68,7 +68,6 @@ async def upload_inspection(
 @router.post("/upload", tags=["Uploads"], summary="Upload evidence file")
 async def upload_file(
     file: UploadFile = File(...),
-    user=Depends(require_roles("admin", "manager", "worker")),
     db=Depends(get_db),
 ):
     if file.content_type not in ALLOWED_TYPES:
@@ -82,9 +81,9 @@ async def upload_file(
 
     log_activity(
         db,
-        user.user_id,
+        None,
         "Uploaded report evidence",
-        event_type="user",
+        event_type="system",
         details=f"Uploaded {file.filename}",
     )
 

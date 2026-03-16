@@ -97,18 +97,35 @@ body {
 	color: var(--muted);
 }
 
+.meta-banner {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	margin-bottom: 0.9rem;
+	padding: 0.35rem 0.65rem;
+	border-radius: 999px;
+	background: #f4fbff;
+	border: 1px solid rgba(11, 114, 133, 0.14);
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: var(--primary);
+}
+
 .heatmap {
 	display: grid;
-	grid-template-columns: repeat(5, minmax(0, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 	gap: 0.65rem;
 }
 
 .cell {
 	border-radius: 12px;
 	padding: 0.85rem 0.5rem;
-	text-align: center;
-	font-weight: 700;
+	text-align: left;
 	border: 1px solid rgba(16, 42, 67, 0.1);
+	min-height: 110px;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
 }
 
 .cell.low {
@@ -124,6 +141,28 @@ body {
 .cell.high {
 	background: linear-gradient(120deg, #ffc9c9, #ffa8a8);
 	color: #7f1d1d;
+}
+
+.cell strong {
+	font-size: 1rem;
+}
+
+.cell small {
+	font-size: 0.8rem;
+	line-height: 1.45;
+}
+
+.cell .score {
+	font-size: 0.82rem;
+	font-weight: 700;
+}
+
+.empty-state {
+	padding: 1rem;
+	border-radius: 14px;
+	background: #f8fbfd;
+	border: 1px dashed rgba(16, 42, 67, 0.16);
+	color: var(--muted);
 }
 
 .chat-toggle-btn {
@@ -192,22 +231,10 @@ body {
 
 <div class="heatmap-card">
 
-<p>AI-generated risk heatmap based on incident reports.</p>
+<p>Heatmap updates from saved report locations and risk severity.</p>
+<div class="meta-banner" id="heatmapMeta">Loading report-driven heatmap...</div>
 
-<div class="heatmap">
-
-<div class="cell low">Zone A</div>
-<div class="cell medium">Zone B</div>
-<div class="cell high">Zone C</div>
-<div class="cell low">Zone D</div>
-<div class="cell medium">Zone E</div>
-
-<div class="cell medium">Zone F</div>
-<div class="cell high">Zone G</div>
-<div class="cell low">Zone H</div>
-<div class="cell medium">Zone I</div>
-<div class="cell high">Zone J</div>
-
+<div class="heatmap" id="heatmapGrid">
 </div>
 
 </div>
@@ -252,9 +279,6 @@ fetch("../components/sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML = data
 
-/* Initialize search */
-initSearch()
-
 /* Sidebar Toggle */
 
 const toggleBtn = document.getElementById("menuToggle")
@@ -295,72 +319,44 @@ document.getElementById("footer").innerHTML = data
 </script>
 
 <script src="../js/main.js"></script>
-
-
-<!-- AI CHAT SCRIPT -->
 <script>
+function renderHeatmap(zones, engine, reportCount){
+	const grid = document.getElementById("heatmapGrid")
+	const meta = document.getElementById("heatmapMeta")
+	meta.textContent = `Engine: ${String(engine || "rules").toUpperCase()} | Reports mapped: ${reportCount || 0}`
 
+	if(!zones || !zones.length){
+		grid.innerHTML = `<div class="empty-state">No saved reports with location details are available yet. Generate reports with a location to populate the heatmap.</div>`
+		return
+	}
 
-
-function sendChat(){
-
-let input=document.getElementById("chatInput")
-let text=input.value.trim()
-
-if(text==="") return
-
-addChat(text,"user-msg")
-
-let reply=generateReply(text)
-
-setTimeout(()=>{
-addChat(reply,"ai-msg")
-},400)
-
-input.value=""
-
+	grid.innerHTML = zones.map(zone => `
+		<div class="cell ${zone.risk_level || "low"}">
+			<strong>${zone.zone}</strong>
+			<div class="score">Risk Score: ${zone.risk_score}</div>
+			<small>Hazard: ${zone.top_hazard || "General Safety"}</small>
+			<small>${zone.summary || ""}</small>
+		</div>
+	`).join("")
 }
 
-function addChat(text,type){
-
-let box=document.getElementById("chatMessages")
-
-let div=document.createElement("div")
-
-div.className=type
-div.innerText=text
-
-box.appendChild(div)
-
-box.scrollTop=box.scrollHeight
-
+async function loadRiskHeatmap(){
+	try {
+		const response = await fetch("/api/analytics/zone-heatmap")
+		if(!response.ok){
+			throw new Error("Unable to load heatmap data.")
+		}
+		const data = await response.json()
+		renderHeatmap(data.zones || [], data.engine, data.report_count)
+	} catch (error) {
+		document.getElementById("heatmapMeta").textContent = "Heatmap unavailable"
+		document.getElementById("heatmapGrid").innerHTML = `<div class="empty-state">${error.message || "Unable to load heatmap data."}</div>`
+	}
 }
 
-function generateReply(q){
-
-q=q.toLowerCase()
-
-if(q.includes("hazard"))
-return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
-
-if(q.includes("helmet"))
-return "Workers must always wear PPE like helmets, gloves, and safety shoes."
-
-if(q.includes("accident"))
-return "Reduce accidents by conducting safety audits and enforcing PPE."
-
-return "Safety tip: Always inspect equipment before starting work."
-
-}
-
-document.getElementById("chatInput").addEventListener("keypress",function(e){
-
-if(e.key==="Enter"){
-sendChat()
-}
-
-})
-
+initSearch()
+wireBackendChat()
+loadRiskHeatmap()
 </script>
 
 </body>

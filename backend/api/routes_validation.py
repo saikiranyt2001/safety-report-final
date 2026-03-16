@@ -1,18 +1,17 @@
 #done
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
 
 from ..agents.validation_agent import ValidationAgent
-from backend.core.rbac import require_roles
 
 router = APIRouter(tags=["Validation"])
 
 
 class ValidationRequest(BaseModel):
     report_text: str
-    hazard_list: List[str]
-    regulation_list: List[str]
+    hazard_list: List[str] = []
+    regulation_list: List[str] = []
 
 
 class ValidationResponse(BaseModel):
@@ -22,7 +21,6 @@ class ValidationResponse(BaseModel):
 @router.post("/validate-report", response_model=ValidationResponse)
 async def validate_report(
     payload: ValidationRequest,
-    _user=Depends(require_roles("admin", "manager")),
 ):
     try:
         agent = ValidationAgent(

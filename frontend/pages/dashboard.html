@@ -33,7 +33,7 @@
 	box-sizing: border-box;
 }
 
-body {
+body.dashboard-page {
 	margin: 0;
 	font-family: "Space Grotesk", sans-serif;
 	color: var(--text);
@@ -44,15 +44,23 @@ body {
 	min-height: 100vh;
 }
 
-.main-content {
-	max-width: 1080px;
-	margin: 2rem auto;
+body.dashboard-page .main-content {
+	max-width: none;
+	width: calc(100% - 290px);
+	margin: 70px 2rem 2rem 250px;
 	padding: 2rem;
 	border: 1px solid var(--border);
 	border-radius: 24px;
 	background: var(--panel);
 	backdrop-filter: blur(4px);
 	box-shadow: var(--shadow);
+	transition: margin-left 0.12s ease-out, width 0.12s ease-out;
+	will-change: margin-left, width;
+}
+
+body.dashboard-page .main-content.expanded {
+	width: calc(100% - 110px);
+	margin-left: 70px;
 }
 
 .dashboard-header {
@@ -279,10 +287,16 @@ body {
 }
 
 @media (max-width: 680px) {
-	.main-content {
+	body.dashboard-page .main-content,
+	body.dashboard-page .main-content.expanded {
+		width: auto;
 		margin: 1rem;
 		padding: 1.2rem;
 		border-radius: 18px;
+	}
+
+	body.dashboard-page .main-content {
+		margin-top: 1rem;
 	}
 
 	.dashboard-header {
@@ -301,7 +315,7 @@ body {
 
 </head>
 
-<body>
+<body class="dashboard-page">
 
 <!-- SIDEBAR -->
 <div id="sidebar-container"></div>
@@ -431,9 +445,6 @@ fetch("../components/sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML = data
 
-/* Initialize search */
-initSearch()
-
 /* Sidebar Toggle */
 
 const toggleBtn = document.getElementById("menuToggle")
@@ -457,6 +468,14 @@ if(footer){
 footer.classList.toggle("expanded")
 }
 
+requestAnimationFrame(() => {
+	requestAnimationFrame(() => {
+		if (riskChart) {
+			riskChart.resize()
+		}
+	})
+})
+
 }
 
 }
@@ -478,6 +497,7 @@ document.getElementById("footer").innerHTML = data
 
 <script>
 
+initSearch()
 wireBackendChat()
 
 function renderSafetyScore(data){
@@ -488,8 +508,8 @@ function renderSafetyScore(data){
 	document.getElementById("scoreCritical").innerText = data.critical
 	document.getElementById("scoreRecommendations").innerText = data.recommendations
 	document.getElementById("miniRiskLevel").innerText = data.risk_level
-	document.getElementById("miniReports").innerText = data.hazards + 22
-	document.getElementById("miniProjects").innerText = 1
+	document.getElementById("miniReports").innerText = data.total_reports ?? data.hazards
+	document.getElementById("miniProjects").innerText = data.active_projects ?? 1
 }
 
 let riskChart
@@ -538,41 +558,26 @@ function renderRecentActivity(activity){
 
 async function loadExecutiveDashboard(projectId){
 	const fallback = {
-		project: "Metro Construction Site",
-		score: 72,
-		risk_level: "Medium",
-		hazards: 6,
-		critical: 2,
-		recommendations: 5,
+		project: "Local Demo Safety Dashboard",
+		score: 0,
+		risk_level: "Low",
+		hazards: 0,
+		critical: 0,
+		recommendations: 0,
+		total_reports: 0,
+		active_projects: 1,
 		risk_distribution: {
-			low: 4,
-			medium: 7,
-			high: 3,
-			critical: 2
+			low: 0,
+			medium: 0,
+			high: 0,
+			critical: 0
 		},
-		hazard_categories: [
-			{ label: "Fall Hazard", count: 4 },
-			{ label: "Electrical Risk", count: 2 },
-			{ label: "Missing PPE", count: 3 },
-			{ label: "Unsafe Ladder", count: 1 }
-		],
-		recent_activity: [
-			"Risk report generated",
-			"Hazard detected in Metro Construction Site",
-			"New inspection uploaded",
-			"Compliance check completed"
-		]
+		hazard_categories: [],
+		recent_activity: ["No report activity yet."]
 	}
 
 	try {
-		const token = getStoredToken()
-		const headers = {}
-
-		if(token && token !== "loggedin"){
-			headers["Authorization"] = "Bearer " + token
-		}
-
-		const response = await fetch("/api/dashboard/executive-summary/" + projectId, { headers: headers })
+		const response = await fetch("/api/dashboard/executive-summary/" + projectId)
 
 		if(!response.ok){
 			throw new Error("Failed to load executive dashboard")

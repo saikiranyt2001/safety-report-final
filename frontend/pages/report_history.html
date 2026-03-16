@@ -138,6 +138,102 @@ body {
 	box-shadow: 0 10px 20px rgba(11, 114, 133, 0.22);
 }
 
+.secondary-btn {
+	border: 1px solid rgba(11, 114, 133, 0.2);
+	border-radius: 10px;
+	background: #fff;
+	color: var(--primary);
+	padding: 0.45rem 0.8rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.action-group {
+	display: flex;
+	gap: 0.55rem;
+	flex-wrap: wrap;
+}
+
+.report-modal {
+	position: fixed;
+	inset: 0;
+	background: rgba(16, 42, 67, 0.55);
+	display: none;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+	z-index: 1200;
+}
+
+.report-modal.open {
+	display: flex;
+}
+
+.report-modal-card {
+	width: min(720px, 100%);
+	max-height: 85vh;
+	overflow: auto;
+	border-radius: 20px;
+	background: #fff;
+	padding: 1.4rem;
+	box-shadow: 0 24px 50px rgba(16, 42, 67, 0.25);
+}
+
+.report-modal-header {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.report-modal-title {
+	margin: 0;
+	font-size: 1.4rem;
+}
+
+.report-modal-close {
+	border: 0;
+	background: transparent;
+	font-size: 1.6rem;
+	cursor: pointer;
+	color: var(--muted);
+}
+
+.report-detail-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.report-detail-card {
+	border: 1px solid var(--border);
+	border-radius: 14px;
+	padding: 0.9rem;
+	background: linear-gradient(180deg, #f8fbfd, #f3f8ff);
+}
+
+.report-detail-label {
+	display: block;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	margin-bottom: 0.35rem;
+}
+
+.report-content-box {
+	border: 1px solid var(--border);
+	border-radius: 14px;
+	padding: 1rem;
+	background: #fbfdff;
+	white-space: pre-wrap;
+	line-height: 1.6;
+}
+
 .chat-toggle-btn {
 	border: 0;
 	border-radius: 999px;
@@ -217,6 +313,43 @@ body {
 
 </div>
 
+<div class="report-modal" id="reportModal">
+<div class="report-modal-card">
+<div class="report-modal-header">
+<div>
+<h2 class="report-modal-title" id="reportModalTitle">Report Details</h2>
+<p class="page-subtitle" id="reportModalSubtitle">Preview saved report content.</p>
+</div>
+<button class="report-modal-close" type="button" onclick="closeReportModal()">&times;</button>
+</div>
+
+<div class="report-detail-grid">
+<div class="report-detail-card">
+<span class="report-detail-label">Report ID</span>
+<div id="modalReportId">-</div>
+</div>
+<div class="report-detail-card">
+<span class="report-detail-label">Project</span>
+<div id="modalProjectId">-</div>
+</div>
+<div class="report-detail-card">
+<span class="report-detail-label">Risk Level</span>
+<div id="modalRiskLevel">-</div>
+</div>
+<div class="report-detail-card">
+<span class="report-detail-label">Created</span>
+<div id="modalCreatedAt">-</div>
+</div>
+<div class="report-detail-card">
+<span class="report-detail-label">Layout</span>
+<div id="modalLayout">-</div>
+</div>
+</div>
+
+<div class="report-content-box" id="modalContent">Loading...</div>
+</div>
+</div>
+
 <!-- AI CHAT -->
 <div class="ai-chat-sidebar" id="aiChat">
 
@@ -256,9 +389,6 @@ fetch("../components/sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML = data
 
-/* Initialize search */
-initSearch()
-
 /* Sidebar Toggle */
 
 const toggleBtn = document.getElementById("menuToggle")
@@ -297,8 +427,6 @@ document.getElementById("footer").innerHTML = data
 
 })
 
-const reportHistoryToken = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
-
 function badgeClass(level){
 const normalized = (level || "").toLowerCase()
 if(normalized === "high" || normalized === "critical") return "high"
@@ -326,20 +454,53 @@ table.innerHTML = items.map(item => `
 <td>Saved Report</td>
 <td><span class="badge ${badgeClass(item.risk_level)}">${item.risk_level}</span></td>
 <td>${formatDate(item.created_at)}</td>
-<td><button class="primary-btn" onclick="viewReport(${item.id})">View</button></td>
+<td>
+<div class="action-group">
+<button class="primary-btn" onclick="viewReport(${item.id})">View</button>
+<button class="secondary-btn" onclick="downloadReport(${item.id})">Download</button>
+</div>
+</td>
 </tr>
 `).join("")
 }
 
-function viewReport(reportId){
-window.location.href = `/frontend/pages/download_report.html?report_id=${reportId}`
+function closeReportModal(){
+document.getElementById("reportModal").classList.remove("open")
 }
 
-fetch("/api/reports", {
-headers: {
-"Authorization": "Bearer " + reportHistoryToken
+async function viewReport(reportId){
+const modal = document.getElementById("reportModal")
+document.getElementById("modalReportId").textContent = "RPT-" + reportId
+document.getElementById("modalProjectId").textContent = "-"
+document.getElementById("modalRiskLevel").textContent = "-"
+document.getElementById("modalCreatedAt").textContent = "-"
+document.getElementById("modalLayout").textContent = "-"
+document.getElementById("modalContent").textContent = "Loading report..."
+modal.classList.add("open")
+
+try {
+const response = await fetch(`/api/reports/${reportId}`)
+if(!response.ok){
+throw new Error("Unable to load report details.")
 }
-})
+const item = await response.json()
+document.getElementById("modalProjectId").textContent = item.project_id ? `Project ${item.project_id}` : "-"
+document.getElementById("modalRiskLevel").textContent = item.risk_level || "-"
+document.getElementById("modalCreatedAt").textContent = formatDate(item.created_at)
+document.getElementById("modalLayout").textContent = item.layout_style === "reference" && item.layout_reference_name
+? `Reference (${item.layout_reference_name})`
+: (item.layout_style || "classic").replace(/^\w/, c => c.toUpperCase())
+document.getElementById("modalContent").textContent = item.content || "No report details available."
+} catch (error) {
+document.getElementById("modalContent").textContent = error.message || "Unable to load report details."
+}
+}
+
+function downloadReport(reportId){
+window.open(`/api/reports/${reportId}/download`, "_blank")
+}
+
+fetch("/api/reports")
 .then(async res => {
 if(!res.ok){
 throw new Error("Failed to load reports")
@@ -355,7 +516,13 @@ document.getElementById("reportTable").innerHTML = `<tr><td colspan="6">Unable t
 
 <script src="../js/main.js"></script>
 <script>
+initSearch()
 wireBackendChat()
+document.getElementById("reportModal").addEventListener("click", function(event){
+if(event.target.id === "reportModal"){
+closeReportModal()
+}
+})
 </script>
 
 </body>

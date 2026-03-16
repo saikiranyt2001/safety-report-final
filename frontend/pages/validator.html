@@ -126,6 +126,19 @@ body {
 	box-shadow: 0 12px 24px rgba(11, 114, 133, 0.24);
 }
 
+.secondary-btn {
+	border: 1px solid rgba(11, 114, 133, 0.2);
+	border-radius: 12px;
+	background: #fff;
+	color: var(--primary);
+	padding: 0.72rem 1rem;
+	margin-top: 0.9rem;
+	margin-left: 0.7rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-weight: 600;
+	cursor: pointer;
+}
+
 .result {
 	margin-top: 1rem;
 	border: 1px solid rgba(16, 42, 67, 0.1);
@@ -213,6 +226,10 @@ rows="8">
 Validate Report
 </button>
 
+<button class="secondary-btn" type="button" onclick="pasteReportFromClipboard()">
+Paste From Clipboard
+</button>
+
 <div class="result" id="resultBox">
 Validation results will appear here.
 </div>
@@ -258,9 +275,6 @@ fetch("../components/sidebar.html")
 .then(data => {
 
 document.getElementById("sidebar-container").innerHTML = data
-
-/* Initialize search */
-initSearch()
 
 /* Sidebar Toggle */
 
@@ -308,7 +322,42 @@ document.getElementById("footer").innerHTML = data
 <!-- VALIDATION LOGIC -->
 <script>
 
-function validateReport(){
+const reportTextArea = document.getElementById("reportText")
+
+reportTextArea.addEventListener("paste", function(event){
+const pastedText = event.clipboardData ? event.clipboardData.getData("text") : ""
+if(!pastedText){
+return
+}
+
+event.preventDefault()
+const start = this.selectionStart
+const end = this.selectionEnd
+const currentValue = this.value
+this.value = currentValue.slice(0, start) + pastedText + currentValue.slice(end)
+this.selectionStart = this.selectionEnd = start + pastedText.length
+})
+
+async function pasteReportFromClipboard(){
+if(!navigator.clipboard || !navigator.clipboard.readText){
+alert("Clipboard access is not available in this browser. Use Ctrl+V in the report box.")
+return
+}
+
+try {
+const text = await navigator.clipboard.readText()
+if(!text.trim()){
+alert("Clipboard is empty.")
+return
+}
+reportTextArea.value = text
+reportTextArea.focus()
+} catch (_error) {
+alert("Clipboard access was blocked. Click in the report box and press Ctrl+V.")
+}
+}
+
+async function validateReport(){
 
 let text=document.getElementById("reportText").value
 
@@ -317,89 +366,50 @@ alert("Please paste a report first")
 return
 }
 
-document.getElementById("resultBox").innerHTML=
+const resultBox = document.getElementById("resultBox")
+resultBox.innerHTML = "<p>Validating report...</p>"
 
-`
+const hazardList = ["electrical", "fall", "fire", "chemical", "ppe"]
+const regulationList = ["OSHA", "PPE", "lockout", "fall protection", "inspection"]
+
+try {
+const response = await fetch("/api/validate-report", {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({
+report_text: text,
+hazard_list: hazardList,
+regulation_list: regulationList
+})
+})
+
+if(!response.ok){
+const errorText = await response.text()
+throw new Error(errorText || "Validation failed")
+}
+
+const data = await response.json()
+const issues = Array.isArray(data.issues) ? data.issues : []
+const hasIssues = issues.some(issue => issue.toLowerCase() !== "no major validation issues detected.")
+resultBox.innerHTML = `
 <h3>Validation Result</h3>
-
 <ul>
-<li>✔ Structure check passed</li>
-<li>⚠ Missing PPE reference</li>
-<li>⚠ Electrical hazard description unclear</li>
+${issues.map(issue => `<li>${issue}</li>`).join("")}
 </ul>
-
-<p><b>Status:</b> <span class="risk-high">Needs Review</span></p>
+<p><b>Status:</b> <span class="${hasIssues ? "risk-high" : ""}">${hasIssues ? "Needs Review" : "Looks Good"}</span></p>
 `
+} catch (error) {
+resultBox.innerHTML = `<p>${error.message || "Validation failed"}</p>`
+}
 
 }
 
 </script>
-
-
-<!-- AI CHAT SCRIPT -->
 <script>
-
-
-
-function sendChat(){
-
-let input=document.getElementById("chatInput")
-let text=input.value.trim()
-
-if(text==="") return
-
-addChat(text,"user-msg")
-
-let reply=generateReply(text)
-
-setTimeout(()=>{
-addChat(reply,"ai-msg")
-},400)
-
-input.value=""
-
-}
-
-function addChat(text,type){
-
-let box=document.getElementById("chatMessages")
-
-let div=document.createElement("div")
-
-div.className=type
-div.innerText=text
-
-box.appendChild(div)
-
-box.scrollTop=box.scrollHeight
-
-}
-
-function generateReply(q){
-
-q=q.toLowerCase()
-
-if(q.includes("hazard"))
-return "Common hazards include slips, falls, electrical risks, and unsafe machinery."
-
-if(q.includes("helmet"))
-return "Workers must always wear PPE like helmets, gloves, and safety shoes."
-
-if(q.includes("accident"))
-return "Reduce accidents by conducting safety audits and enforcing PPE."
-
-return "Safety tip: Always inspect equipment before starting work."
-
-}
-
-document.getElementById("chatInput").addEventListener("keypress",function(e){
-
-if(e.key==="Enter"){
-sendChat()
-}
-
-})
-
+initSearch()
+wireBackendChat()
 </script>
 
 </body>

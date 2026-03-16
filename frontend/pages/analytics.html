@@ -162,7 +162,6 @@ fetch("../components/sidebar.html")
   .then(res => res.text())
   .then(data => {
     document.getElementById("sidebar-container").innerHTML = data
-    initSearch()
     const toggleBtn = document.getElementById("menuToggle")
     const sidebar = document.querySelector(".sidebar")
     const navbar = document.querySelector(".navbar")
@@ -193,5 +192,8 @@ function logout(){
 </script>
 <script src="../js/main.js"></script>
 <script src="../js/analytics.js"></script>
+<script>
+initSearch()
+</script>
 </body>
 </html>

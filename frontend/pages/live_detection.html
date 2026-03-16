@@ -126,6 +126,34 @@ body {
 	background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 247, 255, 0.96));
 }
 
+.source-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.75rem;
+	margin: 1rem 0 0.9rem;
+}
+
+.source-field label {
+	display: block;
+	font-size: 0.84rem;
+	font-weight: 700;
+	color: var(--muted);
+	margin-bottom: 0.38rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.text-input,
+.file-input {
+	width: 100%;
+	border: 1px solid rgba(16, 42, 67, 0.12);
+	border-radius: 12px;
+	padding: 0.72rem 0.9rem;
+	font-family: "Space Grotesk", sans-serif;
+	font-size: 0.95rem;
+	background: #fff;
+}
+
 .status-strip {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -375,6 +403,10 @@ body {
 		grid-template-columns: 1fr;
 	}
 
+	.source-grid {
+		grid-template-columns: 1fr;
+	}
+
 	.control-row {
 		align-items: stretch;
 	}
@@ -408,16 +440,16 @@ body {
 <div class="main-content">
 	<div class="page-header">
 		<div>
-			<h1 class="page-title">Live Webcam Hazard Detection</h1>
-			<p class="page-subtitle">Stream a workstation camera, capture frames every few seconds, and send them to the existing hazard analysis API.</p>
+			<h1 class="page-title">CCTV Video Hazard Detection</h1>
+			<p class="page-subtitle">Upload a recorded CCTV clip or load a direct CCTV video link, then analyze frames every few seconds using the existing hazard analysis API.</p>
 		</div>
-		<span class="header-badge">Realtime Vision Preview</span>
+		<span class="header-badge">Video Source Analysis</span>
 	</div>
 
 	<div class="status-strip">
 		<div class="status-pill">
-			<strong id="cameraState">Connecting...</strong>
-			<span>Webcam availability and permission status.</span>
+			<strong id="cameraState">No video selected</strong>
+			<span>Current video source and load status.</span>
 		</div>
 		<div class="status-pill">
 			<strong id="scanState">Waiting</strong>
@@ -432,14 +464,25 @@ body {
 	<div class="live-grid">
 		<div class="panel-card camera-card">
 			<div class="video-stage">
-				<div class="stream-banner"><span class="live-dot"></span>Live stream</div>
-				<video id="video" autoplay muted playsinline></video>
+				<div class="stream-banner"><span class="live-dot"></span>Video source</div>
+				<video id="video" controls muted playsinline></video>
 				<canvas id="overlayCanvas"></canvas>
 			</div>
 
+			<div class="source-grid">
+				<div class="source-field">
+					<label for="videoFileInput">Upload CCTV Video</label>
+					<input id="videoFileInput" class="file-input" type="file" accept="video/*">
+				</div>
+				<div class="source-field">
+					<label for="videoUrlInput">CCTV Video Link</label>
+					<input id="videoUrlInput" class="text-input" type="url" placeholder="https://example.com/cctv-feed.mp4">
+				</div>
+			</div>
+
 			<div class="control-row">
-				<button id="startBtn" class="control-btn primary" type="button">Start Camera</button>
-				<button id="stopBtn" class="control-btn secondary" type="button">Stop Camera</button>
+				<button id="uploadBtn" class="control-btn primary" type="button">Load Uploaded Video</button>
+				<button id="linkBtn" class="control-btn secondary" type="button">Load CCTV Link</button>
 				<select id="intervalSelect" class="select-input" aria-label="Frame analysis interval">
 					<option value="3000">Analyze every 3 seconds</option>
 					<option value="5000" selected>Analyze every 5 seconds</option>
@@ -447,7 +490,7 @@ body {
 				</select>
 			</div>
 
-			<p class="hint-text">Frames are captured from the live stream, queued through <strong>/api/pipeline/analyze-image</strong>, and polled until the background worker returns the latest hazard result.</p>
+			<p class="hint-text">Frames are captured from the selected CCTV video and sent directly to <strong>/api/analyze-image</strong> for immediate hazard analysis.</p>
 			<canvas id="captureCanvas"></canvas>
 		</div>
 
@@ -478,15 +521,19 @@ body {
 
 <div id="footer"></div>
 
+<script src="../js/main.js"></script>
+
 <script>
-let cameraStream = null
 let scanIntervalId = null
 let isAnalyzing = false
+let activeVideoUrl = null
 
 const video = document.getElementById("video")
 const overlayCanvas = document.getElementById("overlayCanvas")
 const captureCanvas = document.getElementById("captureCanvas")
 const intervalSelect = document.getElementById("intervalSelect")
+const videoFileInput = document.getElementById("videoFileInput")
+const videoUrlInput = document.getElementById("videoUrlInput")
 
 function setCameraState(message, isLive) {
 	const cameraState = document.getElementById("cameraState")
@@ -579,51 +626,12 @@ function updateSummary(result) {
 	setLastScan(new Date().toLocaleTimeString())
 }
 
-function buildAuthHeaders() {
-	const token = localStorage.getItem("token") || localStorage.getItem("auth_token")
-	if (!token) {
-		return {}
-	}
-
-	return {
-		"Authorization": "Bearer " + token
-	}
-}
-
 function sleep(ms) {
 	return new Promise((resolve) => window.setTimeout(resolve, ms))
 }
 
-async function pollTaskResult(taskId) {
-	for (let attempt = 0; attempt < 20; attempt++) {
-		const response = await fetch(`${window.location.origin}/api/pipeline/task-status/${taskId}`, {
-			headers: buildAuthHeaders(),
-		})
-
-		if (!response.ok) {
-			const errorText = await response.text()
-			throw new Error(errorText || "Could not check task status")
-		}
-
-		const data = await response.json()
-
-		if (data.status === "SUCCESS") {
-			return data.result
-		}
-
-		if (data.status === "FAILURE") {
-			throw new Error(data.error || "Background analysis failed")
-		}
-
-		setScanState(`Worker status: ${data.status}`)
-		await sleep(2000)
-	}
-
-	throw new Error("Timed out waiting for worker response")
-}
-
 async function analyzeCurrentFrame() {
-	if (!cameraStream || isAnalyzing || video.readyState < 2) {
+	if (!activeVideoUrl || isAnalyzing || video.readyState < 2) {
 		return
 	}
 
@@ -647,12 +655,11 @@ async function analyzeCurrentFrame() {
 	}
 
 	const formData = new FormData()
-	formData.append("file", blob, "webcam-frame.jpg")
+	formData.append("file", blob, "cctv-frame.jpg")
 
 	try {
-		const response = await fetch(window.location.origin + "/api/pipeline/analyze-image", {
+		const response = await fetch(window.location.origin + "/api/analyze-image", {
 			method: "POST",
-			headers: buildAuthHeaders(),
 			body: formData
 		})
 
@@ -661,18 +668,15 @@ async function analyzeCurrentFrame() {
 			throw new Error(errorText || "Hazard analysis request failed")
 		}
 
-		const taskInfo = await response.json()
-		setScanState(`Queued task ${taskInfo.task_id}`)
-
-		const result = await pollTaskResult(taskInfo.task_id)
+		const result = await response.json()
 		updateSummary(result)
-		setScanState("Monitoring live feed")
+		setScanState("Monitoring loaded video")
 	} catch (error) {
 		console.error(error)
 		setScanState("Analysis failed")
 		document.getElementById("summaryBox").innerHTML = `
 			<strong>Backend analysis unavailable</strong>
-			<p>${error.message || "The webcam is live, but frame analysis could not be completed."}</p>
+			<p>${error.message || "The selected CCTV video is loaded, but frame analysis could not be completed."}</p>
 		`
 	} finally {
 		isAnalyzing = false
@@ -683,54 +687,70 @@ function startScanLoop() {
 	clearInterval(scanIntervalId)
 	const intervalMs = Number(intervalSelect.value || 5000)
 	scanIntervalId = window.setInterval(analyzeCurrentFrame, intervalMs)
-	setScanState("Monitoring live feed")
+	setScanState("Monitoring loaded video")
 	analyzeCurrentFrame()
 }
 
-function stopCamera() {
+function stopAnalysis() {
 	clearInterval(scanIntervalId)
 	scanIntervalId = null
 	setScanState("Paused")
-	setCameraState("Camera stopped", false)
 	resetOverlay()
-
-	if (cameraStream) {
-		cameraStream.getTracks().forEach((track) => track.stop())
-		cameraStream = null
-	}
-
-	video.srcObject = null
 }
 
-async function startCamera() {
+async function loadVideoSource(sourceUrl, sourceLabel) {
 	try {
-		if (cameraStream) {
-			startScanLoop()
-			return
+		stopAnalysis()
+
+		if (!sourceUrl) {
+			throw new Error("No video source provided.")
 		}
 
-		cameraStream = await navigator.mediaDevices.getUserMedia({
-			video: {
-				facingMode: "environment",
-				width: { ideal: 1280 },
-				height: { ideal: 720 }
-			},
-			audio: false
-		})
-
-		video.srcObject = cameraStream
+		activeVideoUrl = sourceUrl
+		video.pause()
+		video.removeAttribute("src")
+		video.load()
+		video.src = sourceUrl
 		await video.play()
-		setCameraState("Camera live", true)
+		setCameraState(sourceLabel, true)
 		startScanLoop()
 	} catch (error) {
 		console.error(error)
-		setCameraState("Camera unavailable", false)
-		setScanState("Permission required")
+		activeVideoUrl = null
+		video.pause()
+		video.removeAttribute("src")
+		video.load()
+		setCameraState("Video unavailable", false)
+		setScanState("Source required")
 		document.getElementById("summaryBox").innerHTML = `
-			<strong>Unable to access webcam</strong>
-			<p>Check browser camera permissions or run the page from a secure origin.</p>
+			<strong>Unable to load video source</strong>
+			<p>${error.message || "Check the uploaded file or CCTV video link and try again."}</p>
 		`
 	}
+}
+
+function loadUploadedVideo() {
+	const file = videoFileInput.files[0]
+	if (!file) {
+		alert("Please choose a video file first.")
+		return
+	}
+
+	if (activeVideoUrl && activeVideoUrl.startsWith("blob:")) {
+		URL.revokeObjectURL(activeVideoUrl)
+	}
+
+	const objectUrl = URL.createObjectURL(file)
+	loadVideoSource(objectUrl, `Uploaded video: ${file.name}`)
+}
+
+function loadLinkedVideo() {
+	const url = videoUrlInput.value.trim()
+	if (!url) {
+		alert("Please enter a CCTV video link first.")
+		return
+	}
+	loadVideoSource(url, "CCTV link loaded")
 }
 
 fetch("../components/sidebar.html")
@@ -748,9 +768,12 @@ fetch("../components/footer.html")
 	})
 function checkAuth(){
 
-const token = localStorage.getItem("token")
+const token = (typeof getStoredToken === "function" ? getStoredToken() : null)
 
 if(!token){
+localStorage.removeItem("auth_token")
+localStorage.removeItem("token")
+localStorage.removeItem("access_token")
 window.location.href="login.html"
 return
 }
@@ -765,19 +788,37 @@ function logout() {
 	window.location.href = "login.html"
 }
 
-document.getElementById("startBtn").addEventListener("click", startCamera)
-document.getElementById("stopBtn").addEventListener("click", stopCamera)
 intervalSelect.addEventListener("change", () => {
-	if (cameraStream) {
+	if (activeVideoUrl) {
 		startScanLoop()
 	}
 })
 
-window.addEventListener("beforeunload", stopCamera)
-window.addEventListener("load", startCamera)
-</script>
+video.addEventListener("ended", () => {
+	setScanState("Video completed")
+})
 
-<script src="../js/main.js"></script>
+video.addEventListener("pause", () => {
+	if (!video.ended && activeVideoUrl && !isAnalyzing) {
+		setScanState("Paused")
+	}
+})
+
+video.addEventListener("play", () => {
+	if (activeVideoUrl && !scanIntervalId) {
+		startScanLoop()
+	}
+})
+
+document.getElementById("uploadBtn").addEventListener("click", loadUploadedVideo)
+document.getElementById("linkBtn").addEventListener("click", loadLinkedVideo)
+window.addEventListener("beforeunload", () => {
+	stopAnalysis()
+	if (activeVideoUrl && activeVideoUrl.startsWith("blob:")) {
+		URL.revokeObjectURL(activeVideoUrl)
+	}
+})
+</script>
 
 </body>
 </html>

@@ -529,19 +529,27 @@ const formData = new FormData()
 formData.append("file", file)
 
 const token = getStoredToken()
+const headers = {}
+if(token){
+headers["Authorization"] = "Bearer " + token
+}
 
 const res = await fetch(buildApiUrl("/api/upload"),{
 
 method:"POST",
-headers:{
-"Authorization":"Bearer "+token
-},
+headers,
 body:formData
 
 })
 
 if(!res.ok){
-throw new Error("Failed to upload evidence")
+let errorText = await res.text()
+try {
+const errorJson = JSON.parse(errorText)
+errorText = errorJson.detail || errorText
+} catch (_error) {
+}
+throw new Error(errorText || "Failed to upload evidence")
 }
 
 return await res.json()
