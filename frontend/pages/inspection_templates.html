@@ -343,6 +343,36 @@ body {
 .result-meta-item strong { display: block; font-size: 1.4rem; font-weight: 700; }
 .result-meta-item span { font-size: 0.82rem; color: var(--muted); }
 
+.result-ai {
+  margin-top: 16px;
+  text-align: left;
+  background: #f8fbff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.result-ai h3 {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+  color: #0b63ce;
+}
+
+.result-ai-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.86rem;
+  color: #334155;
+}
+
+.result-ai-note {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
 /* ---- empty state ---- */
 .empty-state {
   text-align: center;
@@ -573,6 +603,12 @@ body {
         </div>
       </div>
 
+      <div class="result-ai" id="resultAiPanel" style="display:none">
+        <h3>AI Corrective Suggestions</h3>
+        <p class="result-ai-note" id="resultAiStatus">Analyzing failed checks...</p>
+        <ul class="result-ai-list" id="resultAiList"></ul>
+      </div>
+
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button class="btn btn-primary" onclick="showList()">Back to Templates</button>
         <button class="btn btn-outline" onclick="window.location.href='generate_report.html'">Generate Report</button>
@@ -655,7 +691,7 @@ function showView(id){
 function showList(){ loadTemplates(); showView("viewList") }
 function showBuilder(templateId){ activateBuilder(templateId); showView("viewBuilder") }
 function showFill(templateId){ activateFill(templateId); showView("viewFill") }
-function showResult(data){ activateResult(data); showView("viewResult") }
+function showResult(data, context){ activateResult(data, context); showView("viewResult") }
 
 // =====================
 // Template List
@@ -1187,6 +1223,7 @@ async function saveTemplate(){
 // =====================
 let fillTemplateData = null
 const answerState = {}  // questionId → "pass"|"fail"|"na"
+let lastInspectionContext = null
 
 async function activateFill(templateId){
   answerState._templateId = templateId
@@ -1250,6 +1287,19 @@ async function submitInspection(){
     notes: (document.getElementById(`notes-${q.id}`) || {}).value || ""
   }))
 
+  const failedItems = questions
+    .filter(q => (answerState[q.id] || "na") === "fail")
+    .map(q => ({
+      question: q.question,
+      notes: ((document.getElementById(`notes-${q.id}`) || {}).value || "").trim()
+    }))
+
+  lastInspectionContext = {
+    templateName: fillTemplateData.name || "Inspection Template",
+    failedItems,
+    totalQuestions: questions.length
+  }
+
   const templateId = fillTemplateData.id
 
   try {
@@ -1262,7 +1312,7 @@ async function submitInspection(){
     if(!res.ok) throw new Error()
 
     const result = await res.json()
-    showResult(result)
+    showResult(result, lastInspectionContext)
   } catch {
     document.getElementById("fillStatus").textContent = "Submission failed — please try again."
     toast("Submission failed", true)
@@ -1272,7 +1322,7 @@ async function submitInspection(){
 // =====================
 // Result view
 // =====================
-function activateResult(data){
+function activateResult(data, context){
   document.getElementById("resultScore").textContent = data.score + "%"
   document.getElementById("resultPass").textContent = data.pass
   document.getElementById("resultFail").textContent = data.fail
@@ -1285,6 +1335,87 @@ function activateResult(data){
   if(level === "Low") badge.classList.add("badge-green")
   else if(level === "High") badge.classList.add("badge-red")
   else badge.classList.add("badge-grey")
+
+  loadInspectionAiSuggestions(data, context || lastInspectionContext)
+}
+
+function parseAiSuggestionLines(text){
+  return String(text || "")
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .map(line => line.replace(/^[-*0-9.)\s]+/, ""))
+    .filter(line => line.length > 0)
+    .slice(0, 6)
+}
+
+async function fetchInspectionAiSuggestions(context, scoreData){
+  const failedLines = (context.failedItems || []).map((item, idx) => {
+    const note = item.notes ? (" | note: " + item.notes) : ""
+    return (idx + 1) + ". " + item.question + note
+  })
+
+  const prompt = [
+    "You are a safety inspection assistant.",
+    "Provide concise corrective actions based on failed inspection items.",
+    "Return 3 to 6 bullet points, each practical and action-oriented.",
+    "",
+    "Inspection context:",
+    "Template: " + (context.templateName || "Inspection"),
+    "Score: " + String(scoreData.score || 0) + "%",
+    "Failed items: " + String((context.failedItems || []).length),
+    "Total questions: " + String(context.totalQuestions || 0),
+    "",
+    "Failed checklist items:",
+    failedLines.join("\n")
+  ].join("\n")
+
+  const res = await fetch("/api/ai-chat", {
+    method: "POST",
+    headers: apiHeaders(),
+    body: JSON.stringify({ prompt })
+  })
+
+  if(!res.ok){
+    throw new Error("AI unavailable")
+  }
+
+  const data = await res.json()
+  return parseAiSuggestionLines(data.response || "")
+}
+
+async function loadInspectionAiSuggestions(scoreData, context){
+  const panel = document.getElementById("resultAiPanel")
+  const status = document.getElementById("resultAiStatus")
+  const list = document.getElementById("resultAiList")
+  if(!panel || !status || !list){
+    return
+  }
+
+  const failedCount = Number(scoreData.fail || 0)
+  if(!context || !Array.isArray(context.failedItems) || failedCount <= 0 || !context.failedItems.length){
+    panel.style.display = "block"
+    list.innerHTML = ""
+    status.textContent = "No failed checks. Keep current controls in place and continue monitoring."
+    return
+  }
+
+  panel.style.display = "block"
+  status.textContent = "Analyzing failed checks with AI..."
+  list.innerHTML = ""
+
+  try {
+    const suggestions = await fetchInspectionAiSuggestions(context, scoreData)
+    if(!suggestions.length){
+      status.textContent = "No AI suggestions returned."
+      return
+    }
+
+    status.textContent = "Recommended corrective actions:"
+    list.innerHTML = suggestions.map(item => "<li>" + escHtml(item) + "</li>").join("")
+  } catch {
+    status.textContent = "AI suggestions unavailable. Review failed checks and assign corrective actions."
+  }
 }
 
 // =====================

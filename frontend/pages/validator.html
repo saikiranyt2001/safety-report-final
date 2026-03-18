@@ -272,9 +272,22 @@ Validate Report
 Paste From Clipboard
 </button>
 
+<button class="secondary-btn" type="button" onclick="triggerReportUpload()">
+Upload Report File
+</button>
+
+<input
+id="reportFileInput"
+type="file"
+accept=".txt,.md,.csv,.json,.log,.rtf"
+style="display:none"
+onchange="handleReportUpload(event)">
+
 <button class="template-btn" type="button" onclick="insertProfessionalTemplate()">
 Insert Professional Template
 </button>
+
+<p id="uploadInfo" style="margin-top:12px;font-size:0.9rem;color:#64748b;"></p>
 
 <div class="result" id="resultBox">
 Validation results will appear here.
@@ -369,6 +382,8 @@ document.getElementById("footer").innerHTML = data
 <script>
 
 const reportTextArea = document.getElementById("reportText")
+const reportFileInput = document.getElementById("reportFileInput")
+const uploadInfo = document.getElementById("uploadInfo")
 
 reportTextArea.addEventListener("paste", function(event){
 const pastedText = event.clipboardData ? event.clipboardData.getData("text") : ""
@@ -383,12 +398,6 @@ const currentValue = this.value
 this.value = currentValue.slice(0, start) + pastedText + currentValue.slice(end)
 this.selectionStart = this.selectionEnd = start + pastedText.length
 })
-
-async function pasteReportFromClipboard(){
-if(!navigator.clipboard || !navigator.clipboard.readText){
-alert("Clipboard access is not available in this browser. Use Ctrl+V in the report box.")
-return
-}
 
 function insertProfessionalTemplate(){
 const template = [
@@ -438,7 +447,56 @@ const template = [
 ].join("\n")
 
 reportTextArea.value = template
+uploadInfo.textContent = "Professional template inserted."
 reportTextArea.focus()
+}
+
+function triggerReportUpload(){
+reportFileInput.click()
+}
+
+async function handleReportUpload(event){
+const file = event.target.files && event.target.files[0]
+if(!file){
+return
+}
+
+const isSupportedTextFile = /\.(txt|md|csv|json|log|rtf)$/i.test(file.name)
+if(!isSupportedTextFile){
+alert("Unsupported file type. Please upload a text-based file (.txt, .md, .csv, .json, .log, .rtf).")
+event.target.value = ""
+return
+}
+
+const maxSizeBytes = 2 * 1024 * 1024
+if(file.size > maxSizeBytes){
+alert("File is too large. Please upload a file smaller than 2 MB.")
+event.target.value = ""
+return
+}
+
+try {
+const content = await file.text()
+if(!content.trim()){
+alert("The selected file is empty.")
+event.target.value = ""
+return
+}
+
+reportTextArea.value = content
+uploadInfo.textContent = `Loaded file: ${file.name}`
+reportTextArea.focus()
+} catch (_error) {
+alert("Unable to read the selected file. Try another file.")
+}
+
+event.target.value = ""
+}
+
+async function pasteReportFromClipboard(){
+if(!navigator.clipboard || !navigator.clipboard.readText){
+alert("Clipboard access is not available in this browser. Use Ctrl+V in the report box.")
+return
 }
 
 try {
@@ -448,6 +506,7 @@ alert("Clipboard is empty.")
 return
 }
 reportTextArea.value = text
+uploadInfo.textContent = "Pasted content from clipboard."
 reportTextArea.focus()
 } catch (_error) {
 alert("Clipboard access was blocked. Click in the report box and press Ctrl+V.")

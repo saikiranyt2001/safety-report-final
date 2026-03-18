@@ -84,6 +84,31 @@ const data = await response.json()
 return data.response || "No response available."
 }
 
+function buildContextualChatPrompt(message) {
+if(typeof window.getAiAssistantContext !== "function"){
+return message
+}
+
+try {
+const pageContext = String(window.getAiAssistantContext() || "").trim()
+if(!pageContext){
+return message
+}
+
+return [
+"User question:",
+message,
+"",
+"Current page context (generated content):",
+pageContext.slice(0, 6000),
+"",
+"Instruction: Answer the user question using this context when relevant."
+].join("\n")
+} catch (_error) {
+return message
+}
+}
+
 function wireBackendChat(inputId = "chatInput", messagesId = "chatMessages") {
 const input = document.getElementById(inputId)
 if(!input){
@@ -100,7 +125,8 @@ addChatMessage(text, "user-msg", messagesId)
 input.value = ""
 
 try {
-const reply = await sendBackendChatMessage(text)
+const prompt = buildContextualChatPrompt(text)
+const reply = await sendBackendChatMessage(prompt)
 addChatMessage(reply, "ai-msg", messagesId)
 } catch (_error) {
 addChatMessage("AI safety assistant unavailable. Try again.", "ai-msg", messagesId)
@@ -123,7 +149,7 @@ const ROLE_ACCESS_RULES = {
 "/frontend/pages/analytics.html": ["admin", "manager"],
 "/frontend/pages/generate_report.html": ["admin", "manager","worker"],
 "/frontend/pages/rag_report.html": ["admin", "manager"],
-"/frontend/pages/recommendations.html": ["admin", "manager"],
+"/frontend/pages/recommendations.html": ["admin", "manager", "worker"],
 "/frontend/pages/risk_assessment.html": ["admin", "manager"],
 "/frontend/pages/validator.html": ["admin", "manager"],
 "/frontend/pages/upload.html": ["admin", "manager", "worker"],
@@ -251,6 +277,7 @@ const features = {
 "analyze":"analyze_image.html",
 "live":"live_detection.html",
 "webcam":"live_detection.html",
+"equipment":"equipment.html",
 "report":"report_history.html",
 "inspection template":"inspection_templates.html",
 "profile":"profile.html",
@@ -291,6 +318,7 @@ const features = [
 { name:"Compliance Tracker", page:"/frontend/pages/compliance_tracker.html", cat:"Pages" },
 { name:"Incidents", page:"/frontend/pages/incidents.html", cat:"Pages" },
 { name:"Inspection", page:"/frontend/pages/inspection.html", cat:"Pages" },
+{ name:"Equipment", page:"/frontend/pages/equipment.html", cat:"Pages" },
 { name:"Documents", page:"/frontend/pages/documents.html", cat:"Pages" },
 { name:"Training", page:"/frontend/pages/training.html", cat:"Pages" },
 { name:"Users", page:"/frontend/pages/users.html", cat:"Pages" },
@@ -403,8 +431,168 @@ if(empty) empty.style.display="block";
 if(badge) badge.style.display="none";
 }
 
+function openNotificationLink(e, item){
+e.stopPropagation();
+if(!item) return;
+
+const target = item.getAttribute("data-link");
+if(!target) return;
+
+showLoader();
+window.location.href = target;
+}
+
+function escapeNotificationText(value){
+return String(value || "")
+.replace(/&/g, "&amp;")
+.replace(/</g, "&lt;")
+.replace(/>/g, "&gt;")
+.replace(/\"/g, "&quot;")
+.replace(/'/g, "&#39;");
+}
+
+function buildNotificationHeaders(){
+const token = getStoredToken();
+if(!token){
+return { "Content-Type": "application/json" };
+}
+
+return {
+"Content-Type": "application/json",
+"Authorization": "Bearer " + token
+};
+}
+
+function notificationLinkForActivity(activity){
+const key = ((activity.action || "") + " " + (activity.type || "") + " " + (activity.details || "")).toLowerCase();
+
+if(key.includes("incident")) return "../pages/incidents.html";
+if(key.includes("training")) return "../pages/training.html";
+if(key.includes("inspection") || key.includes("equipment")) return "../pages/equipment.html";
+if(key.includes("report")) return "../pages/report_history.html";
+if(key.includes("hazard") || key.includes("detect")) return "../pages/analyze_image.html";
+return "../pages/activity_log.html";
+}
+
+function notificationClassForActivity(activity){
+const key = ((activity.action || "") + " " + (activity.type || "")).toLowerCase();
+if(key.includes("incident") || key.includes("hazard") || key.includes("alert")) return "notif-hazard";
+if(key.includes("report")) return "notif-report";
+return "notif-incident";
+}
+
+function toActivityNotificationItem(activity){
+const action = String(activity.action || "Activity").trim();
+const details = String(activity.details || "").trim();
+const user = String(activity.user || "system").trim();
+const message = details ? (action + ": " + details) : action;
+
+return {
+text: user + " - " + message,
+link: notificationLinkForActivity(activity),
+cls: notificationClassForActivity(activity)
+};
+}
+
+function toTrainingNotificationItem(alert){
+const worker = String(alert.worker || "Worker").trim();
+const training = String(alert.training || "Training").trim();
+const days = Number(alert.days_to_expiry || 0);
+const when = Number.isFinite(days) ? (days <= 0 ? "expires today" : "expires in " + days + " days") : "expiry approaching";
+
+return {
+text: worker + " - " + training + " " + when,
+link: "../pages/training.html",
+cls: "notif-incident"
+};
+}
+
+async function fetchNotificationItems(){
+const headers = buildNotificationHeaders();
+
+try {
+const response = await fetch(buildApiUrl("/api/activity-logs?limit=8"), { headers: headers });
+if(response.ok){
+const logs = await response.json();
+if(Array.isArray(logs) && logs.length){
+return logs.map(toActivityNotificationItem).slice(0, 8);
+}
+}
+} catch (_error) {}
+
+try {
+const response = await fetch(buildApiUrl("/api/training/alerts?within_days=30"), { headers: headers });
+if(response.ok){
+const alerts = await response.json();
+if(Array.isArray(alerts) && alerts.length){
+return alerts.map(toTrainingNotificationItem).slice(0, 8);
+}
+}
+} catch (_error) {}
+
+return [];
+}
+
+function renderNotifications(items){
+const list = document.getElementById("notifList");
+const empty = document.getElementById("notifEmpty");
+const badge = document.getElementById("notifCount");
+
+if(!list || !empty || !badge){
+return;
+}
+
+if(!items.length){
+list.innerHTML = "";
+list.style.display = "none";
+empty.textContent = "No new notifications";
+empty.style.display = "block";
+badge.textContent = "0";
+badge.style.display = "none";
+return;
+}
+
+list.innerHTML = items.map(item => {
+const text = escapeNotificationText(item.text);
+const link = escapeNotificationText(item.link);
+const cls = escapeNotificationText(item.cls || "notif-incident");
+return "<div class=\"notif-item " + cls + "\" data-link=\"" + link + "\" onclick=\"openNotificationLink(event, this)\">" + text + "</div>";
+}).join("");
+
+list.style.display = "block";
+empty.style.display = "none";
+badge.textContent = String(items.length);
+badge.style.display = "inline-flex";
+}
+
+function loadNotificationsWithRetry(attempt){
+const list = document.getElementById("notifList");
+const empty = document.getElementById("notifEmpty");
+const badge = document.getElementById("notifCount");
+
+if(!list || !empty || !badge){
+if(attempt < 10){
+window.setTimeout(function(){
+loadNotificationsWithRetry(attempt + 1);
+}, 200);
+}
+return;
+}
+
+empty.textContent = "Loading notifications...";
+empty.style.display = "block";
+list.style.display = "none";
+
+fetchNotificationItems()
+.then(renderNotifications)
+.catch(function(){
+renderNotifications([]);
+});
+}
+
 // Close notif panel when clicking outside
 function initNotifications(){
+if(!window.__notifOutsideClickBound){
 document.addEventListener("click", function(e){
 const panel = document.getElementById("notifPanel");
 const bell = document.querySelector(".notification");
@@ -412,6 +600,10 @@ if(panel && bell && !bell.contains(e.target)){
 panel.style.display="none";
 }
 });
+window.__notifOutsideClickBound = true;
+}
+
+loadNotificationsWithRetry(0);
 }
 
 /* ============================= */

@@ -56,17 +56,64 @@ background: #fff;
 cursor: pointer;
 }
 
+.kpi-actions select:disabled,
+.kpi-actions button:disabled,
+.kpi-filters button:disabled {
+opacity: 0.6;
+cursor: not-allowed;
+}
+
+.kpi-filters button,
+.kpi-filters button:hover,
+.kpi-filters button:focus-visible,
+.kpi-filters button:disabled {
+color: #102a43 !important;
+}
+
 .kpi-filters button.active,
 .kpi-actions .primary {
 background: #0b63ce;
 border-color: #0b63ce;
-color: #fff;
+color: #fff !important;
 }
 
 .kpi-actions {
 display: flex;
 gap: 8px;
 flex-wrap: wrap;
+}
+
+.kpi-meta {
+display: flex;
+align-items: center;
+gap: 10px;
+margin: -4px 0 12px;
+color: #425466;
+font-size: 13px;
+}
+
+.kpi-loader {
+display: none;
+width: 14px;
+height: 14px;
+border: 2px solid #b6c6da;
+border-top-color: #0b63ce;
+border-radius: 50%;
+animation: kpi-spin 0.8s linear infinite;
+}
+
+.kpi-loader.active {
+display: inline-block;
+}
+
+.kpi-loading .kpi-card,
+.kpi-loading .kpi-panel {
+opacity: 0.62;
+transition: opacity 0.2s ease;
+}
+
+@keyframes kpi-spin {
+to { transform: rotate(360deg); }
 }
 
 .kpi-grid {
@@ -137,7 +184,7 @@ grid-template-columns: 1fr;
 <div class="navbar">
 <div class="logo">AI Safety Platform</div>
 <div class="nav-right">
-<span>Admin</span>
+<span id="navUsername">Admin</span>
 <button onclick="logout()">Logout</button>
 </div>
 </div>
@@ -150,19 +197,19 @@ grid-template-columns: 1fr;
 
 <div class="kpi-summary">
 <div class="kpi-card">
-<h3>91%</h3>
+<h3 id="complianceScoreCard">--</h3>
 <p>Compliance Score</p>
 </div>
 <div class="kpi-card">
-<h3>14</h3>
+<h3 id="openActionsCard">--</h3>
 <p>Open Actions</p>
 </div>
 <div class="kpi-card">
-<h3>6</h3>
+<h3 id="criticalAlertsCard">--</h3>
 <p>Critical Alerts</p>
 </div>
 <div class="kpi-card">
-<h3>97%</h3>
+<h3 id="inspectionCompletionCard">--</h3>
 <p>Inspection Completion</p>
 </div>
 </div>
@@ -176,12 +223,18 @@ grid-template-columns: 1fr;
 <div class="kpi-actions">
 <select id="kpiSiteFilter">
 <option value="all">All Sites</option>
-<option value="warehouse">Warehouse</option>
-<option value="plant">Plant A</option>
-<option value="office">Office Block</option>
+</select>
+<select id="kpiExportFormat">
+<option value="csv">Export CSV</option>
+<option value="pdf">Export PDF</option>
 </select>
 <button class="primary" onclick="exportKpiReport()">Export KPI Report</button>
 </div>
+</div>
+
+<div class="kpi-meta">
+<span id="kpiLastUpdated">Last updated: --</span>
+<span id="kpiLoader" class="kpi-loader" aria-hidden="true"></span>
 </div>
 
 <div class="kpi-grid">
@@ -194,7 +247,7 @@ grid-template-columns: 1fr;
 <canvas id="incidentTrendChart" height="220"></canvas>
 </div>
 <div class="kpi-panel">
-<h2>Training Completion Mix</h2>
+<h2>Risk Distribution Mix</h2>
 <canvas id="trainingChart" height="220"></canvas>
 </div>
 <div class="kpi-panel">
@@ -207,33 +260,16 @@ grid-template-columns: 1fr;
 <th>Change</th>
 </tr>
 </thead>
-<tbody>
+<tbody id="kpiMovementBody">
 <tr>
-<td>Hazard Closure Rate</td>
-<td>88%</td>
-<td class="trend-up">+6%</td>
-</tr>
-<tr>
-<td>Near-Miss Reports</td>
-<td>19</td>
-<td class="trend-up">+3</td>
-</tr>
-<tr>
-<td>Overdue Actions</td>
-<td>5</td>
-<td class="trend-down">-2</td>
-</tr>
-<tr>
-<td>Audit Findings</td>
-<td>11</td>
-<td class="trend-down">-4</td>
+<td colspan="3">Loading KPI movements...</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 
-<div class="status-note" id="kpiStatus"></div>
+<div class="status-note" id="kpiStatus" role="status" aria-live="polite"></div>
 
 </div>
 
@@ -245,14 +281,20 @@ fetch("../components/sidebar.html")
 .then(data => {
 document.getElementById("sidebar-container").innerHTML = data
 
+if(typeof initSearch === "function"){
 initSearch()
+} else {
+window.addEventListener("load", function(){
+if(typeof initSearch === "function") initSearch()
+}, { once: true })
+}
 
 const toggleBtn = document.getElementById("menuToggle")
 const sidebar = document.querySelector(".sidebar")
 const navbar = document.querySelector(".navbar")
 const mainContent = document.querySelector(".main-content")
 
-if(toggleBtn){
+if(toggleBtn && sidebar){
 toggleBtn.onclick = function(){
 sidebar.classList.toggle("collapsed")
 if(navbar) navbar.classList.toggle("expanded")
@@ -271,19 +313,247 @@ fetch("../components/footer.html")
 document.getElementById("footer").innerHTML = data
 })
 
-if(!localStorage.getItem("token")){
+const hasSession = typeof getStoredToken === "function"
+? !!getStoredToken()
+: !!(localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token"))
+
+if(!hasSession){
 window.location.href = "login.html"
 }
 
 function logout(){
+if(typeof logoutUser === "function"){
+logoutUser()
+return
+}
+localStorage.removeItem("auth_token")
 localStorage.removeItem("token")
+localStorage.removeItem("access_token")
 window.location.href = "login.html"
 }
 
 const kpiStatus = document.getElementById("kpiStatus")
+const navUsername = document.getElementById("navUsername")
+const kpiSiteFilter = document.getElementById("kpiSiteFilter")
+const kpiExportFormat = document.getElementById("kpiExportFormat")
+const kpiLastUpdated = document.getElementById("kpiLastUpdated")
+const kpiLoader = document.getElementById("kpiLoader")
+const kpiSummary = document.querySelector(".kpi-summary")
+const kpiGrid = document.querySelector(".kpi-grid")
+const kpiFilterButtons = Array.from(document.querySelectorAll(".kpi-filters button"))
 let complianceChart
 let incidentTrendChart
 let trainingChart
+let selectedProjectId = null
+let autoRefreshTimer = null
+let isExporting = false
+let latestRequestToken = 0
+
+if(navUsername){
+const storedName = localStorage.getItem("username") || localStorage.getItem("user_name") || "Admin"
+navUsername.textContent = storedName
+}
+
+const riskThemes = {
+low: {
+line: "#146c43",
+lineFill: "rgba(20, 108, 67, 0.18)",
+bar: "#2f9e44",
+mix: ["#2f9e44", "#0b63ce", "#f29900"],
+status: "#146c43"
+},
+medium: {
+line: "#0b63ce",
+lineFill: "rgba(11, 99, 206, 0.15)",
+bar: "#f29900",
+mix: ["#146c43", "#0b63ce", "#b3261e"],
+status: "#1e6f43"
+},
+high: {
+line: "#b3261e",
+lineFill: "rgba(179, 38, 30, 0.16)",
+bar: "#dc2626",
+mix: ["#146c43", "#f29900", "#b3261e"],
+status: "#8f1d18"
+}
+}
+
+function setLoadingState(isLoading){
+if(kpiSummary){
+kpiSummary.classList.toggle("kpi-loading", isLoading)
+}
+if(kpiGrid){
+kpiGrid.classList.toggle("kpi-loading", isLoading)
+}
+if(kpiLoader){
+kpiLoader.classList.toggle("active", isLoading)
+}
+
+if(kpiSiteFilter){
+kpiSiteFilter.disabled = isLoading || isExporting
+}
+if(kpiExportFormat){
+kpiExportFormat.disabled = isLoading || isExporting
+}
+kpiFilterButtons.forEach(button => {
+button.disabled = isLoading || isExporting
+})
+}
+
+function updateLastUpdatedStamp(){
+if(!kpiLastUpdated) return
+const now = new Date()
+kpiLastUpdated.textContent = "Last updated: " + now.toLocaleString()
+}
+
+function getActiveRange(){
+const activeRangeButton = document.querySelector(".kpi-filters button.active")
+return activeRangeButton ? activeRangeButton.getAttribute("data-range") : "weekly"
+}
+
+function resolveRiskLevel(summary, distribution){
+const score = Number(summary.average_safety_score || 0)
+const highCritical = Number(distribution.high || 0) + Number(distribution.critical || 0)
+const lowMedium = Number(distribution.low || 0) + Number(distribution.medium || 0)
+
+if(score < 60 || highCritical > lowMedium){
+return "high"
+}
+if(score < 80){
+return "medium"
+}
+return "low"
+}
+
+function setStatusColor(level){
+if(!kpiStatus) return
+const theme = riskThemes[level] || riskThemes.medium
+kpiStatus.style.color = theme.status
+}
+
+function kpiHeaders(){
+const token = typeof getStoredToken === "function"
+? getStoredToken()
+: (localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token"))
+
+const headers = { "Content-Type": "application/json" }
+if(token){
+headers.Authorization = "Bearer " + token
+}
+return headers
+}
+
+async function fetchKpiJson(url){
+const response = await fetch(url, { headers: kpiHeaders() })
+if(!response.ok){
+throw new Error("Request failed: " + response.status)
+}
+return response.json()
+}
+
+async function loadSiteOptions(){
+if(!kpiSiteFilter) return
+
+kpiSiteFilter.disabled = true
+
+try {
+const projects = await fetchKpiJson("/api/projects")
+const currentValue = kpiSiteFilter.value
+const options = [
+"<option value=\"all\">All Sites</option>",
+...projects.map(project => {
+return "<option value=\"" + project.id + "\">" + project.name + "</option>"
+})
+]
+ kpiSiteFilter.innerHTML = options.join("")
+
+if(currentValue && currentValue !== "all"){
+const hasCurrent = projects.some(project => String(project.id) === String(currentValue))
+kpiSiteFilter.value = hasCurrent ? String(currentValue) : "all"
+}
+} catch (_error) {
+kpiSiteFilter.innerHTML = "<option value=\"all\">All Sites</option>"
+} finally {
+kpiSiteFilter.disabled = false
+}
+}
+
+function setText(id, value){
+const el = document.getElementById(id)
+if(el) el.textContent = value
+}
+
+function toPercent(value){
+const num = Number(value)
+return Number.isFinite(num) ? Math.round(num) + "%" : "--"
+}
+
+function trendClass(delta){
+return delta >= 0 ? "trend-up" : "trend-down"
+}
+
+function signed(delta, suffix = ""){
+const num = Number(delta)
+if(!Number.isFinite(num)) return "--"
+const rounded = Math.round(num * 10) / 10
+const prefix = rounded > 0 ? "+" : ""
+return prefix + rounded + suffix
+}
+
+function renderKpiMovements(summary, trends){
+const body = document.getElementById("kpiMovementBody")
+if(!body) return
+
+const scoreSeries = trends.safety_scores || []
+const incidentSeries = trends.incidents || []
+const openTaskSeries = trends.open_tasks || []
+const inspectionSeries = trends.inspections || []
+
+const scoreCurrent = scoreSeries[scoreSeries.length - 1] ?? summary.average_safety_score ?? 0
+const scoreDelta = scoreSeries.length > 1 ? scoreCurrent - scoreSeries[scoreSeries.length - 2] : 0
+
+const incidentCurrent = incidentSeries[incidentSeries.length - 1] ?? summary.incidents_reported ?? 0
+const incidentDelta = incidentSeries.length > 1 ? incidentCurrent - incidentSeries[incidentSeries.length - 2] : 0
+
+const openCurrent = openTaskSeries[openTaskSeries.length - 1] ?? summary.open_tasks ?? 0
+const openDelta = openTaskSeries.length > 1 ? openCurrent - openTaskSeries[openTaskSeries.length - 2] : 0
+
+const inspectionCurrent = inspectionSeries[inspectionSeries.length - 1] ?? 0
+const inspectionDelta = inspectionSeries.length > 1 ? inspectionCurrent - inspectionSeries[inspectionSeries.length - 2] : 0
+
+const rows = [
+{ metric: "Safety Score", current: scoreCurrent, delta: scoreDelta, suffix: "" },
+{ metric: "Incident Volume", current: incidentCurrent, delta: incidentDelta, suffix: "" },
+{ metric: "Open Actions", current: openCurrent, delta: openDelta, suffix: "" },
+{ metric: "Inspections Logged", current: inspectionCurrent, delta: inspectionDelta, suffix: "" }
+]
+
+body.innerHTML = rows.map(row => {
+return "<tr>"
++ "<td>" + row.metric + "</td>"
++ "<td>" + row.current + "</td>"
++ "<td class=\"" + trendClass(row.delta) + "\">" + signed(row.delta, row.suffix) + "</td>"
++ "</tr>"
+}).join("")
+}
+
+function updateSummaryCards(summary){
+setText("complianceScoreCard", toPercent(summary.compliance_rate))
+setText("openActionsCard", summary.open_tasks ?? 0)
+setText("criticalAlertsCard", summary.high_risk_hazards ?? 0)
+setText("inspectionCompletionCard", toPercent(summary.inspection_completion_rate))
+}
+
+function renderFallbackMovements(){
+const body = document.getElementById("kpiMovementBody")
+if(!body) return
+body.innerHTML = [
+"<tr><td>Safety Score</td><td>91</td><td class=\"trend-up\">+2</td></tr>",
+"<tr><td>Incident Volume</td><td>12</td><td class=\"trend-down\">-5</td></tr>",
+"<tr><td>Open Actions</td><td>14</td><td class=\"trend-down\">-2</td></tr>",
+"<tr><td>Inspections Logged</td><td>28</td><td class=\"trend-up\">+4</td></tr>"
+].join("")
+}
 
 const chartData = {
 weekly: {
@@ -306,8 +576,9 @@ training: [54, 31, 15]
 }
 }
 
-function buildCharts(range){
+function buildCharts(range, level = "medium"){
 const data = chartData[range]
+const theme = riskThemes[level] || riskThemes.medium
 
 if(complianceChart) complianceChart.destroy()
 if(incidentTrendChart) incidentTrendChart.destroy()
@@ -320,8 +591,8 @@ labels: data.labels,
 datasets: [{
 label: "Compliance %",
 data: data.compliance,
-borderColor: "#0b63ce",
-backgroundColor: "rgba(11, 99, 206, 0.15)",
+borderColor: theme.line,
+backgroundColor: theme.lineFill,
 fill: true,
 tension: 0.3
 }]
@@ -336,7 +607,7 @@ labels: data.labels,
 datasets: [{
 label: "Incidents",
 data: data.incidents,
-backgroundColor: "#f29900"
+backgroundColor: theme.bar
 }]
 },
 options: { responsive: true, maintainAspectRatio: false }
@@ -345,18 +616,212 @@ options: { responsive: true, maintainAspectRatio: false }
 trainingChart = new Chart(document.getElementById("trainingChart"), {
 type: "doughnut",
 data: {
-labels: ["Completed", "In Progress", "Pending"],
+labels: ["Low", "Medium", "High/Critical"],
 datasets: [{
 data: data.training,
-backgroundColor: ["#146c43", "#0b63ce", "#b3261e"]
+backgroundColor: theme.mix
 }]
 },
 options: { responsive: true, maintainAspectRatio: false }
 })
 }
 
+function buildChartsFromApi(trends, distribution, level = "medium"){
+if(complianceChart) complianceChart.destroy()
+if(incidentTrendChart) incidentTrendChart.destroy()
+if(trainingChart) trainingChart.destroy()
+const theme = riskThemes[level] || riskThemes.medium
+
+const labels = trends.labels || []
+const safetyScores = trends.safety_scores || []
+const incidents = trends.incidents || []
+const riskMix = [
+distribution.low || 0,
+distribution.medium || 0,
+(distribution.high || 0) + (distribution.critical || 0)
+]
+
+complianceChart = new Chart(document.getElementById("complianceChart"), {
+type: "line",
+data: {
+labels: labels,
+datasets: [{
+label: "Safety Score",
+data: safetyScores,
+borderColor: theme.line,
+backgroundColor: theme.lineFill,
+fill: true,
+tension: 0.3
+}]
+},
+options: { responsive: true, maintainAspectRatio: false }
+})
+
+incidentTrendChart = new Chart(document.getElementById("incidentTrendChart"), {
+type: "bar",
+data: {
+labels: labels,
+datasets: [{
+label: "Incidents",
+data: incidents,
+backgroundColor: theme.bar
+}]
+},
+options: { responsive: true, maintainAspectRatio: false }
+})
+
+trainingChart = new Chart(document.getElementById("trainingChart"), {
+type: "doughnut",
+data: {
+labels: ["Low", "Medium", "High/Critical"],
+datasets: [{
+data: riskMix,
+backgroundColor: theme.mix
+}]
+},
+options: { responsive: true, maintainAspectRatio: false }
+})
+}
+
+function rangeToApiWindow(range){
+if(range === "weekly"){
+return { days: 30, months: 3 }
+}
+if(range === "monthly"){
+return { days: 90, months: 6 }
+}
+return { days: 180, months: 12 }
+}
+
+function withProjectParam(url){
+if(!selectedProjectId) return url
+const separator = url.includes("?") ? "&" : "?"
+return url + separator + "project_id=" + selectedProjectId
+}
+
+function hasUsableTrendData(trends){
+const labels = trends.labels || []
+const hasSeries = (trends.hazards || []).length || (trends.incidents || []).length || (trends.safety_scores || []).length
+return labels.length > 0 && !!hasSeries
+}
+
+async function loadKpiDashboard(range, options = {}){
+const silent = !!options.silent
+const requestToken = ++latestRequestToken
+if(!silent){
+setLoadingState(true)
+}
+const windowConfig = rangeToApiWindow(range)
+const summaryUrl = withProjectParam("/api/analytics/safety-summary?days=" + windowConfig.days)
+const trendsUrl = withProjectParam("/api/analytics/risk-trends?months=" + windowConfig.months)
+const distributionUrl = withProjectParam("/api/analytics/risk-distribution")
+
+try {
+const [summary, trends, distribution] = await Promise.all([
+fetchKpiJson(summaryUrl),
+fetchKpiJson(trendsUrl),
+fetchKpiJson(distributionUrl)
+])
+
+if(requestToken !== latestRequestToken){
+return
+}
+
+if(!hasUsableTrendData(trends)){
+throw new Error("No trend data")
+}
+
+const level = resolveRiskLevel(summary, distribution)
+setStatusColor(level)
+updateSummaryCards(summary)
+buildChartsFromApi(trends, distribution, level)
+renderKpiMovements(summary, trends)
+updateLastUpdatedStamp()
+if(!silent){
+kpiStatus.textContent = "Dashboard updated for " + range + " view."
+}
+} catch (_error) {
+if(requestToken !== latestRequestToken){
+return
+}
+setStatusColor("medium")
+updateSummaryCards({
+compliance_rate: 91,
+open_tasks: 14,
+high_risk_hazards: 6,
+inspection_completion_rate: 97
+})
+renderFallbackMovements()
+buildCharts(range, "medium")
+updateLastUpdatedStamp()
+if(!silent){
+kpiStatus.textContent = "Live analytics unavailable. Showing fallback sample data for " + range + " view."
+}
+} finally {
+if(!silent){
+setLoadingState(false)
+}
+}
+}
+
+function startAutoRefresh(){
+if(autoRefreshTimer){
+window.clearInterval(autoRefreshTimer)
+}
+
+autoRefreshTimer = window.setInterval(() => {
+if(!document.hidden){
+loadKpiDashboard(getActiveRange(), { silent: true })
+}
+}, 60000)
+}
+
 function exportKpiReport(){
-kpiStatus.textContent = "KPI report export requested."
+if(isExporting){
+return
+}
+
+isExporting = true
+setLoadingState(true)
+
+const activeRange = getActiveRange()
+const windowConfig = rangeToApiWindow(activeRange)
+const exportFormat = kpiExportFormat ? kpiExportFormat.value : "csv"
+
+const exportUrl = withProjectParam(
+"/api/analytics/kpi-export?days=" + windowConfig.days + "&months=" + windowConfig.months + "&format=" + exportFormat
+)
+
+fetch(exportUrl, { headers: kpiHeaders() })
+.then(response => {
+if(!response.ok){
+throw new Error("Export failed")
+}
+
+const disposition = response.headers.get("Content-Disposition") || ""
+const match = disposition.match(/filename=\"?([^\";]+)\"?/) 
+const filename = match ? match[1] : "kpi_dashboard_export.csv"
+
+return response.blob().then(blob => ({ blob, filename }))
+})
+.then(({ blob, filename }) => {
+const link = document.createElement("a")
+const objectUrl = URL.createObjectURL(blob)
+link.href = objectUrl
+link.download = filename
+document.body.appendChild(link)
+link.click()
+document.body.removeChild(link)
+URL.revokeObjectURL(objectUrl)
+kpiStatus.textContent = "KPI report " + exportFormat.toUpperCase() + " export completed."
+})
+.catch(() => {
+kpiStatus.textContent = exportFormat.toUpperCase() + " export failed. Please try again."
+})
+.finally(() => {
+isExporting = false
+setLoadingState(false)
+})
 }
 
 document.querySelectorAll(".kpi-filters button").forEach(button => {
@@ -364,16 +829,35 @@ button.addEventListener("click", function(){
 document.querySelectorAll(".kpi-filters button").forEach(btn => btn.classList.remove("active"))
 this.classList.add("active")
 const range = this.getAttribute("data-range")
-buildCharts(range)
-kpiStatus.textContent = "Dashboard updated for " + range + " view."
+loadKpiDashboard(range)
 })
 })
 
-document.getElementById("kpiSiteFilter").addEventListener("change", function(){
+if(kpiSiteFilter){
+kpiSiteFilter.addEventListener("change", function(){
+selectedProjectId = this.value === "all" ? null : Number(this.value)
+const activeRange = getActiveRange()
+loadKpiDashboard(activeRange)
 kpiStatus.textContent = "Site filter set to " + this.options[this.selectedIndex].text + "."
 })
+}
 
-buildCharts("weekly")
+loadSiteOptions().finally(() => {
+loadKpiDashboard("weekly")
+startAutoRefresh()
+})
+
+window.addEventListener("beforeunload", function(){
+if(autoRefreshTimer){
+window.clearInterval(autoRefreshTimer)
+}
+})
+
+document.addEventListener("visibilitychange", function(){
+if(!document.hidden && autoRefreshTimer){
+loadKpiDashboard(getActiveRange(), { silent: true })
+}
+})
 </script>
 
 <script src="../js/main.js"></script>

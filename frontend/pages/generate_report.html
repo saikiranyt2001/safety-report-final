@@ -843,6 +843,24 @@ box-shadow: 0 12px 24px rgba(11, 114, 133, 0.25);
 }
 .ai-chat-sidebar { border-radius: 16px 16px 0 0; overflow: hidden; }
 .chat-header, .chat-input button { font-family: "Space Grotesk", sans-serif; }
+.chat-quick-actions {
+display: flex;
+gap: 0.5rem;
+padding: 0.55rem 0.7rem 0;
+}
+.chat-quick-btn {
+border: 1px solid rgba(11, 114, 133, 0.35);
+background: #eef9fb;
+color: #0b7285;
+padding: 0.4rem 0.65rem;
+border-radius: 999px;
+font-size: 0.78rem;
+font-weight: 600;
+cursor: pointer;
+}
+.chat-quick-btn:hover {
+background: #dcf1f5;
+}
 
 @media (max-width: 700px) {
 .main-content { margin: 1rem; padding: 1.2rem; border-radius: 18px; }
@@ -1338,6 +1356,9 @@ placeholder="Describe long-term measures to prevent recurrence (training, proces
 <div class="chat-messages" id="chatMessages">
 <div class="ai-msg">Hello! Ask me about workplace safety or this report.</div>
 </div>
+<div class="chat-quick-actions">
+<button class="chat-quick-btn" type="button" onclick="explainGeneratedReport()">Explain Generated Report</button>
+</div>
 <div class="chat-input">
 <input id="chatInput" placeholder="Ask a question...">
 <button onclick="sendChat()">Send</button>
@@ -1393,6 +1414,7 @@ return
 checkAuth();
 
 let generatedLayoutPlan = null;
+window.lastGeneratedReportData = null;
 
 /* Auto Report ID and today date */
 (function () {
@@ -2098,6 +2120,7 @@ document.getElementById("layoutStatus").textContent = "Upload a layout and gener
 document.getElementById("generatedLayoutPreview").classList.remove("visible")
 document.getElementById("f_layoutReference").dataset.uploadedUrl = ""
 generatedLayoutPlan = null
+window.lastGeneratedReportData = null
 document.getElementById("layoutReferencePreview").classList.remove("visible")
 document.getElementById("layoutReferencePreviewImage").removeAttribute("src")
 document.getElementById("layoutReferencePreviewImage").classList.add("hidden")
@@ -2119,7 +2142,76 @@ function setText(id, value) {
 document.getElementById(id).textContent = value || "-"
 }
 
+function buildReportContextForAssistant() {
+const reportOutput = document.getElementById("reportOutput")
+const reportVisible = reportOutput && !reportOutput.classList.contains("hidden")
+const data = window.lastGeneratedReportData
+
+if(!reportVisible || !data){
+return ""
+}
+
+const contextLines = [
+"Generated Incident Report",
+`Report ID: ${data.report_id || "-"}`,
+`Date/Time: ${(data.date || "-")} ${(data.time || "")}`.trim(),
+`Location: ${data.location || "-"}`,
+`Department: ${data.department || "-"}`,
+`Employee: ${data.employee_name || "-"} (${data.employee_id || "-"})`,
+`Role: ${data.role || "-"}`,
+`Hazard Type: ${data.hazard_type || "-"}`,
+`Risk Level: ${data.risk_level || "-"}`,
+`Risk Score: ${data.risk_score || "-"}`,
+`Severity: ${data.severity || "-"}`,
+`Probability: ${data.probability || "-"}`,
+`Description: ${data.description || "-"}`,
+`Contributing Hazards: ${data.contributing_hazards || "-"}`,
+`Risk Assessment Basis: ${data.risk_assessment_basis || "-"}`,
+`PPE Info: ${data.ppe_info || "-"}`,
+`Root Cause: ${data.root_cause || "-"}`,
+`Control Implementation: ${data.control_implementation || "-"}`,
+`Compliance References: ${data.compliance_references || "-"}`,
+`Immediate Action: ${data.immediate_action || "-"}`,
+`Preventive Action: ${data.preventive_action || "-"}`,
+`Responsible Person: ${data.responsible_person || "-"}`,
+`Deadline: ${data.deadline || "-"}`,
+`Status: ${data.status || "-"}`
+]
+
+return contextLines.join("\n")
+}
+
+window.getAiAssistantContext = buildReportContextForAssistant
+
+function explainGeneratedReport() {
+const input = document.getElementById("chatInput")
+if (!input) return
+
+const hasReport = !!window.lastGeneratedReportData &&
+!document.getElementById("reportOutput").classList.contains("hidden")
+
+if (!hasReport) {
+if (typeof addChatMessage === "function") {
+addChatMessage("Generate a report first, then I can explain it section by section.", "ai-msg")
+} else {
+alert("Generate a report first, then the AI assistant can explain it.")
+}
+return
+}
+
+input.value = "Explain this generated report section by section, highlight key risks and actions, and suggest improvements."
+
+if (typeof window.sendChat === "function") {
+window.sendChat()
+}
+}
+
 function populateOutput(data, dbId) {
+window.lastGeneratedReportData = {
+...data,
+saved_report_id: dbId
+}
+
 applyReportOutputLayout(data)
 setText("out_reportId", data.report_id || `RPT-${dbId}`)
 setText("out_companyName", data.company_name)

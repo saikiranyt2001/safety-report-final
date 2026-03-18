@@ -29,19 +29,15 @@
 <!-- NOTIFICATION BELL -->
 <div class="notification" onclick="toggleNotifPanel()" title="Notifications">
   🔔
-  <span class="notif-badge" id="notifCount">3</span>
+  <span class="notif-badge" id="notifCount" style="display:none">0</span>
   <!-- Notification dropdown panel -->
   <div class="notif-panel" id="notifPanel">
     <div class="notif-header">
       <strong>Notifications</strong>
       <span class="notif-clear" onclick="clearNotifications(event)">Clear all</span>
     </div>
-    <div id="notifList">
-      <div class="notif-item notif-hazard">⚠️ Hazard detected in Zone B</div>
-      <div class="notif-item notif-incident">🚨 Incident reported: Forklift near-miss</div>
-      <div class="notif-item notif-report">📄 Report generated: Monthly Safety</div>
-    </div>
-    <div class="notif-empty" id="notifEmpty" style="display:none">No new notifications</div>
+    <div id="notifList" style="display:none"></div>
+    <div class="notif-empty" id="notifEmpty">Loading notifications...</div>
   </div>
 </div>
 
@@ -78,6 +74,8 @@
 <a href="../pages/generate_report.html">Generate Report</a>
 
 <a href="../pages/inspection_templates.html">Inspection Templates</a>
+
+<a href="../pages/equipment.html">Equipment</a>
 
 <a href="../pages/rag_report.html">RAG Report</a>
 

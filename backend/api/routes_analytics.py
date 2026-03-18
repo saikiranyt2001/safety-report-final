@@ -1,10 +1,16 @@
 from collections import defaultdict
+import csv
 from datetime import UTC, datetime, timedelta
+from io import BytesIO, StringIO
 import json
 import os
 import re
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -262,6 +268,196 @@ def _recent_activity(project_name: str, reports: list[Report]) -> list[str]:
     return activity
 
 
+def _series_value(series: list, idx: int) -> int:
+    return series[idx] if idx < len(series) else 0
+
+
+def _build_kpi_export_rows(
+    summary: dict,
+    trends: dict,
+    distribution: dict,
+    project_name: str,
+    days: int,
+    months: int,
+) -> list[list]:
+    rows: list[list] = []
+    rows.append(["KPI Dashboard Export"])
+    rows.append(["Generated At (UTC)", datetime.now(UTC).isoformat()])
+    rows.append(["Site", project_name])
+    rows.append(["Period Days", days])
+    rows.append(["Trend Months", months])
+    rows.append([])
+
+    rows.append(["Summary KPI", "Value"])
+    rows.append(["Compliance Rate", summary.get("compliance_rate", 0)])
+    rows.append(["Open Actions", summary.get("open_tasks", 0)])
+    rows.append(["Critical Alerts", summary.get("high_risk_hazards", 0)])
+    rows.append(["Inspection Completion", summary.get("inspection_completion_rate", 0)])
+    rows.append(["Hazards Detected", summary.get("hazards_detected", 0)])
+    rows.append(["Incidents Reported", summary.get("incidents_reported", 0)])
+    rows.append([])
+
+    rows.append(["Risk Distribution", "Count"])
+    rows.append(["Low", distribution.get("low", 0)])
+    rows.append(["Medium", distribution.get("medium", 0)])
+    rows.append(["High", distribution.get("high", 0)])
+    rows.append(["Critical", distribution.get("critical", 0)])
+    rows.append([])
+
+    rows.append(["Trend Label", "Hazards", "Incidents", "Safety Score", "Inspections", "Open Tasks"])
+    labels = trends.get("labels", [])
+    hazards = trends.get("hazards", [])
+    incidents = trends.get("incidents", [])
+    safety_scores = trends.get("safety_scores", [])
+    inspections = trends.get("inspections", [])
+    open_tasks = trends.get("open_tasks", [])
+
+    for idx, label in enumerate(labels):
+        rows.append([
+            label,
+            _series_value(hazards, idx),
+            _series_value(incidents, idx),
+            _series_value(safety_scores, idx),
+            _series_value(inspections, idx),
+            _series_value(open_tasks, idx),
+        ])
+
+    return rows
+
+
+def _draw_kpi_pdf_card(
+    pdf: canvas.Canvas,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    title: str,
+    value: str,
+) -> None:
+    pdf.setFillColor(colors.HexColor("#f8fbff"))
+    pdf.roundRect(x, y - h, w, h, 8, fill=1, stroke=0)
+    pdf.setStrokeColor(colors.HexColor("#d9e6f5"))
+    pdf.roundRect(x, y - h, w, h, 8, fill=0, stroke=1)
+    pdf.setFillColor(colors.HexColor("#3c4a57"))
+    pdf.setFont("Helvetica-Bold", 8)
+    pdf.drawString(x + 8, y - 14, title)
+    pdf.setFillColor(colors.HexColor("#102a43"))
+    pdf.setFont("Helvetica-Bold", 14)
+    pdf.drawString(x + 8, y - 34, value)
+
+
+def _render_kpi_export_pdf(
+    summary: dict,
+    trends: dict,
+    distribution: dict,
+    project_name: str,
+    days: int,
+    months: int,
+) -> BytesIO:
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    # Header
+    pdf.setFillColor(colors.HexColor("#0b63ce"))
+    pdf.rect(0, height - 92, width, 92, fill=1, stroke=0)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawString(36, height - 42, "KPI Dashboard Report")
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(36, height - 62, f"Site: {project_name}")
+    pdf.drawString(200, height - 62, f"Days: {days}")
+    pdf.drawString(280, height - 62, f"Months: {months}")
+    pdf.drawString(370, height - 62, f"Generated: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}")
+
+    # Summary cards
+    top_y = height - 112
+    card_w = (width - 90) / 4
+    cards = [
+        ("Compliance Rate", f"{summary.get('compliance_rate', 0)}%"),
+        ("Open Actions", str(summary.get("open_tasks", 0))),
+        ("Critical Alerts", str(summary.get("high_risk_hazards", 0))),
+        ("Inspection Completion", f"{summary.get('inspection_completion_rate', 0)}%"),
+    ]
+    for idx, (title, value) in enumerate(cards):
+        _draw_kpi_pdf_card(pdf, 36 + (idx * (card_w + 6)), top_y, card_w, 46, title, value)
+
+    # Risk distribution section
+    section_y = top_y - 64
+    pdf.setFillColor(colors.HexColor("#102a43"))
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(36, section_y, "Risk Distribution")
+    dist = [
+        ("Low", distribution.get("low", 0), "#2f9e44"),
+        ("Medium", distribution.get("medium", 0), "#f29900"),
+        ("High", distribution.get("high", 0), "#e8590c"),
+        ("Critical", distribution.get("critical", 0), "#c92a2a"),
+    ]
+    block_y = section_y - 14
+    block_w = (width - 90) / 4
+    for idx, (label, value, color_hex) in enumerate(dist):
+        x = 36 + (idx * (block_w + 6))
+        pdf.setFillColor(colors.HexColor(color_hex))
+        pdf.roundRect(x, block_y - 30, block_w, 30, 6, fill=1, stroke=0)
+        pdf.setFillColor(colors.white)
+        pdf.setFont("Helvetica-Bold", 10)
+        pdf.drawString(x + 8, block_y - 12, label)
+        pdf.drawRightString(x + block_w - 8, block_y - 12, str(value))
+
+    # Trend table
+    table_y = block_y - 48
+    headers = ["Label", "Hazards", "Incidents", "Score", "Inspections", "Open Tasks"]
+    col_widths = [120, 70, 70, 70, 90, 100]
+    x = 36
+
+    pdf.setFillColor(colors.HexColor("#e9f2ff"))
+    pdf.rect(x, table_y - 16, sum(col_widths), 16, fill=1, stroke=0)
+    pdf.setFillColor(colors.HexColor("#102a43"))
+    pdf.setFont("Helvetica-Bold", 9)
+    offset = x
+    for i, header in enumerate(headers):
+        pdf.drawString(offset + 4, table_y - 11, header)
+        offset += col_widths[i]
+
+    labels = trends.get("labels", [])
+    hazards = trends.get("hazards", [])
+    incidents = trends.get("incidents", [])
+    safety_scores = trends.get("safety_scores", [])
+    inspections = trends.get("inspections", [])
+    open_tasks = trends.get("open_tasks", [])
+
+    row_y = table_y - 20
+    pdf.setFont("Helvetica", 8)
+    for idx, label in enumerate(labels):
+        if row_y < 46:
+            pdf.showPage()
+            row_y = height - 50
+            pdf.setFont("Helvetica", 8)
+
+        if idx % 2 == 0:
+            pdf.setFillColor(colors.HexColor("#f7fbff"))
+            pdf.rect(x, row_y - 12, sum(col_widths), 12, fill=1, stroke=0)
+
+        values = [
+            str(label),
+            str(_series_value(hazards, idx)),
+            str(_series_value(incidents, idx)),
+            str(_series_value(safety_scores, idx)),
+            str(_series_value(inspections, idx)),
+            str(_series_value(open_tasks, idx)),
+        ]
+        offset = x
+        pdf.setFillColor(colors.HexColor("#1f2937"))
+        for col_idx, value in enumerate(values):
+            pdf.drawString(offset + 4, row_y - 9, value[:20])
+            offset += col_widths[col_idx]
+        row_y -= 12
+
+    pdf.save()
+    buffer.seek(0)
+    return buffer
+
+
 @router.get("/dashboard/metrics")
 async def dashboard_metrics(
     user=Depends(require_roles("admin", "manager")),
@@ -280,15 +476,28 @@ async def dashboard_metrics(
 @router.get("/analytics/safety-summary")
 async def analytics_safety_summary(
     days: int = Query(30, ge=7, le=365),
+    project_id: int | None = Query(None, ge=1),
     db: Session = Depends(get_db),
 ):
     company_id = _resolve_analytics_company_id(db)
     cutoff = datetime.now(UTC) - timedelta(days=days)
-    reports = db.query(Report).filter(Report.company_id == company_id, Report.created_at >= cutoff).all()
-    incidents = db.query(Incident).filter(Incident.company_id == company_id, Incident.created_at >= cutoff).all()
-    tasks = db.query(HazardTask).filter(HazardTask.company_id == company_id).all()
+    report_query = db.query(Report).filter(Report.company_id == company_id, Report.created_at >= cutoff)
+    incident_query = db.query(Incident).filter(Incident.company_id == company_id, Incident.created_at >= cutoff)
+    tasks_query = db.query(HazardTask).filter(HazardTask.company_id == company_id)
+
+    if project_id is not None:
+        report_query = report_query.filter(Report.project_id == project_id)
+        incident_query = incident_query.filter(Incident.project_id == project_id)
+        tasks_query = tasks_query.filter(HazardTask.project_id == project_id)
+
+    reports = report_query.all()
+    incidents = incident_query.all()
+    tasks = tasks_query.all()
     open_tasks = sum(1 for task in tasks if str(getattr(task.status, "value", task.status)) in {"open", "in_progress"})
-    projects = db.query(Project).filter(Project.company_id == company_id).all()
+    project_query = db.query(Project).filter(Project.company_id == company_id)
+    if project_id is not None:
+        project_query = project_query.filter(Project.id == project_id)
+    projects = project_query.all()
 
     site_rollup = []
     for project in projects:
@@ -308,6 +517,7 @@ async def analytics_safety_summary(
 
     return {
         "period_days": days,
+        "project_id": project_id,
         "hazards_detected": len(reports),
         "high_risk_hazards": sum(1 for report in reports if (report.severity or 0) >= 3),
         "incidents_reported": len(incidents),
@@ -323,13 +533,23 @@ async def analytics_safety_summary(
 @router.get("/analytics/risk-trends")
 async def analytics_risk_trends(
     months: int = Query(6, ge=3, le=12),
+    project_id: int | None = Query(None, ge=1),
     db: Session = Depends(get_db),
 ):
     company_id = _resolve_analytics_company_id(db)
-    reports = db.query(Report).filter(Report.company_id == company_id).all()
-    incidents = db.query(Incident).filter(Incident.company_id == company_id).all()
+    report_query = db.query(Report).filter(Report.company_id == company_id)
+    incident_query = db.query(Incident).filter(Incident.company_id == company_id)
+    tasks_query = db.query(HazardTask).filter(HazardTask.company_id == company_id)
+
+    if project_id is not None:
+        report_query = report_query.filter(Report.project_id == project_id)
+        incident_query = incident_query.filter(Incident.project_id == project_id)
+        tasks_query = tasks_query.filter(HazardTask.project_id == project_id)
+
+    reports = report_query.all()
+    incidents = incident_query.all()
     equipment_inspections = db.query(EquipmentInspection).filter(EquipmentInspection.company_id == company_id).all()
-    tasks = db.query(HazardTask).filter(HazardTask.company_id == company_id).all()
+    tasks = tasks_query.all()
 
     buckets = _month_labels(months)
     labels = [label for _, label in buckets]
@@ -357,6 +577,7 @@ async def analytics_risk_trends(
 
     return {
         "labels": labels,
+        "project_id": project_id,
         "hazards": hazard_counts,
         "incidents": incident_counts,
         "safety_scores": safety_scores,
@@ -387,14 +608,72 @@ async def analytics_hazard_types(
 
 @router.get("/analytics/risk-distribution")
 async def analytics_risk_distribution(
+    project_id: int | None = Query(None, ge=1),
     db: Session = Depends(get_db),
 ):
     company_id = _resolve_analytics_company_id(db)
     distribution = {"low": 0, "medium": 0, "high": 0, "critical": 0}
-    reports = db.query(Report).filter(Report.company_id == company_id).all()
+    report_query = db.query(Report).filter(Report.company_id == company_id)
+    if project_id is not None:
+        report_query = report_query.filter(Report.project_id == project_id)
+    reports = report_query.all()
     for report in reports:
         distribution[_bucket_for_severity(report.severity)] += 1
-    return distribution
+    return {
+        **distribution,
+        "project_id": project_id,
+    }
+
+
+@router.get("/analytics/kpi-export")
+async def analytics_kpi_export(
+    days: int = Query(30, ge=7, le=365),
+    months: int = Query(6, ge=3, le=12),
+    format: str = Query("csv", pattern="^(csv|pdf)$"),
+    project_id: int | None = Query(None, ge=1),
+    user=Depends(require_roles("admin", "manager", "worker")),
+    db: Session = Depends(get_db),
+):
+    summary = await analytics_safety_summary(days=days, project_id=project_id, db=db)
+    trends = await analytics_risk_trends(months=months, project_id=project_id, db=db)
+    distribution = await analytics_risk_distribution(project_id=project_id, db=db)
+
+    project_name = "All Sites"
+    if project_id is not None:
+        project = (
+            db.query(Project)
+            .filter(Project.id == project_id, Project.company_id == user.company_id)
+            .first()
+        )
+        if project:
+            project_name = project.name
+
+    rows = _build_kpi_export_rows(summary, trends, distribution, project_name, days, months)
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+
+    if format == "pdf":
+        pdf_buffer = _render_kpi_export_pdf(summary, trends, distribution, project_name, days, months)
+        filename = f"kpi_dashboard_{timestamp}.pdf"
+        return StreamingResponse(
+            pdf_buffer,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    csv_buffer = StringIO()
+    writer = csv.writer(csv_buffer)
+    for row in rows:
+        writer.writerow(row)
+
+    filename = f"kpi_dashboard_{timestamp}.csv"
+    content = csv_buffer.getvalue()
+    csv_buffer.close()
+
+    return StreamingResponse(
+        iter([content]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/analytics/risk-matrix")

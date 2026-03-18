@@ -2,7 +2,7 @@ import hashlib
 import logging
 import secrets
 import smtplib
-from datetime import datetime
+from datetime import UTC, datetime
 from email.message import EmailMessage
 
 import requests
@@ -224,7 +224,7 @@ def dispatch_event(
         "event": event,
         "title": title,
         "body": body,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         **payload,
     }
 

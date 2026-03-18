@@ -43,13 +43,17 @@ min-height: 100vh;
 
 .main-content {
 max-width: 1080px;
-margin: 2rem auto;
+margin: 2rem 2rem 2rem 270px;
 padding: 2rem;
 border: 1px solid var(--border);
 border-radius: 24px;
 background: var(--panel);
 backdrop-filter: blur(4px);
 box-shadow: var(--shadow);
+}
+
+.main-content.expanded {
+margin-left: 100px;
 }
 
 .users-header {
@@ -339,10 +343,64 @@ window.location.href = "login.html"
 
 const userSearch = document.getElementById("userSearch")
 const usersTableBody = document.querySelector("#usersTable tbody")
-const usersToken = localStorage.getItem("auth_token") || localStorage.getItem("token") || localStorage.getItem("access_token")
 let usersCache = []
 
+function isLikelyJwt(token){
+return !!token && token !== "loggedin" && token.split(".").length === 3
+}
+
+function resolveUsersToken(){
+const candidates = [
+localStorage.getItem("auth_token"),
+localStorage.getItem("token"),
+localStorage.getItem("access_token")
+]
+
+const valid = candidates.find(isLikelyJwt) || null
+if(valid){
+localStorage.setItem("auth_token", valid)
+localStorage.setItem("token", valid)
+localStorage.setItem("access_token", valid)
+}
+
+return valid
+}
+
+function handleUnauthorized(){
+localStorage.removeItem("auth_token")
+localStorage.removeItem("token")
+localStorage.removeItem("access_token")
+window.location.href = "login.html"
+}
+
+async function parseApiError(response, fallback){
+let raw = ""
+try {
+raw = await response.text()
+} catch (_error) {
+raw = ""
+}
+
+if(!raw){
+return fallback
+}
+
+try {
+const parsed = JSON.parse(raw)
+return parsed.detail || fallback
+} catch (_error) {
+return raw
+}
+}
+
 function apiHeaders(){
+const usersToken = resolveUsersToken()
+
+if(!usersToken){
+handleUnauthorized()
+throw new Error("Session expired. Please log in again.")
+}
+
 return {
 "Content-Type": "application/json",
 "Authorization": "Bearer " + usersToken
@@ -399,7 +457,12 @@ async function loadUsers(){
 try {
 const response = await fetch("/api/admin/users", { headers: apiHeaders() })
 if(!response.ok){
-throw new Error("Unable to load users")
+if(response.status === 401){
+handleUnauthorized()
+return
+}
+const detail = await parseApiError(response, "Unable to load users")
+throw new Error(detail)
 }
 const users = await response.json()
 renderUsers(users)
@@ -442,8 +505,12 @@ role: nextRole
 })
 })
 if(!response.ok){
-const errorText = await response.text()
-throw new Error(errorText || "Unable to update user")
+if(response.status === 401){
+handleUnauthorized()
+return
+}
+const detail = await parseApiError(response, "Unable to update user")
+throw new Error(detail)
 }
 setStatusMessage("User updated.")
 await loadUsers()
@@ -472,8 +539,12 @@ headers: apiHeaders(),
 body: JSON.stringify({ username, password, role })
 })
 if(!response.ok){
-const errorText = await response.text()
-throw new Error(errorText || "Unable to create user")
+if(response.status === 401){
+handleUnauthorized()
+return
+}
+const detail = await parseApiError(response, "Unable to create user")
+throw new Error(detail)
 }
 setStatusMessage("User created.")
 await loadUsers()
@@ -493,8 +564,12 @@ method: "DELETE",
 headers: apiHeaders()
 })
 if(!response.ok){
-const errorText = await response.text()
-throw new Error(errorText || "Unable to delete user")
+if(response.status === 401){
+handleUnauthorized()
+return
+}
+const detail = await parseApiError(response, "Unable to delete user")
+throw new Error(detail)
 }
 setStatusMessage("User deleted.")
 await loadUsers()
@@ -522,8 +597,12 @@ headers: apiHeaders(),
 body: JSON.stringify({ is_active: nextActiveState })
 })
 if(!response.ok){
-const errorText = await response.text()
-throw new Error(errorText || `Unable to ${actionLabel} user`)
+if(response.status === 401){
+handleUnauthorized()
+return
+}
+const detail = await parseApiError(response, `Unable to ${actionLabel} user`)
+throw new Error(detail)
 }
 setStatusMessage(`User ${nextActiveState ? "activated" : "deactivated"}.`)
 await loadUsers()
